@@ -18,6 +18,8 @@ from zoneinfo import ZoneInfo
 import httpx
 
 from app import planning
+from planning.mrp import from_snapshot as mrp_input
+from planning.mrp import run_mrp
 from app.data import mock_data
 from app.models import (
     ApprovalRequest,
@@ -380,6 +382,40 @@ def build_dataset(snap: dict) -> SimpleNamespace:
             if so_number:
                 finish_by_order[so_number].append(local_day(pord["planned_finish"]))
 
+    # Material requirements planning on the same snapshot (M08): allocation-aware staging and readiness.
+    mrp = run_mrp(mrp_input(snap))
+
+    def mrp_staging(order_number: str) -> list[MaterialStage]:
+        by_item: dict[str, list] = defaultdict(list)
+        for r in mrp.for_order(order_number):
+            if r.level == 1:
+                by_item[r.item].append(r)
+        stages = []
+        for item_code, reqs in by_item.items():
+            required = sum(r.gross for r in reqs)
+            covered = sum(r.allocated + r.planned_production for r in reqs if r.status != "short") + \
+                sum(r.allocated for r in reqs if r.status == "short")
+            statuses = {r.status for r in reqs}
+            status = "short" if "short" in statuses else "late" if "late" in statuses else "covered"
+            ready = max((r.ready_date for r in reqs if r.ready_date), default=None)
+            receipts = [a.ref.split("/")[0] for r in reqs for a in r.allocations if a.source == "po"]
+            note = {"covered": "Covered" + (f" · ready {ready:%b %d}" if ready and ready > mrp.input.as_of else ""),
+                    "late": f"Late · ready {ready:%b %d}" if ready else "Late",
+                    "short": f"Short {sum(mrp.shortage_units(r) for r in reqs if r.status == 'short'):g}"}[status]
+            stages.append(MaterialStage(
+                name=by_code[item_code]["name"] if item_code in by_code else item_code,
+                staged=int(round(min(covered, required))), required=int(-(-round(required, 6) // 1)), note=note,
+                blocked_by=(receipts[-1] if receipts and status == "late" else
+                            ("QC hold" if status == "short" and item_code in mrp.input.holds else None)
+                            if status != "covered" else None)))
+        return stages
+
+    def mrp_ready(order_number: str, line_numbers: list[int]) -> date | None:
+        dates = [mrp.line_ready_date(order_number, n) for n in line_numbers]
+        if any(d is None for d in dates) or not dates:
+            return None
+        return max(dates)
+
     SALES_ORDERS = []
     for o in sorted(snap["sales_orders"], key=lambda x: x["order_number"]):
         its = sorted(items_by_order[o["id"]], key=lambda x: x["line_number"])
@@ -396,20 +432,7 @@ def build_dataset(snap: dict) -> SimpleNamespace:
         material_alert = any(a["alert_type"] in ("material_shortage", "late_supplier_receipt") for a in alerts)
         quantity = sum(num(i["quantity"]) for i in its)
         wcs = sorted({work_centers[op["work_center_id"]]["work_center_code"] for op in route_ops.get(rout_head["id"], [])}) if rout_head else []
-        staging = []
-        if bom_head:
-            for line in sorted(bom_lines[bom_head["id"]], key=lambda x: x["line_number"]):
-                comp = products[line["component_product_id"]]
-                required = math.ceil(round(planning.required_qty(quantity, num(line["quantity_per_parent"]),
-                                                                 num(line["scrap_factor"])), 6))
-                agg = inv_by_product.get(comp["id"])
-                available = planning.net_available(agg["on_hand"], agg["reserved"], agg["hold"]) if agg else 0
-                staged = int(min(available, required))
-                incoming = open_po_by_product.get(comp["id"], [])
-                staging.append(MaterialStage(
-                    name=comp["name"], staged=staged, required=required,
-                    note="Covered" if staged >= required else "Short",
-                    blocked_by=po_headers[incoming[0]["purchase_order_id"]]["po_number"] if (staged < required and incoming) else None))
+        staging = mrp_staging(o["order_number"]) if bom_head else []
         diagnostic = ("From planning run alerts: " + " ".join(a["description"] for a in alerts)) if alerts \
             else "No open planning alerts for this order."
         SALES_ORDERS.append(SalesOrder(
@@ -430,7 +453,8 @@ def build_dataset(snap: dict) -> SimpleNamespace:
             constraint_icon=icon, recommended_action=(top.get("recommended_action") or "—") if top else "—",
             readiness=("Needs Data" if not data_complete else "Material Shortage" if material_alert
                        else label if top else "Cleared"),
-            material_ready=None, staging=staging, ai_diagnostic=diagnostic,
+            material_ready=mrp_ready(o["order_number"], [i["line_number"] for i in its]) if data_complete else None,
+            staging=staging, ai_diagnostic=diagnostic,
             signoff=(f"{person(bom_head['approved_by'], 'Approved')} on {local_day(bom_head['approved_at']):%b %d, %Y}"
                      if bom_head and bom_head.get("approved_at") else "— pending"),
             critical_shortage=material_alert and any(a["severity"] == "critical" for a in alerts),
@@ -506,6 +530,11 @@ def build_dataset(snap: dict) -> SimpleNamespace:
         ASSISTANT_QUICK_PROMPTS=mock_data.ASSISTANT_QUICK_PROMPTS, INVENTORY=INVENTORY, PO_LINES=PO_LINES,
         PRODUCT_ROWS={p["product_code"]: p for p in snap["products"]},
         PROFILES={p["id"]: p["full_name"] for p in snap["profiles"]},
+        MRP=mrp,
+        LAST_MRP_RUN=next(({"run_number": r["run_number"], "status": r["solver_status"],
+                            "completed_at": ts(r.get("completed_at")), "by": person(r.get("created_by"))}
+                           for r in sorted(snap["planning_runs"], key=lambda r: r["run_number"], reverse=True)
+                           if r["run_type"] == "mrp"), None),
         ORDER_EDIT={o["order_number"]: {
             "order_number": o["order_number"], "customer_name": o["customer_name"],
             "customer_reference": o.get("customer_reference") or "", "order_date": o["order_date"],

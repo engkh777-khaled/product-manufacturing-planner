@@ -1,6 +1,6 @@
 # Backend Roadmap — Supabase + Python
 
-_Written 2026-10-10 · Updated 2026-10-10: **cloud-first** (D-014), M03–M07 done_
+_Written 2026-10-10 · Updated 2026-10-10: **cloud-first** (D-014), M03–M08 done_
 
 Each milestone ends with a **test gate**: commands any developer can run on their own machine to prove the
 milestone works. A milestone is not done until its gate passes and its file exists in [milestones/](milestones/).
@@ -154,7 +154,7 @@ Details: [milestones/M07-approvals-and-audit.md](milestones/M07-approvals-and-au
 .\.venv\Scripts\python -m pytest tests/test_approvals.py
 ```
 
-### M08 — Material requirements planning engine (spec §7, Phase 2)
+### M08 — Material requirements planning engine (spec §7, Phase 2) ✅ Done 2026-10-10
 **Goal:** Correct, time-phased material shortages computed from real data, independent of AI.
 - `planning/mrp/`: multilevel explosion (reuse `explode_bom`), net requirements, eligible receipts (open quantity,
   status, QC release, location), time-phased availability, explicit allocation across competing orders.
@@ -166,6 +166,7 @@ Details: [milestones/M07-approvals-and-audit.md](milestones/M07-approvals-and-au
 .\.venv\Scripts\python -m pytest planning/tests/mrp   # spec acceptance tests 2, 3, 10 + golden fixtures
 .\.venv\Scripts\python -m planning.cli mrp --order SO-1005   # prints requirements & shortages from local DB
 ```
+Details: [milestones/M08-mrp-engine.md](milestones/M08-mrp-engine.md).
 
 ### M09 — Finite-capacity scheduler & independent validator (spec §8, Phase 3)
 **Goal:** OR-Tools CP-SAT produces feasible schedules, and a separate validator checks them.

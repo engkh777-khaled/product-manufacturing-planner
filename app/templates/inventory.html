@@ -11,6 +11,79 @@
     {% endif %}
   </div>
 
+  {% if msg %}
+  <div class="p-space-md rounded border border-primary/30 bg-primary/10 text-primary flex items-center gap-space-sm font-label-mono-sm text-label-mono-sm" role="status">{{ icon("info", 16) }}<span>{{ msg }}</span></div>
+  {% endif %}
+
+  {% set status_tone = {"covered": "ok", "late": "warn", "short": "crit"} %}
+  <section id="mrp" class="bg-surface-container-low rounded overflow-hidden">
+    {% call panel_header("Material Requirements (MRP)", "account_tree", "Multilevel explosion · net of stock & eligible receipts · allocated by priority, then need date (spec §7)") %}
+      {% if mrp %}
+        {{ badge(mrp.status, "ok" if mrp.status == "Feasible" else "warn") }}
+        {{ badge(mrp_counts.short ~ " short", "crit") }}{{ badge(mrp_counts.late ~ " late", "warn") }}{{ badge(mrp_counts.covered ~ " covered", "ok") }}
+      {% endif %}
+    {% endcall %}
+    {% if not mrp %}
+    <p class="p-space-lg font-label-mono-xs text-label-mono-xs text-warn">The MRP engine runs on database snapshots: start the app with DATA_BACKEND=supabase.</p>
+    {% else %}
+    <div class="px-space-lg py-space-md flex flex-wrap items-center justify-between gap-space-md font-label-mono-xs text-label-mono-xs text-on-surface-variant">
+      <span>As of {{ mrp.input.as_of|d("%b %d, %Y") }} · {{ mrp.input.demands|length }} order lines · {{ mrp.requirements|length }} requirements ·
+        last saved run: {% if last_mrp_run %}#{{ last_mrp_run.run_number }} ({{ last_mrp_run.status }}) by {{ last_mrp_run.by }}, {{ last_mrp_run.completed_at|d("%b %d %H:%M") }}{% else %}none — open alerts are from the seeded run{% endif %}</span>
+      <div class="flex flex-wrap items-center gap-space-sm">
+        <a href="/inventory?show={{ 'problems' if show_all else 'all' }}#mrp" class="text-primary hover:underline">{{ "Show problems only" if show_all else "Show all requirements" }}</a>
+        {% if can_run_mrp %}
+        <form method="post" action="/inventory/mrp/run"><button class="h-7 px-space-md inline-flex items-center gap-space-xs rounded bg-primary text-on-primary hover:bg-primary-fixed font-label-mono-sm text-label-mono-sm font-semibold">{{ icon("play_arrow", 15) }}Run MRP &amp; update alerts</button></form>
+        {% endif %}
+      </div>
+    </div>
+    <div class="overflow-x-auto scroll-thin">
+      <table class="w-full min-w-[980px] text-left border-collapse font-label-mono-sm text-label-mono-sm">
+        <thead><tr class="bg-surface-container-lowest text-outline font-label-mono-xs text-label-mono-xs uppercase border-b border-hairline">
+          <th class="py-space-sm px-space-md">Order / Line</th><th class="py-space-sm px-space-md">Component</th><th class="py-space-sm px-space-md">Needed (op)</th>
+          <th class="py-space-sm px-space-md text-right">Required</th><th class="py-space-sm px-space-md text-right">Allocated</th><th class="py-space-sm px-space-md text-right">Short</th>
+          <th class="py-space-sm px-space-md">Ready</th><th class="py-space-sm px-space-md">Status</th><th class="py-space-sm px-space-md">Supply used</th></tr></thead>
+        <tbody>
+          {% for r in mrp_rows %}
+          <tr class="border-b border-surface-container">
+            <td class="py-space-sm px-space-md"><a class="text-primary hover:underline" href="/orders?selected={{ r.order_number }}">{{ r.order_number }}</a><span class="text-outline">/{{ r.line_number }}</span> <span class="text-outline">{{ r.priority }}</span></td>
+            <td class="py-space-sm px-space-md"><span class="text-outline">{{ "·" * (r.level - 1) }}</span><span class="text-on-surface">{{ r.item }}</span>{% if r.planned_production %} <span class="text-outline">(build {{ r.planned_production|num(1) }})</span>{% endif %}</td>
+            <td class="py-space-sm px-space-md text-on-surface-variant">{{ r.need_date|d }}{% if r.operation_ref %} <span class="text-outline">{{ r.operation_ref }}</span>{% endif %}</td>
+            <td class="py-space-sm px-space-md text-right text-on-surface">{{ r.gross|num(2) }}</td>
+            <td class="py-space-sm px-space-md text-right text-on-surface-variant">{{ r.allocated|num(2) }}</td>
+            <td class="py-space-sm px-space-md text-right {{ 'text-crit font-semibold' if r.status == 'short' else 'text-outline' }}">{{ mrp.shortage_units(r)|num(0) if r.status == "short" else "—" }}</td>
+            <td class="py-space-sm px-space-md {{ 'text-warn' if r.status == 'late' else 'text-on-surface-variant' }}">{{ r.ready_date|d if r.ready_date else "—" }}{% if r.days_late %} (+{{ r.days_late }}d){% endif %}</td>
+            <td class="py-space-sm px-space-md">{{ badge(r.status, status_tone[r.status]) }}</td>
+            <td class="py-space-sm px-space-md text-on-surface-variant">{{ r.allocations|map(attribute="ref")|join(", ") or "—" }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="9" class="py-space-lg text-center text-ok">All material requirements are covered on time.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% for issue in mrp.issues %}
+    <p class="px-space-lg py-space-xs font-label-mono-xs text-label-mono-xs text-warn">{{ icon("help", 14) }} {{ issue.order_number }}/{{ issue.line_number }}: {{ issue.detail }} — not production-ready.</p>
+    {% endfor %}
+    {% if projections %}
+    <div class="p-space-lg grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-space-md border-t border-surface-container">
+      {% for item, name, events in projections %}
+      <div class="p-space-md bg-surface-container rounded">
+        <div class="font-label-mono-sm text-label-mono-sm text-on-surface">{{ item }} <span class="text-outline">{{ name }}</span></div>
+        <div class="font-label-mono-xs text-label-mono-xs text-outline mb-space-xs uppercase">Time-phased availability</div>
+        <table class="w-full font-label-mono-xs text-label-mono-xs">
+          {% for e in events %}
+          <tr><td class="py-px text-on-surface-variant">{{ e.date|d }}</td><td class="text-outline">{{ e.kind }}</td><td class="text-on-surface-variant">{{ e.ref }}</td>
+              <td class="text-right {{ 'text-ok' if e.qty > 0 else 'text-on-surface' }}">{{ "%+.2f"|format(e.qty) }}</td>
+              <td class="text-right font-semibold {{ 'text-crit' if e.balance < -0.000001 else 'text-on-surface' }}">{{ "%.2f"|format(e.balance) }}</td></tr>
+          {% endfor %}
+        </table>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endif %}
+  </section>
+
   <div class="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-4 gap-space-md">
     {% call kpi_card("Stocked SKUs", "inventory_2", "text-primary") %}
       <span class="font-metric-display text-metric-display text-on-surface">{{ totals.skus }}</span>
@@ -56,6 +129,5 @@
       </table>
     </div>
   </section>
-  <p class="font-label-mono-xs text-label-mono-xs text-outline">Time-phased availability and allocation across orders arrive with the MRP engine (M08).</p>
 </div>
 {% endblock %}

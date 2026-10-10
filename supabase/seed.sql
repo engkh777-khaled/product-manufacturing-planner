@@ -593,3 +593,11 @@ update public.planning_alerts set details = details || '{"required_date": "2025-
 where alert_type = 'late_supplier_receipt' and details ->> 'po_number' = 'PO-8821';
 update public.planning_alerts set details = details || '{"required_date": "2025-11-19"}'::jsonb
 where alert_type = 'quality_hold' and details ->> 'po_number' = 'PO-8840';
+
+-- ------------------------------------------------------------------ M08 additions
+-- Consuming operations of the 14" metal-seated valve (studs are needed at the flange weld, OP-050).
+update public.bom_items bi set operation_reference = v.op
+from (values (1, 'OP-015'), (2, 'OP-060'), (3, 'OP-060'), (4, 'OP-050'), (5, 'OP-060')) as v (line, op),
+     public.bom_headers bh, public.products p
+where bi.bom_header_id = bh.id and bh.product_id = p.id and p.product_code = 'V-900-MSB-14'
+  and bh.revision = 'Rev D' and bi.line_number = v.line;

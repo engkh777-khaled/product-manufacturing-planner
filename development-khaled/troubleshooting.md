@@ -212,3 +212,22 @@ Expected for direct UPDATEs. Use `select public.decide_plan_approval('APR-…', 
 _Seen 2026-10-10 (M07)_
 
 The Windows console uses cp1252. Run with `PYTHONIOENCODING=utf-8` (or `python -X utf8`).
+
+## MRP gives stock to a later need of the same order
+_Seen 2026-10-10 (M08)_
+
+**Cause.** Allocating order-by-order (line 1, then line 2) ignores that component need dates differ per operation.
+
+**Fix (in place).** Level-by-level allocation across all orders, sorted by priority, then **component** need date.
+Check any surprising allocation with `python -m planning.cli mrp --item <code>` (time-phased view).
+
+## "Short 3" although only 2.63 units are missing
+_Reference (M08)_
+
+Requirements include expected scrap and are fractional; shortages of discrete (EA) parts are reported rounded up.
+
+## MRP says "Needs data"
+_Reference (M08)_
+
+At least one open order line has no approved BOM or routing (e.g. SO-1021 / V-800-FGV-02). Its demand cannot be
+planned; the rest of the plan is still computed. Approve the engineering data (Engineering & BOM page).

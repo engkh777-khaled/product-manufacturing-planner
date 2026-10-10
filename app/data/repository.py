@@ -171,8 +171,17 @@ def purchase_orders(open_only: bool = True) -> list[dict]:
     return out
 
 
+def mrp_result():
+    """The MRP result for the current dataset (Supabase mode, M08); None on demo data."""
+    return getattr(ds(), "MRP", None)
+
+
 def shortage_skus() -> list[str]:
-    """Components short for their linked order's build quantity (approved BOMs only)."""
+    """Material problems: with MRP, components short or late against their need date across all orders;
+    on demo data, components short for their linked order's build quantity."""
+    mrp = mrp_result()
+    if mrp is not None:
+        return sorted({r.item for r in mrp.problems() if r.planned_production == 0})
     skus = []
     for code, bom in ds().BOMS.items():
         if bom.status != "Approved":

@@ -1,8 +1,11 @@
 """Inventory & Purchasing (spec §12.4, M06)."""
 
-from datetime import date
+import time
+from datetime import date, datetime, timezone
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi.responses import RedirectResponse
 
 from app.auth import require_user
 from app.data import dataset, writes
@@ -10,6 +13,8 @@ from app.data import repository as repo
 from app.data.dataset import current as ds
 from app.models import CurrentUser
 from app.templating import templates
+from planning.mrp.alerts import run_payload
+from planning.mrp.engine import projection
 
 router = APIRouter(dependencies=[Depends(require_user)])
 
@@ -19,6 +24,23 @@ QUALITY_STATUSES = ["Not Inspected", "QC Hold", "Released", "Rejected"]
 
 def _roles(user: CurrentUser) -> set[str]:
     return set(user.roles) if dataset.is_supabase() else set()
+
+
+def _mrp_context(user: CurrentUser, show_all: bool) -> dict:
+    mrp = repo.mrp_result()
+    if mrp is None:
+        return {"mrp": None}
+    rows = mrp.requirements if show_all else [r for r in mrp.requirements if r.status != "covered"]
+    problem_items = list(dict.fromkeys(r.item for r in mrp.requirements
+                                       if r.status != "covered" and r.planned_production == 0))
+    return {
+        "mrp": mrp, "mrp_rows": rows, "show_all": show_all,
+        "mrp_counts": {s: sum(1 for r in mrp.requirements if r.status == s) for s in ("covered", "late", "short")},
+        "projections": [(item, mrp.input.items[item].name if item in mrp.input.items else item, projection(mrp, item))
+                        for item in problem_items[:6]],
+        "last_mrp_run": getattr(ds(), "LAST_MRP_RUN", None),
+        "can_run_mrp": dataset.is_supabase() and bool({"planner", "admin"} & set(user.roles)),
+    }
 
 
 def _context(user: CurrentUser) -> dict:
@@ -44,8 +66,21 @@ def _context(user: CurrentUser) -> dict:
 
 
 @router.get("/inventory")
-def inventory_page(request: Request, user: CurrentUser = Depends(require_user)):
-    return templates.TemplateResponse(request, "inventory.html", _context(user))
+def inventory_page(request: Request, show: str = "problems", msg: str = "", user: CurrentUser = Depends(require_user)):
+    return templates.TemplateResponse(request, "inventory.html", {
+        **_context(user), **_mrp_context(user, show == "all"), "msg": msg[:300]})
+
+
+@router.post("/inventory/mrp/run")
+def run_mrp_and_save(user: CurrentUser = Depends(require_user)):
+    """Record the MRP result of the current snapshot as a planning run with alerts (planner/admin)."""
+    mrp = repo.mrp_result()
+    if mrp is None or not ({"planner", "admin"} & set(user.roles)):
+        return RedirectResponse(f"/inventory?msg={quote('Running MRP requires DATA_BACKEND=supabase and the planner or admin role.')}", 303)
+    started = datetime.now(timezone.utc)
+    t0 = time.perf_counter()
+    result = writes.record_mrp_run(run_payload(mrp, started, time.perf_counter() - t0))
+    return RedirectResponse(f"/inventory?msg={quote(result.message)}", 303)
 
 
 def _row(rows: list[dict], row_id: str) -> dict:

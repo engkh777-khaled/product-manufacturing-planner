@@ -282,3 +282,28 @@ callers cannot set it. The app only writes *app events* (blocked attempts, solve
 
 **Consequences.** Every change is audited no matter which client made it (app, scripts, SQL editor, future solver).
 Audit volume grows with writes; add retention/archiving before production (M12).
+
+## D-025 — Level-by-level MRP with priority-then-need-date allocation
+_2026-10-10 · M08_
+
+**Context.** Spec §7.1 asks to consolidate shared component demand across orders while preserving pegging;
+acceptance test 10 requires that the same stock is never allocated twice and that the allocation is explainable.
+
+**Decision.** Explode one BOM level for all open order lines, allocate every requirement of that level across orders
+— order priority first, then need date, requested date, order/line — taking the earliest-available remaining supply,
+then explode only unmet sub-assembly quantities to the next level. Requirements stay pegged to their order line;
+each alert names the higher-priority orders that received the stock.
+
+**Consequences.** Deterministic and explainable; quantities are fractional (expected scrap) with discrete shortages
+rounded up. The rule is fixed in code until the business agrees configurable allocation rules.
+
+## D-026 — Need dates from the baseline schedule; MRP owns the material alert types
+_2026-10-10 · M08_
+
+**Decision.** A component is needed at the start of its consuming operation in the approved baseline
+(`bom_items.operation_reference`), else at the production-order start (never before as-of). `record_mrp_run()` stores
+each run and replaces all open `material_shortage`, `late_supplier_receipt`, `quality_hold`, `missing_bom` and
+`missing_routing` alerts; schedule-owned alerts (capacity, delivery risk) are untouched.
+
+**Consequences.** Open material alerts always describe the latest MRP run. MRP is infinite-capacity; M09 closes the
+loop by making material-ready dates hard constraints in the scheduler.

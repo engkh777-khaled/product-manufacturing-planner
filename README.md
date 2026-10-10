@@ -36,6 +36,12 @@ Open http://127.0.0.1:8000 and sign in, e.g. as `planner@example.com` or `approv
 .\.venv\Scripts\python -m pytest
 ```
 
+## Planning engine (CLI)
+```powershell
+.\.venv\Scripts\python -m planning.cli mrp                  # material problems from the database
+.\.venv\Scripts\python -m planning.cli mrp --item SR-ST6-10  # time-phased availability
+```
+
 ## Screens
 | Route | Screen | Interactions |
 |---|---|---|

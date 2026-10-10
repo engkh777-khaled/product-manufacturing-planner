@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-10T11:14:50.113518+00:00",
+ "generated_at": "2026-10-10T14:16:28.487435+00:00",
  "work_centers": [
   {
    "id": "5a40a001-4ef9-4a1e-9bd3-e70b8fdfc736",
@@ -1337,6 +1337,20 @@
  ],
  "bom_headers": [
   {
+   "id": "7c9d76d9-eaa9-43c9-84b4-f134a7e858db",
+   "product_id": "0d3f1dca-bd92-4daa-93c1-eff02051f05a",
+   "revision": "Rev A",
+   "status": "Draft",
+   "effective_from": "2025-12-01",
+   "effective_to": null,
+   "eco_number": "ECO-85002 (open)",
+   "approved_by": null,
+   "approved_at": null,
+   "notes": "Awaiting engineering review",
+   "created_at": "2026-10-10T09:17:50.054167+00:00",
+   "updated_at": "2026-10-10T14:07:44.500743+00:00"
+  },
+  {
    "id": "1617c855-94d2-4b7d-b6e2-aa2de16371b8",
    "product_id": "f8ecc54b-687e-466e-8467-76aacc827b8f",
    "revision": "Rev C",
@@ -1489,34 +1503,20 @@
    "notes": null,
    "created_at": "2026-10-10T09:17:50.054167+00:00",
    "updated_at": "2026-10-10T10:20:08.338474+00:00"
-  },
-  {
-   "id": "7c9d76d9-eaa9-43c9-84b4-f134a7e858db",
-   "product_id": "0d3f1dca-bd92-4daa-93c1-eff02051f05a",
-   "revision": "Rev A",
-   "status": "Draft",
-   "effective_from": "2025-12-01",
-   "effective_to": null,
-   "eco_number": "ECO-85002 (open)",
-   "approved_by": null,
-   "approved_at": null,
-   "notes": "Awaiting engineering review",
-   "created_at": "2026-10-10T09:17:50.054167+00:00",
-   "updated_at": "2026-10-10T11:14:09.595551+00:00"
   }
  ],
  "bom_items": [
   {
-   "id": "188af8da-007a-4062-b549-8bae2ae672e5",
-   "bom_header_id": "1617c855-94d2-4b7d-b6e2-aa2de16371b8",
+   "id": "8bc156c5-8eda-467d-9b6a-ca11acd18fcc",
+   "bom_header_id": "7c9d76d9-eaa9-43c9-84b4-f134a7e858db",
    "line_number": 1,
-   "component_product_id": "e62060a1-064c-483e-8268-9c044f2968aa",
+   "component_product_id": "147eb2bf-2435-41ae-b968-06192ffdbaed",
    "quantity_per_parent": 1.0,
    "unit_of_measure": "EA",
-   "scrap_factor": 0.02,
+   "scrap_factor": 0.01,
    "is_phantom": false,
    "is_optional": false,
-   "operation_reference": "OP-020",
+   "operation_reference": null,
    "created_at": "2026-10-10T09:17:50.054167+00:00"
   },
   {
@@ -1524,45 +1524,6 @@
    "bom_header_id": "7deddb16-1e9f-42f7-873f-ba2cf68efdce",
    "line_number": 1,
    "component_product_id": "1b8ed230-23e4-4287-b753-e37b6940cd50",
-   "quantity_per_parent": 1.0,
-   "unit_of_measure": "EA",
-   "scrap_factor": 0.02,
-   "is_phantom": false,
-   "is_optional": false,
-   "operation_reference": null,
-   "created_at": "2026-10-10T09:17:50.054167+00:00"
-  },
-  {
-   "id": "8db1d092-b720-4147-8015-5d3bcc671917",
-   "bom_header_id": "24b1db87-7cf6-4b32-b40e-03bf208e3aff",
-   "line_number": 1,
-   "component_product_id": "c5cfb05b-2c15-4050-92a6-348e32d7dd3c",
-   "quantity_per_parent": 1.0,
-   "unit_of_measure": "EA",
-   "scrap_factor": 0.02,
-   "is_phantom": false,
-   "is_optional": false,
-   "operation_reference": null,
-   "created_at": "2026-10-10T09:17:50.054167+00:00"
-  },
-  {
-   "id": "37c6fcd8-4bc3-45e4-bdca-4503c1798944",
-   "bom_header_id": "99d97b0c-e506-4caa-95d2-fc57d2233a05",
-   "line_number": 1,
-   "component_product_id": "6e7d8bf1-a0c8-4f84-a700-4d699d987c1a",
-   "quantity_per_parent": 1.0,
-   "unit_of_measure": "EA",
-   "scrap_factor": 0.02,
-   "is_phantom": false,
-   "is_optional": false,
-   "operation_reference": null,
-   "created_at": "2026-10-10T09:17:50.054167+00:00"
-  },
-  {
-   "id": "7c937564-2b9b-4f8f-89b7-e3eb56134bec",
-   "bom_header_id": "0090264d-7ea8-4901-bd99-f071a08e087a",
-   "line_number": 1,
-   "component_product_id": "06b8406f-31e2-4c16-9c86-eb4f01a32b29",
    "quantity_per_parent": 1.0,
    "unit_of_measure": "EA",
    "scrap_factor": 0.02,
@@ -1585,19 +1546,6 @@
    "created_at": "2026-10-10T09:17:50.054167+00:00"
   },
   {
-   "id": "20d0648f-65fc-425c-ac6d-ee6ba09a1ffd",
-   "bom_header_id": "c22751e0-d734-4840-b975-1b1a72b4ffc3",
-   "line_number": 1,
-   "component_product_id": "d3f298c2-f766-4469-94cc-bcd8b6b1fae0",
-   "quantity_per_parent": 1.0,
-   "unit_of_measure": "EA",
-   "scrap_factor": 0.02,
-   "is_phantom": false,
-   "is_optional": false,
-   "operation_reference": null,
-   "created_at": "2026-10-10T09:17:50.054167+00:00"
-  },
-  {
    "id": "44a10d2e-0f63-45aa-922f-649cf859d8c8",
    "bom_header_id": "2b9a8a4f-ff6a-4893-86b8-bde61eeb889d",
    "line_number": 1,
@@ -1611,26 +1559,52 @@
    "created_at": "2026-10-10T09:17:50.054167+00:00"
   },
   {
-   "id": "8bc156c5-8eda-467d-9b6a-ca11acd18fcc",
-   "bom_header_id": "7c9d76d9-eaa9-43c9-84b4-f134a7e858db",
+   "id": "20d0648f-65fc-425c-ac6d-ee6ba09a1ffd",
+   "bom_header_id": "c22751e0-d734-4840-b975-1b1a72b4ffc3",
    "line_number": 1,
-   "component_product_id": "147eb2bf-2435-41ae-b968-06192ffdbaed",
+   "component_product_id": "d3f298c2-f766-4469-94cc-bcd8b6b1fae0",
    "quantity_per_parent": 1.0,
    "unit_of_measure": "EA",
-   "scrap_factor": 0.01,
+   "scrap_factor": 0.02,
    "is_phantom": false,
    "is_optional": false,
    "operation_reference": null,
    "created_at": "2026-10-10T09:17:50.054167+00:00"
   },
   {
-   "id": "62d86505-4141-42ac-bf8b-582552000b24",
-   "bom_header_id": "175c5ef9-4f2f-4a68-965f-e012618abb54",
+   "id": "188af8da-007a-4062-b549-8bae2ae672e5",
+   "bom_header_id": "1617c855-94d2-4b7d-b6e2-aa2de16371b8",
    "line_number": 1,
-   "component_product_id": "10857a67-4b3e-4ef3-bc0a-e27c6a098912",
+   "component_product_id": "e62060a1-064c-483e-8268-9c044f2968aa",
    "quantity_per_parent": 1.0,
    "unit_of_measure": "EA",
-   "scrap_factor": 0.0,
+   "scrap_factor": 0.02,
+   "is_phantom": false,
+   "is_optional": false,
+   "operation_reference": "OP-020",
+   "created_at": "2026-10-10T09:17:50.054167+00:00"
+  },
+  {
+   "id": "b9a308c6-8107-4d95-a2b7-e7d5bb582fca",
+   "bom_header_id": "7b001d6a-d261-499b-9d2a-bb1cf56792f1",
+   "line_number": 1,
+   "component_product_id": "e62060a1-064c-483e-8268-9c044f2968aa",
+   "quantity_per_parent": 1.0,
+   "unit_of_measure": "EA",
+   "scrap_factor": 0.02,
+   "is_phantom": false,
+   "is_optional": false,
+   "operation_reference": "OP-020",
+   "created_at": "2026-10-10T09:17:50.054167+00:00"
+  },
+  {
+   "id": "37c6fcd8-4bc3-45e4-bdca-4503c1798944",
+   "bom_header_id": "99d97b0c-e506-4caa-95d2-fc57d2233a05",
+   "line_number": 1,
+   "component_product_id": "6e7d8bf1-a0c8-4f84-a700-4d699d987c1a",
+   "quantity_per_parent": 1.0,
+   "unit_of_measure": "EA",
+   "scrap_factor": 0.02,
    "is_phantom": false,
    "is_optional": false,
    "operation_reference": null,
@@ -1650,26 +1624,78 @@
    "created_at": "2026-10-10T09:17:50.054167+00:00"
   },
   {
-   "id": "b9a308c6-8107-4d95-a2b7-e7d5bb582fca",
-   "bom_header_id": "7b001d6a-d261-499b-9d2a-bb1cf56792f1",
+   "id": "8db1d092-b720-4147-8015-5d3bcc671917",
+   "bom_header_id": "24b1db87-7cf6-4b32-b40e-03bf208e3aff",
    "line_number": 1,
-   "component_product_id": "e62060a1-064c-483e-8268-9c044f2968aa",
+   "component_product_id": "c5cfb05b-2c15-4050-92a6-348e32d7dd3c",
    "quantity_per_parent": 1.0,
    "unit_of_measure": "EA",
    "scrap_factor": 0.02,
    "is_phantom": false,
    "is_optional": false,
-   "operation_reference": "OP-020",
+   "operation_reference": "OP-015",
    "created_at": "2026-10-10T09:17:50.054167+00:00"
   },
   {
-   "id": "a417ad9a-21d4-4784-9bd7-4080fa100bc7",
-   "bom_header_id": "175c5ef9-4f2f-4a68-965f-e012618abb54",
-   "line_number": 2,
-   "component_product_id": "e20c939b-500c-4bf8-8ff0-bbe1dfb0d981",
+   "id": "7c937564-2b9b-4f8f-89b7-e3eb56134bec",
+   "bom_header_id": "0090264d-7ea8-4901-bd99-f071a08e087a",
+   "line_number": 1,
+   "component_product_id": "06b8406f-31e2-4c16-9c86-eb4f01a32b29",
    "quantity_per_parent": 1.0,
    "unit_of_measure": "EA",
-   "scrap_factor": 0.015,
+   "scrap_factor": 0.02,
+   "is_phantom": false,
+   "is_optional": false,
+   "operation_reference": null,
+   "created_at": "2026-10-10T09:17:50.054167+00:00"
+  },
+  {
+   "id": "62d86505-4141-42ac-bf8b-582552000b24",
+   "bom_header_id": "175c5ef9-4f2f-4a68-965f-e012618abb54",
+   "line_number": 1,
+   "component_product_id": "10857a67-4b3e-4ef3-bc0a-e27c6a098912",
+   "quantity_per_parent": 1.0,
+   "unit_of_measure": "EA",
+   "scrap_factor": 0.0,
+   "is_phantom": false,
+   "is_optional": false,
+   "operation_reference": null,
+   "created_at": "2026-10-10T09:17:50.054167+00:00"
+  },
+  {
+   "id": "73a4bc67-7fbb-47d1-bfab-830fcd5af34f",
+   "bom_header_id": "7c9d76d9-eaa9-43c9-84b4-f134a7e858db",
+   "line_number": 2,
+   "component_product_id": "ccd2881f-208d-44cb-953c-c17fe042a78f",
+   "quantity_per_parent": 1.0,
+   "unit_of_measure": "EA",
+   "scrap_factor": 0.02,
+   "is_phantom": false,
+   "is_optional": false,
+   "operation_reference": null,
+   "created_at": "2026-10-10T09:17:50.054167+00:00"
+  },
+  {
+   "id": "98ff382d-7464-4340-bc43-bca1e446da49",
+   "bom_header_id": "7deddb16-1e9f-42f7-873f-ba2cf68efdce",
+   "line_number": 2,
+   "component_product_id": "8b622576-f6d8-4d38-911d-789843f5ff59",
+   "quantity_per_parent": 1.0,
+   "unit_of_measure": "EA",
+   "scrap_factor": 0.03,
+   "is_phantom": false,
+   "is_optional": false,
+   "operation_reference": null,
+   "created_at": "2026-10-10T09:17:50.054167+00:00"
+  },
+  {
+   "id": "8a2ca7db-8c61-4397-904d-e5d8bf9b3793",
+   "bom_header_id": "99d97b0c-e506-4caa-95d2-fc57d2233a05",
+   "line_number": 2,
+   "component_product_id": "7458ae45-1e20-4b6b-b4cf-ba1c83784f51",
+   "quantity_per_parent": 2.0,
+   "unit_of_measure": "EA",
+   "scrap_factor": 0.03,
    "is_phantom": false,
    "is_optional": false,
    "operation_reference": null,
@@ -1715,19 +1741,6 @@
    "created_at": "2026-10-10T09:17:50.054167+00:00"
   },
   {
-   "id": "1e640c65-ff86-43f6-a0d2-e12cdfb12c96",
-   "bom_header_id": "1617c855-94d2-4b7d-b6e2-aa2de16371b8",
-   "line_number": 2,
-   "component_product_id": "3e6b66de-7105-4acc-802f-72d2a23aa417",
-   "quantity_per_parent": 1.0,
-   "unit_of_measure": "EA",
-   "scrap_factor": 0.02,
-   "is_phantom": false,
-   "is_optional": false,
-   "operation_reference": "OP-020",
-   "created_at": "2026-10-10T09:17:50.054167+00:00"
-  },
-  {
    "id": "8410ad96-47c4-41b7-b538-17a175605305",
    "bom_header_id": "2b9a8a4f-ff6a-4893-86b8-bde61eeb889d",
    "line_number": 2,
@@ -1738,6 +1751,32 @@
    "is_phantom": false,
    "is_optional": false,
    "operation_reference": null,
+   "created_at": "2026-10-10T09:17:50.054167+00:00"
+  },
+  {
+   "id": "a417ad9a-21d4-4784-9bd7-4080fa100bc7",
+   "bom_header_id": "175c5ef9-4f2f-4a68-965f-e012618abb54",
+   "line_number": 2,
+   "component_product_id": "e20c939b-500c-4bf8-8ff0-bbe1dfb0d981",
+   "quantity_per_parent": 1.0,
+   "unit_of_measure": "EA",
+   "scrap_factor": 0.015,
+   "is_phantom": false,
+   "is_optional": false,
+   "operation_reference": null,
+   "created_at": "2026-10-10T09:17:50.054167+00:00"
+  },
+  {
+   "id": "1e640c65-ff86-43f6-a0d2-e12cdfb12c96",
+   "bom_header_id": "1617c855-94d2-4b7d-b6e2-aa2de16371b8",
+   "line_number": 2,
+   "component_product_id": "3e6b66de-7105-4acc-802f-72d2a23aa417",
+   "quantity_per_parent": 1.0,
+   "unit_of_measure": "EA",
+   "scrap_factor": 0.02,
+   "is_phantom": false,
+   "is_optional": false,
+   "operation_reference": "OP-020",
    "created_at": "2026-10-10T09:17:50.054167+00:00"
   },
   {
@@ -1754,32 +1793,6 @@
    "created_at": "2026-10-10T09:17:50.054167+00:00"
   },
   {
-   "id": "98ff382d-7464-4340-bc43-bca1e446da49",
-   "bom_header_id": "7deddb16-1e9f-42f7-873f-ba2cf68efdce",
-   "line_number": 2,
-   "component_product_id": "8b622576-f6d8-4d38-911d-789843f5ff59",
-   "quantity_per_parent": 1.0,
-   "unit_of_measure": "EA",
-   "scrap_factor": 0.03,
-   "is_phantom": false,
-   "is_optional": false,
-   "operation_reference": null,
-   "created_at": "2026-10-10T09:17:50.054167+00:00"
-  },
-  {
-   "id": "73a4bc67-7fbb-47d1-bfab-830fcd5af34f",
-   "bom_header_id": "7c9d76d9-eaa9-43c9-84b4-f134a7e858db",
-   "line_number": 2,
-   "component_product_id": "ccd2881f-208d-44cb-953c-c17fe042a78f",
-   "quantity_per_parent": 1.0,
-   "unit_of_measure": "EA",
-   "scrap_factor": 0.02,
-   "is_phantom": false,
-   "is_optional": false,
-   "operation_reference": null,
-   "created_at": "2026-10-10T09:17:50.054167+00:00"
-  },
-  {
    "id": "d9604ac8-06f0-45e9-93fb-10eb5b194677",
    "bom_header_id": "24b1db87-7cf6-4b32-b40e-03bf208e3aff",
    "line_number": 2,
@@ -1789,20 +1802,20 @@
    "scrap_factor": 0.04,
    "is_phantom": false,
    "is_optional": false,
-   "operation_reference": null,
+   "operation_reference": "OP-060",
    "created_at": "2026-10-10T09:17:50.054167+00:00"
   },
   {
-   "id": "8a2ca7db-8c61-4397-904d-e5d8bf9b3793",
-   "bom_header_id": "99d97b0c-e506-4caa-95d2-fc57d2233a05",
-   "line_number": 2,
-   "component_product_id": "7458ae45-1e20-4b6b-b4cf-ba1c83784f51",
-   "quantity_per_parent": 2.0,
+   "id": "661464cc-1a69-41d3-89f2-8a1c356cd303",
+   "bom_header_id": "1617c855-94d2-4b7d-b6e2-aa2de16371b8",
+   "line_number": 3,
+   "component_product_id": "cdba8ac3-48f4-4dc6-b953-b5fdf1e8b739",
+   "quantity_per_parent": 1.0,
    "unit_of_measure": "EA",
-   "scrap_factor": 0.03,
+   "scrap_factor": 0.035,
    "is_phantom": false,
    "is_optional": false,
-   "operation_reference": null,
+   "operation_reference": "OP-040",
    "created_at": "2026-10-10T09:17:50.054167+00:00"
   },
   {
@@ -1815,15 +1828,15 @@
    "scrap_factor": 0.05,
    "is_phantom": false,
    "is_optional": false,
-   "operation_reference": null,
+   "operation_reference": "OP-060",
    "created_at": "2026-10-10T09:17:50.054167+00:00"
   },
   {
-   "id": "0e01f45d-1d60-4a57-bdaa-43529dfaf5ac",
-   "bom_header_id": "95f0736e-b80c-4a39-8188-8e97db837fd2",
+   "id": "23db1b91-b7d0-4d25-a32f-75d0ef71d5e8",
+   "bom_header_id": "99d97b0c-e506-4caa-95d2-fc57d2233a05",
    "line_number": 3,
-   "component_product_id": "80b1f7d1-a48b-4d86-8914-e756c6616f04",
-   "quantity_per_parent": 2.0,
+   "component_product_id": "43059759-c321-42f0-9f00-cd9a4f3d8a87",
+   "quantity_per_parent": 1.0,
    "unit_of_measure": "EA",
    "scrap_factor": 0.0,
    "is_phantom": false,
@@ -1845,19 +1858,6 @@
    "created_at": "2026-10-10T09:17:50.054167+00:00"
   },
   {
-   "id": "661464cc-1a69-41d3-89f2-8a1c356cd303",
-   "bom_header_id": "1617c855-94d2-4b7d-b6e2-aa2de16371b8",
-   "line_number": 3,
-   "component_product_id": "cdba8ac3-48f4-4dc6-b953-b5fdf1e8b739",
-   "quantity_per_parent": 1.0,
-   "unit_of_measure": "EA",
-   "scrap_factor": 0.035,
-   "is_phantom": false,
-   "is_optional": false,
-   "operation_reference": "OP-040",
-   "created_at": "2026-10-10T09:17:50.054167+00:00"
-  },
-  {
    "id": "cbaa510c-89e7-4bd9-9dc3-c2e7bf15df5b",
    "bom_header_id": "0090264d-7ea8-4901-bd99-f071a08e087a",
    "line_number": 3,
@@ -1865,6 +1865,19 @@
    "quantity_per_parent": 1.0,
    "unit_of_measure": "EA",
    "scrap_factor": 0.0,
+   "is_phantom": false,
+   "is_optional": false,
+   "operation_reference": null,
+   "created_at": "2026-10-10T09:17:50.054167+00:00"
+  },
+  {
+   "id": "35387fb1-37b6-4176-bdd4-2f36908815e0",
+   "bom_header_id": "2b9a8a4f-ff6a-4893-86b8-bde61eeb889d",
+   "line_number": 3,
+   "component_product_id": "11621c8f-e65b-4c6e-88f4-39e5237d069a",
+   "quantity_per_parent": 1.0,
+   "unit_of_measure": "EA",
+   "scrap_factor": 0.02,
    "is_phantom": false,
    "is_optional": false,
    "operation_reference": null,
@@ -1897,11 +1910,11 @@
    "created_at": "2026-10-10T09:17:50.054167+00:00"
   },
   {
-   "id": "23db1b91-b7d0-4d25-a32f-75d0ef71d5e8",
-   "bom_header_id": "99d97b0c-e506-4caa-95d2-fc57d2233a05",
+   "id": "0e01f45d-1d60-4a57-bdaa-43529dfaf5ac",
+   "bom_header_id": "95f0736e-b80c-4a39-8188-8e97db837fd2",
    "line_number": 3,
-   "component_product_id": "43059759-c321-42f0-9f00-cd9a4f3d8a87",
-   "quantity_per_parent": 1.0,
+   "component_product_id": "80b1f7d1-a48b-4d86-8914-e756c6616f04",
+   "quantity_per_parent": 2.0,
    "unit_of_measure": "EA",
    "scrap_factor": 0.0,
    "is_phantom": false,
@@ -1910,10 +1923,36 @@
    "created_at": "2026-10-10T09:17:50.054167+00:00"
   },
   {
-   "id": "35387fb1-37b6-4176-bdd4-2f36908815e0",
-   "bom_header_id": "2b9a8a4f-ff6a-4893-86b8-bde61eeb889d",
-   "line_number": 3,
-   "component_product_id": "11621c8f-e65b-4c6e-88f4-39e5237d069a",
+   "id": "88aa5881-829f-4acd-bb93-fc5e8b20e720",
+   "bom_header_id": "c22751e0-d734-4840-b975-1b1a72b4ffc3",
+   "line_number": 4,
+   "component_product_id": "97454fb9-33da-4deb-a30d-bb2b3b06cd4a",
+   "quantity_per_parent": 1.0,
+   "unit_of_measure": "EA",
+   "scrap_factor": 0.01,
+   "is_phantom": false,
+   "is_optional": false,
+   "operation_reference": null,
+   "created_at": "2026-10-10T09:17:50.054167+00:00"
+  },
+  {
+   "id": "c60270fb-4449-4daa-a331-376a87d0b748",
+   "bom_header_id": "24b1db87-7cf6-4b32-b40e-03bf208e3aff",
+   "line_number": 4,
+   "component_product_id": "1d1b86ed-20c9-459b-9340-7c198eb76445",
+   "quantity_per_parent": 24.0,
+   "unit_of_measure": "EA",
+   "scrap_factor": 0.0,
+   "is_phantom": false,
+   "is_optional": false,
+   "operation_reference": "OP-050",
+   "created_at": "2026-10-10T09:17:50.054167+00:00"
+  },
+  {
+   "id": "8d5f3599-3f25-4675-b234-8aca9427ae36",
+   "bom_header_id": "95f0736e-b80c-4a39-8188-8e97db837fd2",
+   "line_number": 4,
+   "component_product_id": "16c1ff98-3462-4e99-9046-eb02d075f81f",
    "quantity_per_parent": 1.0,
    "unit_of_measure": "EA",
    "scrap_factor": 0.02,
@@ -1936,29 +1975,16 @@
    "created_at": "2026-10-10T09:17:50.054167+00:00"
   },
   {
-   "id": "ba501b57-31ff-491c-a7c0-7c45f780e8b1",
-   "bom_header_id": "2b9a8a4f-ff6a-4893-86b8-bde61eeb889d",
+   "id": "ce4278b5-b0f1-4585-bfb7-f40d16efbbf8",
+   "bom_header_id": "7b001d6a-d261-499b-9d2a-bb1cf56792f1",
    "line_number": 4,
-   "component_product_id": "2df7140c-2b11-462c-8714-f069e83fae83",
-   "quantity_per_parent": 1.0,
+   "component_product_id": "b378b59b-3bbf-48e1-b499-e477d6ed0365",
+   "quantity_per_parent": 2.0,
    "unit_of_measure": "EA",
-   "scrap_factor": 0.0,
+   "scrap_factor": 0.05,
    "is_phantom": false,
    "is_optional": false,
-   "operation_reference": null,
-   "created_at": "2026-10-10T09:17:50.054167+00:00"
-  },
-  {
-   "id": "c60270fb-4449-4daa-a331-376a87d0b748",
-   "bom_header_id": "24b1db87-7cf6-4b32-b40e-03bf208e3aff",
-   "line_number": 4,
-   "component_product_id": "1d1b86ed-20c9-459b-9340-7c198eb76445",
-   "quantity_per_parent": 24.0,
-   "unit_of_measure": "EA",
-   "scrap_factor": 0.0,
-   "is_phantom": false,
-   "is_optional": false,
-   "operation_reference": null,
+   "operation_reference": "OP-030",
    "created_at": "2026-10-10T09:17:50.054167+00:00"
   },
   {
@@ -1975,39 +2001,26 @@
    "created_at": "2026-10-10T09:17:50.054167+00:00"
   },
   {
-   "id": "8d5f3599-3f25-4675-b234-8aca9427ae36",
-   "bom_header_id": "95f0736e-b80c-4a39-8188-8e97db837fd2",
+   "id": "ba501b57-31ff-491c-a7c0-7c45f780e8b1",
+   "bom_header_id": "2b9a8a4f-ff6a-4893-86b8-bde61eeb889d",
    "line_number": 4,
-   "component_product_id": "16c1ff98-3462-4e99-9046-eb02d075f81f",
+   "component_product_id": "2df7140c-2b11-462c-8714-f069e83fae83",
    "quantity_per_parent": 1.0,
    "unit_of_measure": "EA",
-   "scrap_factor": 0.02,
+   "scrap_factor": 0.0,
    "is_phantom": false,
    "is_optional": false,
    "operation_reference": null,
    "created_at": "2026-10-10T09:17:50.054167+00:00"
   },
   {
-   "id": "ce4278b5-b0f1-4585-bfb7-f40d16efbbf8",
-   "bom_header_id": "7b001d6a-d261-499b-9d2a-bb1cf56792f1",
-   "line_number": 4,
-   "component_product_id": "b378b59b-3bbf-48e1-b499-e477d6ed0365",
-   "quantity_per_parent": 2.0,
-   "unit_of_measure": "EA",
-   "scrap_factor": 0.05,
-   "is_phantom": false,
-   "is_optional": false,
-   "operation_reference": "OP-030",
-   "created_at": "2026-10-10T09:17:50.054167+00:00"
-  },
-  {
-   "id": "88aa5881-829f-4acd-bb93-fc5e8b20e720",
-   "bom_header_id": "c22751e0-d734-4840-b975-1b1a72b4ffc3",
-   "line_number": 4,
-   "component_product_id": "97454fb9-33da-4deb-a30d-bb2b3b06cd4a",
+   "id": "8806b67a-4bdf-4ccc-a01c-d35137515a15",
+   "bom_header_id": "7deddb16-1e9f-42f7-873f-ba2cf68efdce",
+   "line_number": 5,
+   "component_product_id": "a0301a48-9b41-455f-982b-9dc473225260",
    "quantity_per_parent": 1.0,
    "unit_of_measure": "EA",
-   "scrap_factor": 0.01,
+   "scrap_factor": 0.0,
    "is_phantom": false,
    "is_optional": false,
    "operation_reference": null,
@@ -2036,20 +2049,7 @@
    "scrap_factor": 0.01,
    "is_phantom": false,
    "is_optional": false,
-   "operation_reference": null,
-   "created_at": "2026-10-10T09:17:50.054167+00:00"
-  },
-  {
-   "id": "8806b67a-4bdf-4ccc-a01c-d35137515a15",
-   "bom_header_id": "7deddb16-1e9f-42f7-873f-ba2cf68efdce",
-   "line_number": 5,
-   "component_product_id": "a0301a48-9b41-455f-982b-9dc473225260",
-   "quantity_per_parent": 1.0,
-   "unit_of_measure": "EA",
-   "scrap_factor": 0.0,
-   "is_phantom": false,
-   "is_optional": false,
-   "operation_reference": null,
+   "operation_reference": "OP-060",
    "created_at": "2026-10-10T09:17:50.054167+00:00"
   },
   {
@@ -3683,7 +3683,7 @@
    "reserved_quantity": 0.0,
    "quality_hold_quantity": 0.0,
    "net_available_quantity": 24.0,
-   "updated_at": "2026-10-10T11:14:02.95356+00:00"
+   "updated_at": "2026-10-10T14:07:37.528964+00:00"
   }
  ],
  "purchase_orders": [
@@ -3791,7 +3791,7 @@
    "warehouse_id": "25353d56-6465-469a-8849-b98925ac7582",
    "notes": null,
    "created_at": "2026-10-10T09:17:50.054167+00:00",
-   "updated_at": "2026-10-10T11:14:05.48767+00:00"
+   "updated_at": "2026-10-10T14:07:40.240079+00:00"
   },
   {
    "id": "62d1b588-1b4d-4160-b19d-ff6fa238d25c",
@@ -5959,5 +5959,5 @@
    "job_title": "System Administrator"
   }
  ],
- "_note": "FICTIONAL demo data exported from the dev project via public.planning_snapshot() as planner@example.com (M06/M07 test fixture)."
+ "_note": "FICTIONAL demo data exported from the dev project via public.planning_snapshot() as planner@example.com (test fixture, M06-M08)."
 }

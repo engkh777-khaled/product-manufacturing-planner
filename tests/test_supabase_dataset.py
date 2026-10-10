@@ -49,7 +49,8 @@ def test_multilevel_bom_from_chained_single_level_boms(db_dataset):
     codes = {r["item"].component_code: r for r in view["rows"]}
     assert codes["PL-A36-12"]["depth"] == 3                       # valve → kit → bracket → plate
     assert codes["SR-ST6-10"]["available"] == 10                  # 12 on QC hold excluded
-    assert repo.shortage_skus() == ["ACT-DA-400", "SR-ST6-10", "ST-IN718-M24"]
+    # M08: MRP allocates across orders — SO-1022 (Low priority) also lacks bodies/balls after SO-1005 (Critical).
+    assert repo.shortage_skus() == ["ACT-DA-400", "SR-ST6-10", "ST-IN718-M24", "TB-316-HC10", "VB-LF2-L10", "VB-LF2-U10"]
 
 
 def test_capacity_and_purchasing(db_dataset):

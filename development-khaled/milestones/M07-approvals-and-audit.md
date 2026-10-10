@@ -5,7 +5,7 @@
 | **Date** | 2026-10-10 |
 | **Author** | Khaled (implemented with Claude Code) |
 | **Status** | Done |
-| **Commits** | _see git log — "M07" commit_ |
+| **Commits** | `038c51f` |
 | **Spec sections** | §5 (Approver; no self-approval; AI never approves), §6.19 (versions, baseline), §6.21–6.22, §8.8, §10, §12.8, acceptance test 9 |
 
 ## Goal

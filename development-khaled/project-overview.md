@@ -1,6 +1,6 @@
 # Project Overview
 
-_Last updated: 2026-10-10 (after M07)_
+_Last updated: 2026-10-10 (after M08)_
 
 ## Goal
 
@@ -27,7 +27,8 @@ The AI must never invent quantities or dates, approve plans, place POs, or relea
 | Auth | Supabase Auth sign-in, 7 spec roles, RLS policies on all tables, HTTP-only cookie sessions (M05) |
 | Editing | Draft sales orders, inventory, PO lines, BOM revision workflow, approval decisions (Supabase mode) |
 | Approvals & audit | Workflow functions + guard (approve ⇒ new baseline), append-only trigger audit on 12 tables (M07) |
-| Tests | 145 passing: 73 app + 72 DB (`tests/db`, need `DATABASE_URL`; skipped in CI) |
+| Planning engine | `planning/` package: MRP (multilevel netting, priority allocation, time-phased availability, alerts) + CLI (M08) |
+| Tests | 167 passing: 92 app/engine + 75 DB (`tests/db`, need `DATABASE_URL`; skipped in CI) |
 
 ## Architecture today
 
@@ -86,6 +87,7 @@ tests/                  test_planning.py, test_routes.py, test_health.py; db/ = 
 pytest.ini              Short tracebacks (never print secrets)
 supabase/               config.toml, migrations/ (schema + RLS), seed.sql (fictional data)
 scripts/                seed_demo_users.py — fictional role users (password only in .env)
+planning/               Pure planning engine: mrp/ (inputs, engine, alerts), cli.py, tests/
 .github/workflows/      tests.yml — CI
 .env.example           Config template (.env itself is git-ignored)
 development-khaled/     This engineering log

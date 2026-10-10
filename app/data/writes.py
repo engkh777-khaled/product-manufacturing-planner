@@ -158,6 +158,14 @@ def withdraw_plan(request_number: str) -> WriteResult:
     return result
 
 
+def record_mrp_run(payload: dict) -> WriteResult:
+    """Planner/admin: store an MRP run and replace the open material alerts (M08)."""
+    result = _rest("POST", "rpc/record_mrp_run", json={"p": payload})
+    if result.ok:
+        result.message = f"MRP run #{result.data} saved with {len(payload['alerts'])} alerts."
+    return result
+
+
 def fetch_audit(limit: int = 100, entity_type: str | None = None) -> WriteResult:
     """Audit history as the user: RLS returns rows only to approvers and admins."""
     params = {"select": "*", "order": "created_at.desc", "limit": str(limit)}
