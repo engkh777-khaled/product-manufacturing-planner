@@ -94,3 +94,49 @@ files under `.github/workflows/`.
 echo | gh auth refresh --hostname github.com --scopes workflow   # approve the code at github.com/login/device
 gh auth status                                                   # scopes now include 'workflow'
 ```
+
+## Connecting Python / pytest to the Supabase database (`DATABASE_URL`)
+_Seen 2026-10-10 (M04)_
+
+**Symptom.** Connection to `db.<ref>.supabase.co:5432` times out from some networks.
+
+**Cause.** The direct database host on the free plan is IPv6-only.
+
+**Fix.** Use the **Session pooler** string: Dashboard → **Connect** → *Session pooler*. It looks like
+`postgresql://postgres.qemoliyeblfmrccniczr:<password>@aws-<n>-eu-west-3.pooler.supabase.com:5432/postgres`.
+Put it in `.env` as `DATABASE_URL=...` (never commit it), then `pytest tests/db`.
+
+## `supabase db push` wants to re-apply migrations that already exist
+_Prevented 2026-10-10 (M04)_
+
+**Cause.** Local migration file timestamps differ from the versions recorded in the remote
+`supabase_migrations.schema_migrations` table (e.g. after applying SQL through the dashboard or the API).
+
+**Fix.** Rename local files to the remote versions (`npx supabase migration list` shows both columns), or repair the
+history with `npx supabase migration repair --status applied <version>`.
+
+## `DATABASE_URL` password problems
+_Seen 2026-10-10 (M04)_
+
+- The line must start with `DATABASE_URL=` (a bare `postgresql://…` line is ignored).
+- Remove the `[ ]` from the dashboard's `[YOUR-PASSWORD]` placeholder.
+- Special characters must be **percent-encoded**: `@`→`%40`, `#`→`%23`, `%`→`%25`, `/`→`%2F`, `:`→`%3A`.
+  Easiest: use the dashboard's *Generate a password* (letters and digits only).
+- `FATAL: password authentication failed` = wrong password, not a network problem. **Stop retrying**: repeated failures
+  make Supabase temporarily ban your IP. Reset the password, or unban under Database settings → *Network Bans*.
+
+## Test output must never show secrets
+_Seen 2026-10-10 (M04)_
+
+**Cause.** pytest's default (long) tracebacks print function arguments — psycopg's included the decoded connection
+string with the password.
+
+**Fix (in place).** `pytest.ini` sets `--tb=short`; `tests/db/conftest.py` catches connection errors and reports only
+the server's first message line. Don't add `-l`/`--showlocals` or `--tb=long` when DB credentials are configured.
+
+## Dates off by a day when converting `timestamptz`
+_Seen 2026-10-10 (M04)_
+
+**Cause.** In Postgres, `AT TIME ZONE '-06'` is a POSIX-style offset whose sign is **inverted** (it means UTC+6).
+
+**Fix.** Use a named zone: `planned_finish AT TIME ZONE 'America/Chicago'` (the demo plant's zone).

@@ -169,3 +169,32 @@ is not reused (it hosts another app with a conflicting `products` table).
 **Consequences.** The dev database is shared and disposable; never store real data in it. Production will be a
 separate project (M12). A local Docker stack can be added later without changing migrations or tests. The D-012
 rule "every milestone has a test gate runnable from a developer machine" still applies.
+
+## D-015 — Schema conventions
+_2026-10-10 · M04_
+
+**Decision.**
+- **Components are products** (`item_type` = finished_good | manufactured | purchased). A multilevel BOM is a chain
+  of single-level BOMs: each manufactured component with a structure has its own `bom_headers` row. This is the
+  standard MRP model and lets the same component appear in many parents.
+- **Status/priority values are `text` + `CHECK`**, not Postgres enum types, so adding a value is a simple migration.
+- **Business rules live in the database** (constraints, partial unique indexes, triggers), so they hold for the
+  UI, scripts, the solver and the AI assistant alike.
+- **Production orders and operations are stored per schedule version.** Scenarios copy, never mutate, the baseline.
+- **RLS enabled on every table from day one, default-deny** (no policies) until M05 defines role policies.
+- Plant times are stored as `timestamptz`; the demo plant is CST (UTC-06).
+
+**Consequences.** The UI mock and the seed differ in a few operation numbers and one product (see M04 known gaps);
+the seed is authoritative from M06.
+
+## D-016 — Applying migrations through the Supabase API, aligned with CLI history
+_2026-10-10 · M04_
+
+**Context.** The dev database password was not available, so `npx supabase db push` could not run.
+
+**Decision.** Migrations were applied with the Supabase API (MCP `apply_migration`) and the local files were renamed
+to the exact versions recorded remotely (`supabase_migrations.schema_migrations`). The seed was run once via SQL.
+From now on either path works: `npx supabase migration new` → `npx supabase db push` (with password), or the API —
+but **always keep file names equal to the remote versions**.
+
+**Consequences.** `npx supabase db reset --linked` rebuilds the dev DB entirely from the repo files.

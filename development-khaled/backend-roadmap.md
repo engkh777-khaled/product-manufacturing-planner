@@ -1,6 +1,6 @@
 # Backend Roadmap — Supabase + Python
 
-_Written 2026-10-10 · Updated 2026-10-10: **cloud-first** (D-014), M03 done_
+_Written 2026-10-10 · Updated 2026-10-10: **cloud-first** (D-014), M03 + M04 done_
 
 Each milestone ends with a **test gate**: commands any developer can run on their own machine to prove the
 milestone works. A milestone is not done until its gate passes and its file exists in [milestones/](milestones/).
@@ -89,7 +89,7 @@ curl http://127.0.0.1:8000/healthz         # {"status":"ok", … "supabase":{"co
 ```
 Details: [milestones/M03-dev-environment-supabase-cloud.md](milestones/M03-dev-environment-supabase-cloud.md).
 
-### M04 — Database schema, constraints & seed data (spec §6, Phase 1)
+### M04 — Database schema, constraints & seed data (spec §6, Phase 1) ✅ Done 2026-10-10
 **Goal:** The spec §6 schema exists as versioned migrations, loaded with the fictional dataset.
 - Migrations in `supabase/migrations/` covering products, BOMs and routings (with operation dependencies),
   sales orders and lines, warehouses, inventory, POs, work centers, machines, shift calendars, holidays,
@@ -97,6 +97,8 @@ Details: [milestones/M03-dev-environment-supabase-cloud.md](milestones/M03-dev-e
 - UUID keys, foreign keys, `CHECK` constraints (positive quantities, valid status enums), unique codes, indexes.
 - `supabase/seed.sql`: port of `app/data/mock_data.py`, labelled fictional.
 - DB-level tests in `tests/db/` (pytest + `DATABASE_URL`).
+
+Details: [milestones/M04-database-schema-and-seed.md](milestones/M04-database-schema-and-seed.md).
 
 **Test gate**
 ```powershell

@@ -1,6 +1,6 @@
 # Project Overview
 
-_Last updated: 2026-10-10 (after M03)_
+_Last updated: 2026-10-10 (after M04)_
 
 ## Goal
 
@@ -19,12 +19,12 @@ The AI must never invent quantities or dates, approve plans, place POs, or relea
 |---|---|
 | Frontend (5 screens) | Built — FastAPI + Jinja2 + HTMX/Alpine, matches the Stitch designs |
 | Data | Fictional in-memory dataset behind a repository layer |
-| Supabase | Cloud dev project connected (`/healthz`); schema, auth, RLS planned M04–M07 in [backend-roadmap.md](backend-roadmap.md) |
+| Supabase | Cloud dev project: full spec §6 schema (24 tables, RLS default-deny) + fictional seed (M04). Auth/policies next (M05) |
 | Configuration | `app/config.py` + `.env` (template `.env.example`) |
 | CI | GitHub Actions runs `pytest` on push |
 | Planning engine (OR-Tools CP-SAT) | Not started — "Re-run CP-SAT" returns the cached run |
 | AI assistant | Scripted replies grounded in repository data; no LLM connected |
-| Tests | 35 passing (`pytest`) |
+| Tests | 72 passing: 35 app + 37 DB (`tests/db`, need `DATABASE_URL`; skipped in CI) |
 
 ## Architecture today
 
@@ -75,7 +75,9 @@ app/
   templates/            base.html, pages, components/ (macros), partials/ (HTMX fragments)
   static/css/           input.css (source) → app.css (built, committed)
 design/stitch/          Original Stitch designs: code.html + screen.png per screen, DESIGN.md
-tests/                  test_planning.py, test_routes.py, test_health.py
+tests/                  test_planning.py, test_routes.py, test_health.py; db/ = database tests
+pytest.ini              Short tracebacks (never print secrets)
+supabase/               config.toml, migrations/ (schema), seed.sql (fictional data)
 .github/workflows/      tests.yml — CI
 .env.example           Config template (.env itself is git-ignored)
 development-khaled/     This engineering log
