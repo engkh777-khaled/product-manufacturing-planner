@@ -307,3 +307,52 @@ each run and replaces all open `material_shortage`, `late_supplier_receipt`, `qu
 
 **Consequences.** Open material alerts always describe the latest MRP run. MRP is infinite-capacity; M09 closes the
 loop by making material-ready dates hard constraints in the scheduler.
+
+## D-027 — Scheduling model: 30-minute slots, work pauses outside shifts, never overlaps downtime or commitments
+_2026-10-10 · M09_
+
+**Context.** Spec §8.3 rule 5: respect calendars and downtime; §8.2 asks to define how setup is charged.
+
+**Decision.** Time is discretised in 30-minute slots from as-of. An operation occupies one qualified machine from
+start to finish; its work only advances in working time (shifts − holidays/shutdowns + approved overtime), so it
+pauses overnight and at weekends and resumes in the next shift. It may never overlap confirmed downtime or
+committed (frozen / released / in-progress) work on that machine. Setup and inspection are charged once per
+production order; `per_batch` cycle time once per batch of `maximum_batch_quantity`; durations ÷ machine speed.
+CP-SAT sees each operation's possible starts as a few *pieces* per day (start ∈ [lo, hi] ⇒ finish = start + c).
+
+**Consequences.** Small model (seconds for the plant), exact calendars incl. DST. Planned (unconfirmed) downtime
+does not block — it is shown as a validation warning. Shift capacity factors and minimum batches are ignored.
+
+## D-028 — Scheduler scope: confirmed demand; short material blocks the operation and its successors
+_2026-10-10 · M09_
+
+**Decision.** Draft orders are not capacity commitments: they are scheduled only with `--include-drafts` (MRP
+still shows their material). A component that MRP reports short with no eligible receipt blocks its consuming
+operation and every successor; earlier operations are still scheduled. The line is reported *blocked* with the
+shortage, never given an invented completion date (acceptance test 2).
+
+**Consequences.** Demo outcome is *Feasible with lateness* (SO-1005/1, SO-1022/1 blocked), not *Needs data*.
+Lines without approved BOM/routing, qualified machine or calendar make the run *Needs data* while the rest is
+still planned.
+
+## D-029 — Three independent checks guard approval
+_2026-10-10 · M09_
+
+**Decision.** (1) The Python validator re-derives everything from raw inputs without solver code. (2) The database
+function `private.schedule_hard_violations()` re-checks stored operations (overlap, precedence, confirmed downtime,
+qualification) when a run is recorded and on every transition to Proposed/Approved. (3) `validation_passed` can
+only become true inside `record_schedule_run()`; edits to planned times/machines clear it.
+
+**Consequences.** A schedule changed behind the app cannot be approved. Calendar and material checks still rely on
+the Python validator (residual risk for forged RPC payloads; move the validator server-side in M12).
+
+## D-030 — Solver runs as an in-memory background job in a worker process
+_2026-10-10 · M09_
+
+**Decision.** "Re-run CP-SAT" creates a job: a thread fetches a fresh RLS snapshot with the user's token, a
+`ProcessPoolExecutor` worker solves (CPU-bound, never blocks requests), and the thread saves through
+`record_schedule_run()` with the same token. The page polls the job every second. `SCHEDULER_WORKER=thread` runs
+in-process (tests); `SCHEDULER_TIME_LIMIT_SECONDS` sets the limit (default 10).
+
+**Consequences.** Simple and RLS-correct for one app instance; jobs are lost on restart (the DB stays consistent —
+nothing is written until the end). A multi-instance deployment needs a queue (M12).

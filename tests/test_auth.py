@@ -35,10 +35,10 @@ USERS = {
 }
 
 
-def make_token(email: str, expires_in: int = 3600, key=_key) -> str:
+def make_token(email: str, expires_in: int = 3600, key=_key, issued_offset: int = 0) -> str:
     now = int(time.time())
     claims = {"sub": USERS[email]["id"], "email": email, "aud": "authenticated", "role": "authenticated",
-              "iss": ISSUER, "iat": now, "exp": now + expires_in}
+              "iss": ISSUER, "iat": now + issued_offset, "exp": now + expires_in}
     return jwt.encode(claims, key, algorithm="ES256", headers={"kid": "test-kid"})
 
 
@@ -159,6 +159,13 @@ def test_expired_access_token_is_refreshed(client, fake):
     assert r.status_code == 200
     assert any(u.endswith("grant_type=refresh_token") for u in fake.calls)
     assert client.cookies.get(auth.REFRESH_COOKIE) != refresh  # rotated
+
+
+def test_small_clock_skew_does_not_sign_the_user_out(client, fake):
+    # Seen live (M09): this PC's clock ran behind Supabase, so a fresh token's iat was a few seconds "in the future".
+    sign_in(client)
+    client.cookies.set(auth.ACCESS_COOKIE, make_token("planner@example.com", issued_offset=5))
+    assert client.get("/dashboard").status_code == 200
 
 
 def test_forged_token_is_rejected_and_cookies_cleared(client):

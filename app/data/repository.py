@@ -357,6 +357,49 @@ def scenario_comparison() -> dict:
     return {"base": base, "cand": cand}
 
 
+def resources_view() -> dict:
+    """Work centers, machines, shifts, calendar exceptions and downtime (M09). The demo data has no calendars, so
+    it shows machines and the baseline's maintenance blocks read-only."""
+    res = getattr(ds(), "RESOURCES", None)
+    if res is not None:
+        return res
+    base = baseline()
+    return {
+        "work_centers": [{"id": wc.code, "code": wc.code, "name": wc.name, "department": wc.group,
+                          "description": wc.detail, "shifts": [], "routing_ops": [],
+                          "machines": [{"id": m.machine_code, "code": m.machine_code, "name": m.name, "capabilities": [],
+                                        "factor": 1, "active": not m.down, "shifts": []} for m in wc.machines]}
+                         for wc in ds().WORK_CENTERS],
+        "downtime": [{"id": f"demo-{i}", "machine_code": b.machine_code, "start": b.start, "end": b.end,
+                      "type": "breakdown" if b.kind == "downtime" else "planned_maintenance", "status": "Confirmed",
+                      "reason": b.label, "by": "demo"} for i, b in enumerate(base.blocks) if b.kind in ("pm", "downtime")],
+        "exceptions": [],
+    }
+
+
+def schedule_report(version: ScheduleVersion) -> dict | None:
+    """Delivery results and the independent validation report of a solver-made version (M09), for display."""
+    r = version.report
+    if not r:
+        return None
+    from app.data.supabase_dataset import ts
+
+    lines = []
+    for l in r.get("lines", []):
+        due = ts(l.get("due"))
+        lines.append({**l, "due": due - timedelta(minutes=1) if due else None, "completion": ts(l.get("completion")),
+                      "earliest_possible": ts(l.get("earliest_possible")), "baseline_finish": ts(l.get("baseline_finish"))})
+    order = {"blocked": 0, "late": 1, "needs_data": 2, "on_time": 3}
+    lines.sort(key=lambda l: (order.get(l["status"], 9), l["order_number"], l["line_number"]))
+    validation = r.get("validation", {})
+    return {"outcome": r.get("outcome"), "lines": lines, "validation": validation,
+            "checks": [(name, validation.get("checked", {}).get(name, 0),
+                        validation.get("violations_by_check", {}).get(name, 0))
+                       for name in validation.get("checked", {})],
+            "conflicts": r.get("conflicts", []), "db_check": r.get("db_check", []),
+            "stale": r.get("validation_stale"), "issues": r.get("issues", [])}
+
+
 _FALLBACK_COLORS = ["bg-primary text-on-primary", "bg-primary-fixed text-on-primary-fixed",
                     "bg-tertiary-container text-on-tertiary-container", "bg-cobalt text-white",
                     "bg-secondary-container text-on-secondary-container", "bg-surface-bright text-on-surface"]

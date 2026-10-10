@@ -40,13 +40,17 @@ Open http://127.0.0.1:8000 and sign in, e.g. as `planner@example.com` or `approv
 ```powershell
 .\.venv\Scripts\python -m planning.cli mrp                  # material problems from the database
 .\.venv\Scripts\python -m planning.cli mrp --item SR-ST6-10  # time-phased availability
+.\.venv\Scripts\python -m planning.cli schedule              # CP-SAT schedule + independent validation
+.\.venv\Scripts\python -m planning.cli schedule --machine MC-014 --freeze-days 3 --save
 ```
 
 ## Screens
 | Route | Screen | Interactions |
 |---|---|---|
 | `/dashboard` | Executive Dashboard | Approval gate enforces server-side authorization (planner cannot commit) |
-| `/workbench` | Planning Workbench (finite-capacity Gantt) | Baseline v4.2 / Scenario v4.3 switch, critical-path / shortage / PM filters, solver re-run (demo stub) |
+| `/workbench` | Planning Workbench (finite-capacity Gantt) | Version switch, critical-path / shortage / PM filters, real CP-SAT re-run with delivery + validation panels (Supabase mode, planner) |
+| `/inventory` | Inventory & Purchasing | Stock and PO edits (stores / purchasing), MRP with time-phased availability and Run MRP (planner) |
+| `/resources` | Resources & Calendars | Machines, capabilities, shifts, holidays, overtime, downtime; supervisors record downtime and calendar changes |
 | `/orders` | Sales Orders & Demand | Search, status tabs, priority filter, pagination, order inspector |
 | `/engineering` | Engineering & BOM | Product switch, multilevel BOM expand/collapse, shortages filter, scrap +5% simulation, BOM validation |
 | `/approvals` | Approvals & Audit | Approve/reject plans (approver), version lifecycle, append-only audit trail |

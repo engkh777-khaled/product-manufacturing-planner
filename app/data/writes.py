@@ -31,8 +31,9 @@ class WriteResult:
     data: Any = field(default=None)
 
 
-def _rest(method: str, path: str, *, json=None, params=None, prefer: str = "return=representation") -> WriteResult:
-    token = dataset.access_token()
+def _rest(method: str, path: str, *, json=None, params=None, prefer: str = "return=representation",
+          token: str | None = None, timeout: float = 20) -> WriteResult:
+    token = token or dataset.access_token()   # background jobs pass the token they were started with
     settings = auth.settings()
     if not token or not settings.supabase_configured:
         return WriteResult(False, "Saving requires DATA_BACKEND=supabase and a signed-in user.")
@@ -40,7 +41,7 @@ def _rest(method: str, path: str, *, json=None, params=None, prefer: str = "retu
                "Content-Type": "application/json", "Prefer": prefer}
     try:
         r = httpx.request(method, f"{settings.supabase_url.rstrip('/')}/rest/v1/{path}", headers=headers,
-                          json=json, params=params, timeout=20)
+                          json=json, params=params, timeout=timeout)
     except httpx.HTTPError:
         return WriteResult(False, "Supabase is unreachable. Nothing was saved.")
     if r.status_code >= 400:
@@ -53,7 +54,7 @@ def _rest(method: str, path: str, *, json=None, params=None, prefer: str = "retu
                 generic in message for generic in ("permission denied", "row-level security")):
             return WriteResult(False, f"{message}.")  # our workflow functions explain why (e.g. self-approval)
         return WriteResult(False, ERROR_MESSAGES.get(code, f"Save failed ({r.status_code}: {body.get('message', 'error')})."))
-    if method != "GET":
+    if method != "GET" and path != "rpc/planning_snapshot":
         supabase_dataset.invalidate()  # every user's next page load sees the change
     data = r.json() if r.content and r.headers.get("content-type", "").startswith("application/json") else None
     return WriteResult(True, "Saved.", data)
@@ -163,6 +164,57 @@ def record_mrp_run(payload: dict) -> WriteResult:
     result = _rest("POST", "rpc/record_mrp_run", json={"p": payload})
     if result.ok:
         result.message = f"MRP run #{result.data} saved with {len(payload['alerts'])} alerts."
+    return result
+
+
+# ------------------------------------------------------------------ resources & calendars (supervisor/admin, M09)
+
+def create_downtime(values: dict, machine_code: str) -> WriteResult:
+    result = _rest("POST", "machine_downtime", json={**values, "created_by": _user_id()})
+    if result.ok:
+        result.message = f"Downtime on {machine_code} recorded ({values['status']})."
+    return result
+
+
+def set_downtime_status(downtime_id: str, status: str) -> WriteResult:
+    result = _patch_one("machine_downtime", {"id": f"eq.{downtime_id}"}, {"status": status},
+                        "Downtime not found or you may not change it.")
+    if result.ok:
+        result.message = f"Downtime marked {status}."
+    return result
+
+
+def create_calendar_exception(values: dict) -> WriteResult:
+    result = _rest("POST", "calendar_exceptions", json=values)
+    if result.ok:
+        result.message = f"{values['exception_type'].capitalize()} '{values['description']}' added."
+    return result
+
+
+def set_exception_approval(exception_id: str, approved: bool) -> WriteResult:
+    result = _patch_one("calendar_exceptions", {"id": f"eq.{exception_id}"}, {"is_approved": approved},
+                        "Calendar entry not found or you may not change it.")
+    if result.ok:
+        result.message = "Overtime approved — the scheduler will use it." if approved else "Approval withdrawn."
+    return result
+
+
+def fetch_snapshot(token: str) -> WriteResult:
+    """A fresh RLS-filtered planning snapshot for a background solver run (M09)."""
+    return _rest("POST", "rpc/planning_snapshot", json={}, token=token, timeout=30)
+
+
+def record_schedule_run(payload: dict, token: str | None = None) -> WriteResult:
+    """Planner/admin: store a schedule run and, when the solver produced one, a Draft version with its production
+    orders and operations (M09). The database re-checks the stored operations independently."""
+    result = _rest("POST", "rpc/record_schedule_run", json={"p": payload}, token=token, timeout=60)
+    if result.ok:
+        d = result.data or {}
+        if d.get("version_number"):
+            result.message = (f"Run #{d['run_number']}: {payload['status']} — saved as Draft v{d['version_number']}, "
+                              f"validation {'passed' if d.get('validation_passed') else 'FAILED'}.")
+        else:
+            result.message = f"Run #{d.get('run_number')}: {payload['status']} — no schedule to save."
     return result
 
 

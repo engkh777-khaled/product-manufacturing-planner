@@ -41,8 +41,10 @@ def test_every_table_exists_with_rls_enabled(db):
     ("select count(*) from sales_orders", 10),
     ("select count(*) from sales_order_items", 13),
     ("select count(*) from schedule_versions where is_baseline", 1),
-    ("select count(*) from production_operations", 58),
-    ("select count(*) from planning_alerts", 8),
+    ("select count(*) from production_operations op join production_orders po on po.id = op.production_order_id "
+     "join schedule_versions v on v.id = po.schedule_version_id where v.version_number in ('4.2', '4.3')", 58),
+    # seeded alerts only: MRP and schedule runs recorded from the app (run_number >= 1100) add their own
+    ("select count(*) from planning_alerts a join planning_runs r on r.id = a.planning_run_id where r.run_number < 1100", 8),
 ])
 def test_seed_counts(db, sql, expected):
     assert scalar(db, sql) == expected
@@ -57,7 +59,7 @@ def test_net_available_excludes_quality_hold(db):
 def test_scenario_never_overwrites_baseline(db):
     db.execute("""select sv.version_number, to_char(po.planned_finish at time zone 'America/Chicago', 'YYYY-MM-DD')
                   from production_orders po join schedule_versions sv on sv.id = po.schedule_version_id
-                  where po.production_order_number = 'PRD-1005-1'""")
+                  where po.production_order_number = 'PRD-1005-1' and sv.version_number in ('4.2', '4.3')""")
     assert dict(db.fetchall()) == {"4.2": "2025-12-03", "4.3": "2025-11-29"}
 
 

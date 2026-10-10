@@ -352,7 +352,8 @@ def build_dataset(snap: dict) -> SimpleNamespace:
             late_orders=int(m.get("late_orders", 0)), total_lateness_h=int(m.get("total_lateness_hours", 0)),
             overtime_cost=num(m.get("overtime_cost")), hard_violations=int(m.get("hard_violations", 0)),
             soft_violations=int(m.get("soft_violations", 0)), validation_passed=v.get("validation_passed"),
-            created_by_id=v.get("created_by"), order_finish=finish_by_version[v["id"]])
+            created_by_id=v.get("created_by"), order_finish=finish_by_version[v["id"]],
+            report=m if "lines" in m else {})
 
     # ---- capacity (loads are planning-run outputs stored on the baseline version)
     wc_load = base_metrics.get("work_center_load", {})
@@ -520,6 +521,50 @@ def build_dataset(snap: dict) -> SimpleNamespace:
         else mock_data.PLANNING_HORIZON
     gantt_start = datetime.combine(horizon[0] + timedelta(days=(7 - horizon[0].weekday()) % 7), datetime.min.time())
 
+    # ---- resources & calendars (spec §12.5, M09): scheduler inputs, editable by supervisors/admins
+    day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+    def days_label(days: list[int]) -> str:
+        days = sorted(days)
+        if len(days) > 2 and days == list(range(days[0], days[-1] + 1)):
+            return f"{day_names[days[0] - 1]}–{day_names[days[-1] - 1]}"
+        return ", ".join(day_names[d - 1] for d in days)
+
+    product_of_routing = {r["id"]: products[r["product_id"]]["product_code"] for r in snap["routing_headers"]
+                          if r["status"] == "Approved"}
+    RESOURCES = {"work_centers": [], "downtime": [], "exceptions": []}
+    for w in snap["work_centers"]:
+        mcs = sorted((m for m in snap["machines"] if m["work_center_id"] == w["id"]), key=lambda m: m["machine_code"])
+        RESOURCES["work_centers"].append({
+            "id": w["id"], "code": w["work_center_code"], "name": w["name"], "department": w.get("department") or "",
+            "description": w.get("description") or "",
+            "machines": [{"id": m["id"], "code": m["machine_code"], "name": m["name"],
+                          "capabilities": m.get("capability_tags") or [], "factor": num(m.get("capacity_factor")) or 1,
+                          "active": m["is_active"],
+                          "shifts": [s["shift_name"] for s in snap.get("shift_calendars", []) if s.get("machine_id") == m["id"]]}
+                         for m in mcs],
+            "shifts": [{"name": s["shift_name"], "start": s["start_time"][:5], "end": s["end_time"][:5],
+                        "days": days_label(s["working_days"]), "valid_from": s.get("valid_from"),
+                        "valid_to": s.get("valid_to")}
+                       for s in snap.get("shift_calendars", []) if s.get("work_center_id") == w["id"]],
+            "routing_ops": [f"{product_of_routing[o['routing_header_id']]} {o['operation_number']} {o['operation_name']}"
+                            for o in sorted(snap["routing_operations"], key=lambda o: o["sequence"])
+                            if o["work_center_id"] == w["id"] and o["routing_header_id"] in product_of_routing],
+        })
+    for d in snap["machine_downtime"]:
+        RESOURCES["downtime"].append({
+            "id": d["id"], "machine_code": machines[d["machine_id"]]["machine_code"], "start": ts(d["start_datetime"]),
+            "end": ts(d["end_datetime"]), "type": d["downtime_type"], "status": d["status"], "reason": d["reason"],
+            "by": person(d.get("created_by"), "seed")})
+    for e in snap.get("calendar_exceptions", []):
+        scope = (machines[e["machine_id"]]["machine_code"] if e.get("machine_id")
+                 else work_centers[e["work_center_id"]]["work_center_code"] if e.get("work_center_id") else "Plant-wide")
+        RESOURCES["exceptions"].append({
+            "id": e["id"], "kind": e["exception_type"], "description": e["description"], "start": ts(e["starts_at"]),
+            "end": ts(e["ends_at"]), "scope": scope, "approved": e["is_approved"]})
+    RESOURCES["downtime"].sort(key=lambda d: d["start"])
+    RESOURCES["exceptions"].sort(key=lambda e: e["start"])
+
     return SimpleNamespace(
         SOURCE="supabase", PLANT=mock_data.PLANT, PLANNING_HORIZON=horizon, GANTT_START=gantt_start,
         GANTT_DAYS=mock_data.GANTT_DAYS, PRODUCTS=PRODUCTS, BOMS=BOMS, BOM_REVISIONS=BOM_REVISIONS, ROUTINGS=ROUTINGS,
@@ -546,6 +591,7 @@ def build_dataset(snap: dict) -> SimpleNamespace:
                       for i in sorted(items_by_order[o["id"]], key=lambda x: x["line_number"])]}
             for o in snap["sales_orders"]},
         SNAPSHOT_AT=snap.get("generated_at"),
+        RESOURCES=RESOURCES,
     )
 
 

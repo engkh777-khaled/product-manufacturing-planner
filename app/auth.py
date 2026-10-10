@@ -27,6 +27,7 @@ SESSION_MAX_AGE = 60 * 60 * 24 * 7  # refresh-token cookie lifetime: 7 days
 
 JWKS_TTL_SECONDS = 600
 IDENTITY_TTL_SECONDS = 60
+CLOCK_SKEW_SECONDS = 30  # tolerated difference between this machine's clock and Supabase Auth (iat / exp)
 
 
 class AuthError(Exception):
@@ -134,8 +135,9 @@ async def verify_access_token(token: str) -> dict:
             key = keys[kid]
         except KeyError as exc:
             raise jwt.InvalidTokenError("unknown signing key") from exc
+    # leeway: a fresh token's iat can be a moment "in the future" when this machine's clock is behind Supabase's
     return jwt.decode(token, key.key, algorithms=[key.algorithm_name], audience="authenticated",
-                      issuer=_auth_url(""))
+                      issuer=_auth_url(""), leeway=CLOCK_SKEW_SECONDS)
 
 
 # ------------------------------------------------------------------ Identity (roles via RLS)

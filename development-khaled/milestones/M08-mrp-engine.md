@@ -5,7 +5,7 @@
 | **Date** | 2026-10-10 |
 | **Author** | Khaled (implemented with Claude Code) |
 | **Status** | Done |
-| **Commits** | _see git log — "M08" commit_ |
+| **Commits** | `d40a04e` |
 | **Spec sections** | §7.1–7.5 (explosion, netting, time-phased availability, shortage alerts, corrective actions), §6.11 (eligible receipts), §6.18/§6.20 (runs, alerts), acceptance tests 2, 3, 8, 10 |
 
 ## Goal

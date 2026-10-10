@@ -293,6 +293,298 @@
    "updated_at": "2026-10-10T09:17:50.054167+00:00"
   }
  ],
+ "shift_calendars": [
+  {
+   "id": "99e6073a-c476-4d4c-8753-537876dac80d",
+   "work_center_id": "5391f51e-ceb8-4aa5-81f6-eeccd89d3ae1",
+   "machine_id": null,
+   "shift_name": "S1",
+   "start_time": "06:00:00",
+   "end_time": "14:00:00",
+   "valid_from": "2025-01-01",
+   "valid_to": null,
+   "working_days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "capacity_factor": 1.0,
+   "created_at": "2026-10-10T09:17:50.054167+00:00"
+  },
+  {
+   "id": "cd90fe6a-d0d7-49d8-835c-d8c5b951a27e",
+   "work_center_id": "8e77c487-c630-48b8-9d6d-245c1094f521",
+   "machine_id": null,
+   "shift_name": "S1",
+   "start_time": "06:00:00",
+   "end_time": "14:00:00",
+   "valid_from": "2025-01-01",
+   "valid_to": null,
+   "working_days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "capacity_factor": 1.0,
+   "created_at": "2026-10-10T09:17:50.054167+00:00"
+  },
+  {
+   "id": "05df000c-7af0-4e82-9ec8-3a54e9d164b4",
+   "work_center_id": "03313a5d-5b13-4b6d-9c9c-889d8044ee73",
+   "machine_id": null,
+   "shift_name": "S1",
+   "start_time": "06:00:00",
+   "end_time": "14:00:00",
+   "valid_from": "2025-01-01",
+   "valid_to": null,
+   "working_days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "capacity_factor": 1.0,
+   "created_at": "2026-10-10T09:17:50.054167+00:00"
+  },
+  {
+   "id": "e98f47ca-d34b-4056-9a31-c63c4bf34651",
+   "work_center_id": "7b42b0e5-6081-479d-9cb3-38267d6ed5d6",
+   "machine_id": null,
+   "shift_name": "S1",
+   "start_time": "06:00:00",
+   "end_time": "14:00:00",
+   "valid_from": "2025-01-01",
+   "valid_to": null,
+   "working_days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "capacity_factor": 1.0,
+   "created_at": "2026-10-10T09:17:50.054167+00:00"
+  },
+  {
+   "id": "8557fc93-877f-4692-959e-886a2c41b20b",
+   "work_center_id": "47afee16-0eb6-4c25-ac01-e4aa7caf4177",
+   "machine_id": null,
+   "shift_name": "S1",
+   "start_time": "06:00:00",
+   "end_time": "14:00:00",
+   "valid_from": "2025-01-01",
+   "valid_to": null,
+   "working_days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "capacity_factor": 1.0,
+   "created_at": "2026-10-10T09:17:50.054167+00:00"
+  },
+  {
+   "id": "e77c6567-c804-4cc4-b873-411ad351c585",
+   "work_center_id": "bdbbcfd8-cc3f-4b68-b988-e22dd01b8255",
+   "machine_id": null,
+   "shift_name": "S1",
+   "start_time": "06:00:00",
+   "end_time": "14:00:00",
+   "valid_from": "2025-01-01",
+   "valid_to": null,
+   "working_days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "capacity_factor": 1.0,
+   "created_at": "2026-10-10T09:17:50.054167+00:00"
+  },
+  {
+   "id": "bb393c25-8d20-4d17-996e-39c79d1a9ddc",
+   "work_center_id": "5a40a001-4ef9-4a1e-9bd3-e70b8fdfc736",
+   "machine_id": null,
+   "shift_name": "S1",
+   "start_time": "06:00:00",
+   "end_time": "14:00:00",
+   "valid_from": "2025-01-01",
+   "valid_to": null,
+   "working_days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "capacity_factor": 1.0,
+   "created_at": "2026-10-10T09:17:50.054167+00:00"
+  },
+  {
+   "id": "09bb8236-0443-425e-8112-7cb1ceb77419",
+   "work_center_id": "bdbbcfd8-cc3f-4b68-b988-e22dd01b8255",
+   "machine_id": null,
+   "shift_name": "S2",
+   "start_time": "14:00:00",
+   "end_time": "22:00:00",
+   "valid_from": "2025-01-01",
+   "valid_to": null,
+   "working_days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "capacity_factor": 1.0,
+   "created_at": "2026-10-10T09:17:50.054167+00:00"
+  },
+  {
+   "id": "8409fbf5-2589-4d5d-8c81-624829d88d99",
+   "work_center_id": "5a40a001-4ef9-4a1e-9bd3-e70b8fdfc736",
+   "machine_id": null,
+   "shift_name": "S2",
+   "start_time": "14:00:00",
+   "end_time": "22:00:00",
+   "valid_from": "2025-01-01",
+   "valid_to": null,
+   "working_days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "capacity_factor": 1.0,
+   "created_at": "2026-10-10T09:17:50.054167+00:00"
+  },
+  {
+   "id": "a199bb8d-053f-40d8-8576-e0fb1ea8f1b9",
+   "work_center_id": "03313a5d-5b13-4b6d-9c9c-889d8044ee73",
+   "machine_id": null,
+   "shift_name": "S2",
+   "start_time": "14:00:00",
+   "end_time": "22:00:00",
+   "valid_from": "2025-01-01",
+   "valid_to": null,
+   "working_days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "capacity_factor": 1.0,
+   "created_at": "2026-10-10T09:17:50.054167+00:00"
+  },
+  {
+   "id": "61daa94f-218e-4d23-a214-abf5dd652954",
+   "work_center_id": "5391f51e-ceb8-4aa5-81f6-eeccd89d3ae1",
+   "machine_id": null,
+   "shift_name": "S2",
+   "start_time": "14:00:00",
+   "end_time": "22:00:00",
+   "valid_from": "2025-01-01",
+   "valid_to": null,
+   "working_days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "capacity_factor": 1.0,
+   "created_at": "2026-10-10T09:17:50.054167+00:00"
+  },
+  {
+   "id": "bea29201-bd0d-4114-9456-5c1ed6cf99d6",
+   "work_center_id": "47afee16-0eb6-4c25-ac01-e4aa7caf4177",
+   "machine_id": null,
+   "shift_name": "S2",
+   "start_time": "14:00:00",
+   "end_time": "22:00:00",
+   "valid_from": "2025-01-01",
+   "valid_to": null,
+   "working_days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "capacity_factor": 1.0,
+   "created_at": "2026-10-10T09:17:50.054167+00:00"
+  },
+  {
+   "id": "9f919d20-e72d-4f55-ad1a-e57128006057",
+   "work_center_id": "8e77c487-c630-48b8-9d6d-245c1094f521",
+   "machine_id": null,
+   "shift_name": "S2",
+   "start_time": "14:00:00",
+   "end_time": "22:00:00",
+   "valid_from": "2025-01-01",
+   "valid_to": null,
+   "working_days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "capacity_factor": 1.0,
+   "created_at": "2026-10-10T09:17:50.054167+00:00"
+  },
+  {
+   "id": "b9aada30-b701-4145-8fe7-c0aade03e6e7",
+   "work_center_id": "7b42b0e5-6081-479d-9cb3-38267d6ed5d6",
+   "machine_id": null,
+   "shift_name": "S2",
+   "start_time": "14:00:00",
+   "end_time": "22:00:00",
+   "valid_from": "2025-01-01",
+   "valid_to": null,
+   "working_days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "capacity_factor": 1.0,
+   "created_at": "2026-10-10T09:17:50.054167+00:00"
+  }
+ ],
+ "calendar_exceptions": [
+  {
+   "id": "eb85d14c-6037-4787-809c-b9febf675319",
+   "exception_type": "holiday",
+   "description": "Christmas Day",
+   "starts_at": "2025-12-25T06:00:00+00:00",
+   "ends_at": "2025-12-26T06:00:00+00:00",
+   "work_center_id": null,
+   "machine_id": null,
+   "is_approved": true,
+   "created_at": "2026-10-10T09:17:50.054167+00:00"
+  },
+  {
+   "id": "7050eec3-97ba-474a-90ae-33b45053f756",
+   "exception_type": "holiday",
+   "description": "New Year's Day",
+   "starts_at": "2026-01-01T06:00:00+00:00",
+   "ends_at": "2026-01-02T06:00:00+00:00",
+   "work_center_id": null,
+   "machine_id": null,
+   "is_approved": true,
+   "created_at": "2026-10-10T09:17:50.054167+00:00"
+  }
+ ],
  "machine_downtime": [
   {
    "id": "fd3d5a86-4c60-4251-95ad-dbd62a736251",
@@ -5959,5 +6251,5 @@
    "job_title": "System Administrator"
   }
  ],
- "_note": "FICTIONAL demo data exported from the dev project via public.planning_snapshot() as planner@example.com (test fixture, M06-M08)."
+ "_note": "FICTIONAL demo data exported from the dev project via public.planning_snapshot() as planner@example.com (test fixture, M06-M09; calendars added in M09)."
 }

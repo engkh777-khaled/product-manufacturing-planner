@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% from "components/ui.html" import icon, badge, kpi_card, panel_header %}
+{% block title %}Resources & Calendars{% endblock %}
+{% block content %}
+{% set input_cls = "h-8 px-space-sm bg-surface-container-lowest text-on-surface rounded border border-hairline focus:border-cobalt outline-none font-label-mono-sm text-label-mono-sm" %}
+{% set machines_all = res.work_centers|map(attribute="machines")|sum(start=[]) %}
+<div class="p-space-xl flex flex-col gap-space-xl">
+  <div class="flex flex-col gap-space-sm">
+    <nav class="font-label-mono-xs text-label-mono-xs text-outline uppercase" aria-label="Breadcrumb">Sec 12.5 / Capacity / <span class="text-primary">Resources &amp; Calendars</span></nav>
+    <h1 class="font-headline-lg text-headline-lg text-on-surface">Resources &amp; Calendars</h1>
+    <p class="font-body-sm text-body-sm text-on-surface-variant max-w-3xl">The finite-capacity scheduler books operations only on qualified, active machines, inside shifts and approved overtime, never during confirmed downtime or holidays. Changes here take effect on the next solver run.</p>
+    {% if not editable_backend %}
+    <p class="font-label-mono-xs text-label-mono-xs text-warn">Read-only demo data without calendars. Run with DATA_BACKEND=supabase to see shifts and record downtime.</p>
+    {% elif not can_edit %}
+    <p class="font-label-mono-xs text-label-mono-xs text-outline">Supervisors and admins record downtime and calendar changes; you have read access.</p>
+    {% endif %}
+  </div>
+
+  {% if msg %}
+  <div class="p-space-md rounded border border-primary/30 bg-primary/10 text-primary flex items-center gap-space-sm font-label-mono-sm text-label-mono-sm" role="status">{{ icon("info", 16) }}<span>{{ msg }}</span></div>
+  {% endif %}
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-4 gap-space-md">
+    {% call kpi_card("Work Centers", "factory", "text-primary") %}<span class="font-metric-display text-metric-display text-on-surface">{{ res.work_centers|length }}</span>{% endcall %}
+    {% call kpi_card("Active Machines", "precision_manufacturing", "text-primary") %}
+      <span class="font-metric-display text-metric-display text-on-surface">{{ machines_all|selectattr("active")|list|length }} / {{ machines_all|length }}</span>
+    {% endcall %}
+    {% call kpi_card("Confirmed Downtime", "build", "text-warn") %}
+      <span class="font-metric-display text-metric-display text-warn">{{ res.downtime|selectattr("status", "equalto", "Confirmed")|list|length }}</span>
+      <span class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">{{ res.downtime|selectattr("status", "equalto", "Planned")|list|length }} planned (not blocking)</span>
+    {% endcall %}
+    {% call kpi_card("Holidays & Overtime", "event", "text-ai") %}
+      <span class="font-metric-display text-metric-display text-on-surface">{{ res.exceptions|length }}</span>
+      <span class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">{{ res.exceptions|selectattr("kind", "equalto", "overtime")|selectattr("approved")|list|length }} approved overtime</span>
+    {% endcall %}
+  </div>
+
+  <section class="bg-surface-container-low rounded overflow-hidden">
+    {% call panel_header("Work Centers & Machines", "precision_manufacturing", "Capabilities decide which operations a machine may run (spec §6.13); speed factor scales durations") %}{% endcall %}
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-px bg-surface-container">
+      {% for wc in res.work_centers %}
+      <div class="p-space-lg bg-surface-container-low flex flex-col gap-space-sm">
+        <div class="flex flex-wrap items-baseline justify-between gap-space-sm">
+          <div><span class="font-label-mono-sm text-label-mono-sm text-primary">{{ wc.code }}</span> <span class="font-headline-sm text-headline-sm text-on-surface">{{ wc.name }}</span></div>
+          <span class="font-label-mono-xs text-label-mono-xs text-outline">{{ wc.department }}</span>
+        </div>
+        <div class="flex flex-wrap gap-space-xs font-label-mono-xs text-label-mono-xs">
+          {% for s in wc.shifts %}{{ badge(s.name ~ " " ~ s.start ~ "–" ~ s.end ~ " " ~ s.days, "info") }}{% else %}<span class="text-warn">No shift calendar{% if editable_backend %} — operations here cannot be scheduled{% endif %}</span>{% endfor %}
+        </div>
+        <table class="w-full font-label-mono-xs text-label-mono-xs">
+          {% for m in wc.machines %}
+          <tr class="border-t border-surface-container">
+            <td class="py-space-xs pr-space-sm {{ 'text-on-surface' if m.active else 'text-outline line-through' }}">{{ m.code }}</td>
+            <td class="py-space-xs pr-space-sm text-on-surface-variant">{{ m.name }}</td>
+            <td class="py-space-xs pr-space-sm">{% for c in m.capabilities %}<span class="inline-block mr-1 px-1 rounded bg-surface-container-high text-on-surface-variant">{{ c }}</span>{% endfor %}</td>
+            <td class="py-space-xs text-right text-outline">{% if m.factor != 1 %}×{{ m.factor }}{% endif %}{% if not m.active %} inactive{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </table>
+        {% if wc.routing_ops %}
+        <details class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">
+          <summary class="cursor-pointer text-outline">{{ wc.routing_ops|length }} routing operations assigned</summary>
+          <ul class="mt-space-xs flex flex-col gap-px">{% for r in wc.routing_ops %}<li>{{ r }}</li>{% endfor %}</ul>
+        </details>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="bg-surface-container-low rounded overflow-hidden" id="downtime">
+    {% call panel_header("Machine Downtime", "build", "Confirmed downtime blocks the machine (spec §6.15); planned entries are shown as warnings only") %}{% endcall %}
+    <div class="overflow-x-auto scroll-thin">
+      <table class="w-full min-w-[860px] text-left border-collapse font-label-mono-sm text-label-mono-sm">
+        <thead><tr class="bg-surface-container-lowest text-outline font-label-mono-xs text-label-mono-xs uppercase border-b border-hairline">
+          <th class="py-space-sm px-space-md">Machine</th><th class="py-space-sm px-space-md">From</th><th class="py-space-sm px-space-md">To</th>
+          <th class="py-space-sm px-space-md">Type</th><th class="py-space-sm px-space-md">Reason</th><th class="py-space-sm px-space-md">Status</th>
+          <th class="py-space-sm px-space-md"></th></tr></thead>
+        <tbody>
+          {% for d in res.downtime %}
+          <tr class="border-b border-surface-container">
+            <td class="py-space-sm px-space-md text-on-surface">{{ d.machine_code }}</td>
+            <td class="py-space-sm px-space-md text-on-surface-variant">{{ d.start|d("%a %b %d %H:%M") }}</td>
+            <td class="py-space-sm px-space-md text-on-surface-variant">{{ d.end|d("%a %b %d %H:%M") }}</td>
+            <td class="py-space-sm px-space-md text-on-surface-variant">{{ d.type|replace("_", " ") }}</td>
+            <td class="py-space-sm px-space-md text-on-surface-variant">{{ d.reason }}</td>
+            <td class="py-space-sm px-space-md">{{ badge(d.status, {"Confirmed": "crit", "Planned": "warn"}.get(d.status, "info")) }}</td>
+            <td class="py-space-sm px-space-md text-right">
+              {% if can_edit %}
+              <form method="post" action="/resources/downtime/{{ d.id }}/status" class="inline-flex gap-space-xs">
+                {% if d.status != "Confirmed" %}<button name="status" value="Confirmed" class="text-primary hover:underline">Confirm</button>{% endif %}
+                {% if d.status != "Cancelled" %}<button name="status" value="Cancelled" class="text-outline hover:underline">Cancel</button>{% endif %}
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="7" class="py-space-lg text-center text-outline">No downtime recorded.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if can_edit %}
+    <form method="post" action="/resources/downtime" class="p-space-lg border-t border-surface-container flex flex-wrap items-end gap-space-sm font-label-mono-xs text-label-mono-xs text-outline">
+      <label class="flex flex-col gap-px">Machine<select name="machine_code" class="{{ input_cls }}">{% for m in machines_all %}<option>{{ m.code }}</option>{% endfor %}</select></label>
+      <label class="flex flex-col gap-px">From (plant time)<input type="datetime-local" name="start" required class="{{ input_cls }}"></label>
+      <label class="flex flex-col gap-px">To<input type="datetime-local" name="end" required class="{{ input_cls }}"></label>
+      <label class="flex flex-col gap-px">Type<select name="downtime_type" class="{{ input_cls }}">{% for t in downtime_types %}<option value="{{ t }}">{{ t|replace("_", " ") }}</option>{% endfor %}</select></label>
+      <label class="flex flex-col gap-px">Status<select name="status" class="{{ input_cls }}">{% for s in downtime_statuses[:2] %}<option>{{ s }}</option>{% endfor %}</select></label>
+      <label class="flex flex-col gap-px grow min-w-[180px]">Reason<input name="reason" required maxlength="200" class="{{ input_cls }}"></label>
+      <button class="h-8 px-space-md inline-flex items-center gap-space-xs rounded bg-primary text-on-primary hover:bg-primary-fixed font-label-mono-sm text-label-mono-sm font-semibold">{{ icon("add", 15) }}Record downtime</button>
+    </form>
+    {% endif %}
+  </section>
+
+  <section class="bg-surface-container-low rounded overflow-hidden" id="calendar">
+    {% call panel_header("Holidays, Shutdowns & Overtime", "event", "Holidays and shutdowns remove working time; only approved overtime adds capacity (spec §6.14)") %}{% endcall %}
+    <div class="overflow-x-auto scroll-thin">
+      <table class="w-full min-w-[760px] text-left border-collapse font-label-mono-sm text-label-mono-sm">
+        <thead><tr class="bg-surface-container-lowest text-outline font-label-mono-xs text-label-mono-xs uppercase border-b border-hairline">
+          <th class="py-space-sm px-space-md">Type</th><th class="py-space-sm px-space-md">Description</th><th class="py-space-sm px-space-md">Scope</th>
+          <th class="py-space-sm px-space-md">From</th><th class="py-space-sm px-space-md">To</th><th class="py-space-sm px-space-md">Approval</th></tr></thead>
+        <tbody>
+          {% for e in res.exceptions %}
+          <tr class="border-b border-surface-container">
+            <td class="py-space-sm px-space-md">{{ badge(e.kind, "ai" if e.kind == "overtime" else "warn") }}</td>
+            <td class="py-space-sm px-space-md text-on-surface">{{ e.description }}</td>
+            <td class="py-space-sm px-space-md text-on-surface-variant">{{ e.scope }}</td>
+            <td class="py-space-sm px-space-md text-on-surface-variant">{{ e.start|d("%a %b %d %H:%M") }}</td>
+            <td class="py-space-sm px-space-md text-on-surface-variant">{{ e.end|d("%a %b %d %H:%M") }}</td>
+            <td class="py-space-sm px-space-md">
+              {% if e.kind == "overtime" %}
+                {{ badge("approved" if e.approved else "not approved", "ok" if e.approved else "warn") }}
+                {% if can_edit %}
+                <form method="post" action="/resources/exceptions/{{ e.id }}/approval" class="inline">
+                  <input type="hidden" name="approved" value="{{ 'false' if e.approved else 'true' }}">
+                  <button class="ml-space-xs text-primary hover:underline font-label-mono-xs text-label-mono-xs">{{ "Withdraw" if e.approved else "Approve" }}</button>
+                </form>
+                {% endif %}
+              {% else %}<span class="text-outline">—</span>{% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="py-space-lg text-center text-outline">No holidays or overtime recorded.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if can_edit %}
+    <form method="post" action="/resources/exceptions" class="p-space-lg border-t border-surface-container flex flex-wrap items-end gap-space-sm font-label-mono-xs text-label-mono-xs text-outline">
+      <label class="flex flex-col gap-px">Type<select name="exception_type" class="{{ input_cls }}">{% for t in exception_types %}<option>{{ t }}</option>{% endfor %}</select></label>
+      <label class="flex flex-col gap-px grow min-w-[180px]">Description<input name="description" required maxlength="200" class="{{ input_cls }}"></label>
+      <label class="flex flex-col gap-px">Scope<select name="scope" class="{{ input_cls }}"><option value="">Plant-wide</option>{% for w in res.work_centers %}<option>{{ w.code }}</option>{% endfor %}{% for m in machines_all %}<option>{{ m.code }}</option>{% endfor %}</select></label>
+      <label class="flex flex-col gap-px">From (plant time)<input type="datetime-local" name="start" required class="{{ input_cls }}"></label>
+      <label class="flex flex-col gap-px">To<input type="datetime-local" name="end" required class="{{ input_cls }}"></label>
+      <label class="h-8 flex items-center gap-space-xs text-on-surface-variant"><input type="checkbox" name="approved" value="true" class="accent-primary">Overtime approved</label>
+      <button class="h-8 px-space-md inline-flex items-center gap-space-xs rounded bg-primary text-on-primary hover:bg-primary-fixed font-label-mono-sm text-label-mono-sm font-semibold">{{ icon("add", 15) }}Add to calendar</button>
+    </form>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

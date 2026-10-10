@@ -11,3 +11,4 @@ psycopg[binary]>=3.2
 PyJWT[crypto]>=2.8
 bcrypt>=4.1
 tzdata>=2024.1
+ortools>=9.12

@@ -32,6 +32,10 @@ class Settings(BaseSettings):
 
     health_timeout_seconds: float = 5.0
 
+    # Finite-capacity scheduler (M09): CP-SAT runs in a worker process so a solve never blocks web requests.
+    scheduler_worker: Literal["process", "thread"] = "process"
+    scheduler_time_limit_seconds: float = 10.0
+
     @model_validator(mode="after")
     def _auth_mode_is_safe(self) -> "Settings":
         if self.auth_mode == "disabled" and self.app_env not in ("development", "test"):

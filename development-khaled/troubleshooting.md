@@ -231,3 +231,36 @@ _Reference (M08)_
 
 At least one open order line has no approved BOM or routing (e.g. SO-1021 / V-800-FGV-02). Its demand cannot be
 planned; the rest of the plan is still computed. Approve the engineering data (Engineering & BOM page).
+
+## CP-SAT finds no solution / takes very long
+_Seen 2026-10-10 (M09)_
+
+**Cause.** An `AddElement` over every time slot (thousands of values) is fully encoded by CP-SAT (80 000 variables).
+
+**Fix (in place).** Piecewise start formulation, greedy hint, per-line search window, `cp_model_probing_level = 0`.
+Debug with `CPSAT_LOG=1 python -m planning.cli schedule` (prints the solver log).
+
+## Signed out at random right after logging in
+_Seen 2026-10-10 (M09)_
+
+**Cause.** This PC's clock was a few seconds behind Supabase; a fresh access token's `iat` looked like the future
+(`ImmatureSignatureError`), so the session was treated as invalid and the cookies were cleared.
+
+**Fix (in place).** `verify_access_token` allows 30 s leeway (`CLOCK_SKEW_SECONDS`). Still keep Windows time sync on.
+
+## "Version … fails the database schedule re-check" on submit or approval
+_Reference (M09)_
+
+Stored operations overlap, break precedence, hit confirmed downtime or sit on an unqualified machine — usually
+because downtime was confirmed or operations were edited after the run. Re-run the solver and submit the new draft.
+
+## "Only record_schedule_run() can mark a schedule as validated"
+_Reference (M09)_
+
+`validation_passed` cannot be set by hand (D-029). Run the solver; its validation decides.
+
+## Seed-count DB tests fail after using the app
+_Seen 2026-10-10 (M09)_
+
+App runs add alerts, versions and operations to the dev DB. The seed tests now count only seeded runs (< #1100) and
+versions 4.2/4.3. `supabase db reset --linked` restores the pure seed.

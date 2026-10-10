@@ -1,6 +1,6 @@
 # Project Overview
 
-_Last updated: 2026-10-10 (after M08)_
+_Last updated: 2026-10-10 (after M09)_
 
 ## Goal
 
@@ -22,13 +22,13 @@ The AI must never invent quantities or dates, approve plans, place POs, or relea
 | Supabase | Cloud dev project: full spec §6 schema (24 tables, RLS default-deny) + fictional seed (M04). Auth/policies next (M05) |
 | Configuration | `app/config.py` + `.env` (template `.env.example`) |
 | CI | GitHub Actions runs `pytest` on push |
-| Planning engine (OR-Tools CP-SAT) | Not started — "Re-run CP-SAT" returns the cached run |
+| Planning engine (OR-Tools CP-SAT) | Finite-capacity scheduler + independent validator; "Re-run CP-SAT" runs a background job and saves a Draft version (M09) |
 | AI assistant | Scripted replies grounded in repository data; no LLM connected |
 | Auth | Supabase Auth sign-in, 7 spec roles, RLS policies on all tables, HTTP-only cookie sessions (M05) |
 | Editing | Draft sales orders, inventory, PO lines, BOM revision workflow, approval decisions (Supabase mode) |
 | Approvals & audit | Workflow functions + guard (approve ⇒ new baseline), append-only trigger audit on 12 tables (M07) |
 | Planning engine | `planning/` package: MRP (multilevel netting, priority allocation, time-phased availability, alerts) + CLI (M08) |
-| Tests | 167 passing: 92 app/engine + 75 DB (`tests/db`, need `DATABASE_URL`; skipped in CI) |
+| Tests | 223 passing: 139 app/engine + 84 DB (`tests/db`, need `DATABASE_URL`; skipped in CI) |
 
 ## Architecture today
 
@@ -87,7 +87,7 @@ tests/                  test_planning.py, test_routes.py, test_health.py; db/ = 
 pytest.ini              Short tracebacks (never print secrets)
 supabase/               config.toml, migrations/ (schema + RLS), seed.sql (fictional data)
 scripts/                seed_demo_users.py — fictional role users (password only in .env)
-planning/               Pure planning engine: mrp/ (inputs, engine, alerts), cli.py, tests/
+planning/               Pure planning engine: mrp/ (M08), scheduling/ (CP-SAT, M09), validation/, cli.py, tests/
 .github/workflows/      tests.yml — CI
 .env.example           Config template (.env itself is git-ignored)
 development-khaled/     This engineering log
@@ -98,9 +98,10 @@ development-khaled/     This engineering log
 | Route | Screen | Key behaviour |
 |---|---|---|
 | `/dashboard` | Executive Dashboard | KPIs computed from data; approval gate refuses planner sign-off (server-side) |
-| `/workbench` | Planning Workbench | Custom Gantt; baseline v4.2 ↔ scenario v4.3; critical-path / shortage / PM filters |
+| `/workbench` | Planning Workbench | Custom Gantt per version; real CP-SAT runs (M09) with delivery + validation panels |
 | `/orders` | Sales Orders & Demand | Search, status tabs, priority, pagination, order inspector |
-| `/inventory` | Inventory & Purchasing | Balances, QC holds, PO lines; stores/purchasing edit inline (M06) |
+| `/inventory` | Inventory & Purchasing | Balances, QC holds, PO lines; stores/purchasing edit inline (M06); MRP (M08) |
+| `/resources` | Resources & Calendars | Machines, capabilities, shifts, holidays/overtime, downtime; supervisors edit (M09) |
 | `/engineering` | Engineering & BOM | Multilevel BOM, revision history + approval workflow, scrap simulation, validation |
 | `/approvals` | Approvals & Audit | Pending plans with impact vs baseline, decisions, version lifecycle, audit trail (M07) |
 | `/assistant` | AI Planning Assistant | Scripted grounded replies; approval submission needs both confirmations (server-checked) |

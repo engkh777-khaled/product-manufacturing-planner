@@ -1,7 +1,36 @@
-{% from "components/ui.html" import icon %}
+{% from "components/ui.html" import icon, badge %}
+{% if not job %}
 <div class="flex items-start gap-space-sm p-space-md rounded border border-primary/30 bg-primary/10 text-primary font-label-mono-xs text-label-mono-xs" role="status"
      x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 7000)">
   {{ icon("info", 15) }}
-  <span>Planning service is not connected in this demo build. Showing cached run #{{ v.run_number }}:
-    <b>{{ v.solver_status }}</b> in {{ v.solve_seconds }}s, {{ v.hard_violations }} hard / {{ v.soft_violations }} soft violations. Request logged to audit trail.</span>
+  <span>{{ reason }} {% if v.solver_status %}Showing recorded run #{{ v.run_number }}:
+    <b>{{ v.solver_status }}</b> in {{ v.solve_seconds }}s, {{ v.hard_violations }} hard / {{ v.soft_violations }} soft violations.{% endif %} Request logged to audit trail.</span>
 </div>
+{% elif job.status == "running" %}
+<div class="flex items-center gap-space-sm p-space-md rounded border border-cobalt/40 bg-cobalt/10 text-on-surface font-label-mono-xs text-label-mono-xs" role="status"
+     hx-get="/workbench/runs/{{ job.id }}" hx-trigger="every 1s" hx-swap="outerHTML">
+  <span class="animate-spin">{{ icon("autorenew", 15, "text-cobalt") }}</span>
+  <span>CP-SAT run in progress — {{ job.stage }}… {{ "%.0f"|format(job.elapsed) }}s
+    <span class="text-outline">(time limit {{ job.options.time_limit_s|num(0) }}s, then independent validation)</span></span>
+</div>
+{% elif job.status == "failed" %}
+<div class="flex items-start gap-space-sm p-space-md rounded border border-crit/40 bg-crit/10 text-crit font-label-mono-xs text-label-mono-xs" role="alert">
+  {{ icon("error", 15) }}<span>{{ job.message }}</span>
+</div>
+{% else %}
+{% set ok = job.validation_passed %}
+<div class="flex flex-col gap-space-sm p-space-md rounded border {{ 'border-ok/40 bg-ok/10' if ok else 'border-warn/40 bg-warn/10' }} font-label-mono-xs text-label-mono-xs" role="status">
+  <div class="flex flex-wrap items-center gap-space-sm text-on-surface">
+    {{ icon("task_alt" if ok else "rule", 15, "text-ok" if ok else "text-warn") }}
+    <span>{{ job.message }}</span>
+    {{ badge(job.outcome, "ok" if job.outcome == "Feasible" else "warn") }}
+    <span class="text-outline">{{ job.seconds }}s</span>
+    {% if job.version_number %}<a class="text-primary underline" href="/workbench?version=v{{ job.version_number }}">Open v{{ job.version_number }}</a>{% endif %}
+  </div>
+  {% for c in job.conflicts %}<div class="text-crit">{{ icon("block", 13) }} {{ c }}</div>{% endfor %}
+  {% set problems = job.lines|selectattr("status", "in", ["late", "blocked", "needs_data"])|list %}
+  {% for l in problems %}
+  <div class="text-on-surface-variant"><b class="text-on-surface">{{ l.order_number }}/{{ l.line_number }}</b> {{ l.status }}{% if l.lateness_hours %} +{{ l.lateness_hours|num(1) }}h{% endif %} — {{ l.limiting|join("; ") }}</div>
+  {% endfor %}
+</div>
+{% endif %}

@@ -15,6 +15,7 @@ NAV = [
     ("/workbench", "view_timeline", "Planning Workbench"),
     ("/orders", "receipt_long", "Sales Orders & Demand"),
     ("/inventory", "inventory_2", "Inventory & Purchasing"),
+    ("/resources", "precision_manufacturing", "Resources & Calendars"),
     ("/engineering", "schema", "Engineering & BOM"),
     ("/approvals", "verified_user", "Approvals & Audit"),
     ("/assistant", "psychology", "AI Planning Assistant"),

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "components/ui.html" import icon, button, badge %}
+{% from "components/ui.html" import icon, button, badge, panel_header %}
 {% block title %}Planning Workbench{% endblock %}
 {% block content %}
 <div x-data="{ critical: false, shortage: false, pm: true }" class="flex flex-col">
@@ -157,6 +157,60 @@
     </div>
   </section>
 
+  {# Solver output: delivery per line + independent validation (M09) #}
+  {% if report %}
+  {% set line_tone = {"on_time": "ok", "late": "warn", "blocked": "crit", "needs_data": "warn"} %}
+  <section id="schedule-report" class="px-space-xl pt-space-xl grid grid-cols-1 2xl:grid-cols-3 gap-space-md">
+    <div class="2xl:col-span-2 bg-surface-container-low rounded overflow-hidden">
+      {% call panel_header("Delivery by Order Line", "local_shipping", "Planned completion vs requested date, earliest possible completion and limiting factors (spec §8.7, §9)") %}
+        {{ badge(report.outcome, "ok" if report.outcome == "Feasible" else "warn") }}
+      {% endcall %}
+      <div class="overflow-x-auto scroll-thin">
+        <table class="w-full min-w-[900px] text-left border-collapse font-label-mono-sm text-label-mono-sm">
+          <thead><tr class="bg-surface-container-lowest text-outline font-label-mono-xs text-label-mono-xs uppercase border-b border-hairline">
+            <th class="py-space-sm px-space-md">Order / Line</th><th class="py-space-sm px-space-md">Status</th>
+            <th class="py-space-sm px-space-md">Requested</th><th class="py-space-sm px-space-md">Planned finish</th>
+            <th class="py-space-sm px-space-md text-right">Late</th><th class="py-space-sm px-space-md">Earliest possible</th>
+            <th class="py-space-sm px-space-md text-right">vs baseline</th><th class="py-space-sm px-space-md">Why</th></tr></thead>
+          <tbody>
+            {% for l in report.lines %}
+            <tr class="border-b border-surface-container align-top">
+              <td class="py-space-sm px-space-md"><a class="text-primary hover:underline" href="/orders?selected={{ l.order_number }}">{{ l.order_number }}</a><span class="text-outline">/{{ l.line_number }}</span> <span class="text-outline">{{ l.priority }}</span></td>
+              <td class="py-space-sm px-space-md">{{ badge(l.status|replace("_", " "), line_tone.get(l.status, "info")) }}</td>
+              <td class="py-space-sm px-space-md text-on-surface-variant">{{ l.due|d if l.due and l.status != "needs_data" else "—" }}</td>
+              <td class="py-space-sm px-space-md text-on-surface">{{ l.completion|d("%b %d %H:%M") if l.completion else "—" }}</td>
+              <td class="py-space-sm px-space-md text-right {{ 'text-warn font-semibold' if l.lateness_hours else 'text-outline' }}">{{ ("+" ~ l.lateness_hours|num(1) ~ "h") if l.lateness_hours else "—" }}</td>
+              <td class="py-space-sm px-space-md text-on-surface-variant">{{ l.earliest_possible|d("%b %d %H:%M") if l.earliest_possible else "—" }}{% if l.achievable == false and l.status == "late" %} <span class="text-crit">(date not achievable)</span>{% endif %}</td>
+              <td class="py-space-sm px-space-md text-right text-on-surface-variant">{% if l.change_vs_baseline_days is not none %}{{ "%+.1f"|format(l.change_vs_baseline_days) }} d{% else %}—{% endif %}</td>
+              <td class="py-space-sm px-space-md text-on-surface-variant font-label-mono-xs text-label-mono-xs">{{ l.limiting|join("; ") or "—" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="bg-surface-container-low rounded overflow-hidden">
+      {% set passed = report.validation.passed and not report.db_check and not report.stale %}
+      {% call panel_header("Independent Validation", "rule", "Re-checked separately from the solver (spec §8.8); the database re-checks again on submit and approval") %}
+        {{ badge("passed" if passed else "failed", "ok" if passed else "crit") }}
+      {% endcall %}
+      <ul class="p-space-md flex flex-col gap-space-xs font-label-mono-xs text-label-mono-xs">
+        {% for name, checked, failed in report.checks %}
+        <li class="flex items-center justify-between gap-space-sm">
+          <span class="flex items-center gap-space-xs {{ 'text-crit' if failed else 'text-on-surface-variant' }}">{{ icon("cancel" if failed else "check_circle", 14, "text-crit" if failed else "text-ok") }}{{ name|replace("_", " ") }}</span>
+          <span class="text-outline">{{ checked }} checked{% if failed %} · <b class="text-crit">{{ failed }} failed</b>{% endif %}</span>
+        </li>
+        {% endfor %}
+        {% for v in report.validation.violations %}<li class="text-crit">✗ {{ v.message }}</li>{% endfor %}
+        {% for w in report.validation.warnings %}<li class="text-warn">! {{ w.message }}</li>{% endfor %}
+        {% for c in report.db_check %}<li class="text-crit">✗ database re-check: {{ c }}</li>{% endfor %}
+        {% if report.stale %}<li class="text-crit">✗ {{ report.stale }} — re-run the solver</li>{% endif %}
+        {% for c in report.conflicts %}<li class="text-crit">✗ {{ c }}</li>{% endfor %}
+      </ul>
+    </div>
+  </section>
+  {% endif %}
+
   {# What-if comparison strip #}
   {% set b, c = cmp.base, cmp.cand %}
   <section class="p-space-xl grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-12 gap-space-md">
@@ -182,14 +236,19 @@
     <div class="2xl:col-span-2 p-space-lg bg-surface-container-low rounded flex flex-col gap-space-sm">
       <div class="flex items-center justify-between text-outline font-label-mono-xs text-label-mono-xs uppercase">CP-SAT Engine{{ icon("bolt", 16) }}</div>
       <div class="flex items-baseline gap-space-xs"><span class="font-metric-display text-metric-display text-tertiary">{{ c.solve_seconds }}s</span><span class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">Run #{{ c.run_number }}</span></div>
-      <div class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">Independent validation: {{ "passed" if c.hard_violations == 0 else "failed" }}</div>
+      <div class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">Independent validation: {{ "passed" if c.validation_passed and c.hard_violations == 0 else "failed" }}</div>
     </div>
     <div class="sm:col-span-2 2xl:col-span-4 p-space-lg bg-surface-container-high rounded flex gap-space-md border-l-2 border-ai/60">
       {{ icon("psychology", 22, "text-ai") }}
       <div class="flex flex-col gap-space-xs min-w-0">
         <h3 class="font-headline-sm text-headline-sm text-on-surface">OR-Tools AI Recommendation</h3>
         <span class="font-label-mono-xs text-label-mono-xs text-primary">{{ c.change_summary }}</span>
+        {% if c.report %}
+        {% set problems = c.report.lines|selectattr("status", "in", ["late", "blocked", "needs_data"])|list %}
+        <p class="font-body-sm text-body-sm text-on-surface-variant">Solver draft v{{ c.version_number }}: {{ c.report.lines|length - problems|length }} of {{ c.report.lines|length }} order lines on time{% if problems %}; {% for l in problems %}{{ l.order_number }}/{{ l.line_number }} {{ l.status|replace("_", " ") }}{{ ", " if not loop.last }}{% endfor %}{% endif %}. Independent validation {{ "passed" if c.validation_passed else "failed" }}. Human approval required before adoption.</p>
+        {% else %}
         <p class="font-body-sm text-body-sm text-on-surface-variant">Scenario v{{ c.version_number }} recovers SO-1005 (Shell Offshore GOM) from Dec 03 to Nov 29 at a cost of ${{ c.overtime_cost|num }}. SO-1012 remains late (VTL capacity) — no change in this scenario. Human approval required before adoption.</p>
+        {% endif %}
         <a href="/assistant" class="font-label-mono-xs text-label-mono-xs text-primary underline self-end">View solver trace</a>
       </div>
     </div>

@@ -8,3 +8,5 @@ import os
 
 os.environ["APP_ENV"] = "test"
 os.environ["AUTH_MODE"] = "disabled"
+os.environ["SCHEDULER_WORKER"] = "thread"  # solver jobs run in-process in tests (no worker pool)
+os.environ["SCHEDULER_TIME_LIMIT_SECONDS"] = "3"

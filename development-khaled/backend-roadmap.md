@@ -1,6 +1,6 @@
 # Backend Roadmap — Supabase + Python
 
-_Written 2026-10-10 · Updated 2026-10-10: **cloud-first** (D-014), M03–M08 done_
+_Written 2026-10-10 · Updated 2026-10-10: **cloud-first** (D-014), M03–M09 done_
 
 Each milestone ends with a **test gate**: commands any developer can run on their own machine to prove the
 milestone works. A milestone is not done until its gate passes and its file exists in [milestones/](milestones/).
@@ -168,7 +168,7 @@ Details: [milestones/M07-approvals-and-audit.md](milestones/M07-approvals-and-au
 ```
 Details: [milestones/M08-mrp-engine.md](milestones/M08-mrp-engine.md).
 
-### M09 — Finite-capacity scheduler & independent validator (spec §8, Phase 3)
+### M09 — Finite-capacity scheduler & independent validator (spec §8, Phase 3) ✅ Done 2026-10-10
 **Goal:** OR-Tools CP-SAT produces feasible schedules, and a separate validator checks them.
 - New screen **Resources & Calendars** (spec §12.5): shifts, holidays, downtime, overtime. These are scheduler inputs.
 - `planning/scheduling/`: interval variables, precedence, optional intervals for alternative machines,
@@ -182,10 +182,11 @@ Details: [milestones/M08-mrp-engine.md](milestones/M08-mrp-engine.md).
 .\.venv\Scripts\python -m pytest planning/tests/scheduling   # acceptance tests 1, 4, 5, 6, 7, 8
 .\.venv\Scripts\python -m planning.cli schedule --horizon 2025-11-17:2025-12-15
 ```
+Details: [milestones/M09-finite-capacity-scheduler.md](milestones/M09-finite-capacity-scheduler.md). "Re-run CP-SAT" already starts a real run (done in M09).
 
 ### M10 — Planning workbench on live schedules & what-if scenarios (spec §10, §12.6, Phase 4)
 **Goal:** The Gantt and dashboards show solver output, and planners run scenarios without touching the baseline.
-- Gantt reads `schedule_versions` and `production_operations`. "Re-run CP-SAT" starts a real run.
+- Gantt reads `schedule_versions` and `production_operations` (done since M06/M09; "Re-run CP-SAT" is real since M09).
 - Scenario builder covering supplier delay, machine unavailable, urgent order, quantity change, overtime and priority. Each
   scenario saves as a new version.
 - Baseline vs scenario comparison computed from data, replacing the current hard-coded v4.2/v4.3 metrics.
