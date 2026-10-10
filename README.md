@@ -4,6 +4,9 @@ Python frontend for the **AI Valve Production Planning Agent** ([spec](valve-pla
 built from the Google Stitch designs in [design/stitch/](design/stitch/) (design system:
 [DESIGN.md](design/stitch/precision_industrial_operations/DESIGN.md)).
 
+> **New to the project?** Start with the engineering log in [development-khaled/](development-khaled/) —
+> milestones, decisions, and troubleshooting.
+
 > **All data is fictional demo data** (spec §13). Nothing connects to an ERP, Supabase, a solver, or an LLM yet.
 
 ## Stack

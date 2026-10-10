@@ -1,0 +1,40 @@
+# Development Log — Product Manufacturing Planner
+
+This folder is the running engineering record of the project. Read it before you change anything:
+it explains **what exists, why it was built that way, and what is still missing**.
+
+Every milestone adds a file here. Nothing is deleted: if a decision is reversed, add a new entry that supersedes the old one.
+
+## Start here
+
+| Read | When |
+|---|---|
+| [project-overview.md](project-overview.md) | First day on the project: goal, architecture, stack, folder map, how to run |
+| [milestones/](milestones/) | To see what was done, in order |
+| [decisions.md](decisions.md) | Before changing the stack, data model, or a convention |
+| [troubleshooting.md](troubleshooting.md) | When setup, builds, or `git push` misbehave |
+
+## Milestone timeline
+
+| # | Date | Milestone | Status | Commit |
+|---|---|---|---|---|
+| M00 | 2026-10-10 | [Project specification](milestones/M00-project-specification.md) | Done | `b7e2f07` |
+| M01 | 2026-10-10 | [Frontend from Stitch designs](milestones/M01-frontend-from-stitch-designs.md) | Done | `afb6ce1` |
+| M02 | 2026-10-10 | [GitHub repository & push setup](milestones/M02-github-repository.md) | Done | `afb6ce1` |
+| M03 | — | Supabase schema, auth & seed data (spec Phase 1) | Next | — |
+
+## How to add a milestone
+
+1. Copy [milestones/_template.md](milestones/_template.md) to `milestones/MNN-short-name.md` (next number, kebab-case name).
+2. Fill in every section. Write facts you verified (commands run, test results), not intentions.
+3. Add a row to the **Milestone timeline** above.
+4. Record any new architectural choice in [decisions.md](decisions.md) and any new gotcha in [troubleshooting.md](troubleshooting.md).
+5. If the folder map, stack, or run instructions changed, update [project-overview.md](project-overview.md).
+6. Commit the docs together with (or right after) the code they describe.
+
+## Conventions
+
+- Dates are absolute (`YYYY-MM-DD`), never "yesterday" or "last week".
+- Link code with relative paths, e.g. [`app/planning.py`](../app/planning.py).
+- Reference the spec by section, e.g. "spec §8.3", where the spec is [valve-planning-agent-mvp.md](../valve-planning-agent-mvp.md).
+- All sample data in this project is **fictional** (spec §13). Say so whenever you show numbers.
