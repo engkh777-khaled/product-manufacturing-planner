@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Form, Request
 
 from app import assistant
 from app.auth import require_user
-from app.data import mock_data as db
+from app.data.dataset import current as ds
 from app.data import repository as repo
 from app.models import CurrentUser
 from app.templating import templates
@@ -23,11 +23,11 @@ def assistant_page(request: Request, order: str = "SO-1005"):
         "question": question,
         "first_reply": None if o.order_number == "SO-1005" else assistant.respond(question),
         "cmp": repo.scenario_comparison(),
-        "po": next(p for p in db.PURCHASE_ORDERS if p.po_number == "PO-8821"),
+        "po": next((p for p in ds().PURCHASE_ORDERS if p.po_number == "PO-8821"), None),
         "bottleneck": repo.bottleneck(),
-        "quick_prompts": db.ASSISTANT_QUICK_PROMPTS,
-        "approval": repo.approval_requests()[0],
-        "approver_role": db.APPROVER_ROLE,
+        "quick_prompts": ds().ASSISTANT_QUICK_PROMPTS,
+        "approval": next(iter(repo.approval_requests()), None),
+        "approver_role": ds().APPROVER_ROLE,
     })
 
 

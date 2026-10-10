@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% from "components/ui.html" import icon, badge, kpi_card, panel_header %}
+{% block title %}Inventory & Purchasing{% endblock %}
+{% block content %}
+<div class="p-space-xl flex flex-col gap-space-xl">
+  <div class="flex flex-col gap-space-sm">
+    <nav class="font-label-mono-xs text-label-mono-xs text-outline uppercase" aria-label="Breadcrumb">Sec 12.4 / Material Supply / <span class="text-primary">Inventory &amp; Purchasing</span></nav>
+    <h1 class="font-headline-lg text-headline-lg text-on-surface">Inventory &amp; Purchasing</h1>
+    {% if not editable_backend %}
+    <p class="font-label-mono-xs text-label-mono-xs text-warn">Read-only demo data. Run with DATA_BACKEND=supabase to adjust stock and purchase orders.</p>
+    {% endif %}
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-4 gap-space-md">
+    {% call kpi_card("Stocked SKUs", "inventory_2", "text-primary") %}
+      <span class="font-metric-display text-metric-display text-on-surface">{{ totals.skus }}</span>
+    {% endcall %}
+    {% call kpi_card("Units on QC Hold", "gpp_maybe", "text-warn") %}
+      <span class="font-metric-display text-metric-display text-warn">{{ totals.on_hold|num(0) }}</span>
+    {% endcall %}
+    {% call kpi_card("Open PO Lines", "local_shipping", "text-primary") %}
+      <span class="font-metric-display text-metric-display text-on-surface">{{ totals.open_lines }}</span>
+    {% endcall %}
+    {% call kpi_card("Component Shortages", "warning", "text-crit") %}
+      <span class="font-metric-display text-metric-display text-crit">{{ shortages|length }}</span>
+      <span class="font-label-mono-xs text-label-mono-xs text-on-surface-variant truncate" title="{{ shortages|join(', ') }}">{{ shortages|join(", ") or "None" }}</span>
+    {% endcall %}
+  </div>
+
+  <section class="bg-surface-container-low rounded overflow-hidden">
+    {% call panel_header("Incoming Purchase Orders", "local_shipping", "Expected receipts, quality status and slippage vs MRP need dates") %}
+      {% for p in late %}{{ badge(p.po.po_number ~ " +" ~ p.slip ~ "d", "crit") }}{% endfor %}
+    {% endcall %}
+    <div class="overflow-x-auto scroll-thin">
+      <table class="w-full min-w-[960px] text-left border-collapse">
+        <thead><tr class="bg-surface-container-lowest text-outline font-label-mono-xs text-label-mono-xs uppercase border-b border-hairline">
+          <th class="py-space-sm px-space-md">PO / Supplier</th><th class="py-space-sm px-space-md">Item</th>
+          <th class="py-space-sm px-space-md text-right">Ordered</th><th class="py-space-sm px-space-md text-right">Received</th>
+          <th class="py-space-sm px-space-md">Expected</th><th class="py-space-sm px-space-md">Status</th>
+          <th class="py-space-sm px-space-md text-right">Open</th><th class="py-space-sm px-space-md"></th></tr></thead>
+        <tbody>{% for l in po_lines %}{% include "partials/po_line_row.html" %}{% endfor %}</tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="bg-surface-container-low rounded overflow-hidden">
+    {% call panel_header("Inventory Balances", "warehouse", "Net Available = On Hand − Reserved − QC Hold (spec §6.9)") %}{% endcall %}
+    <div class="overflow-x-auto scroll-thin">
+      <table class="w-full min-w-[860px] text-left border-collapse">
+        <thead><tr class="bg-surface-container-lowest text-outline font-label-mono-xs text-label-mono-xs uppercase border-b border-hairline">
+          <th class="py-space-sm px-space-md">Component</th><th class="py-space-sm px-space-md">Warehouse</th><th class="py-space-sm px-space-md">Lot</th>
+          <th class="py-space-sm px-space-md text-right">On Hand</th><th class="py-space-sm px-space-md text-right">Reserved</th>
+          <th class="py-space-sm px-space-md text-right">QC Hold</th><th class="py-space-sm px-space-md text-right">Net Available</th>
+          <th class="py-space-sm px-space-md"></th></tr></thead>
+        <tbody>{% for r in inventory %}{% include "partials/inventory_row.html" %}{% endfor %}</tbody>
+      </table>
+    </div>
+  </section>
+  <p class="font-label-mono-xs text-label-mono-xs text-outline">Time-phased availability and allocation across orders arrive with the MRP engine (M08).</p>
+</div>
+{% endblock %}

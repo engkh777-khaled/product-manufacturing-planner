@@ -78,6 +78,14 @@
       </div>
       {% endif %}
 
+      {% if can_edit and o.status.value == "Draft" %}
+      <div class="flex flex-wrap gap-space-sm">
+        <a href="/orders/{{ o.order_number }}/edit" class="h-7 px-space-md inline-flex items-center gap-space-xs rounded bg-surface-container-high text-on-surface hover:bg-surface-container-highest font-label-mono-sm text-label-mono-sm">{{ icon("edit", 15) }}Edit Draft</a>
+        <form method="post" action="/orders/{{ o.order_number }}/confirm"><button class="h-7 px-space-md inline-flex items-center gap-space-xs rounded bg-primary text-on-primary hover:bg-primary-fixed font-label-mono-sm text-label-mono-sm font-semibold">{{ icon("check", 15) }}Confirm Order</button></form>
+        <form method="post" action="/orders/{{ o.order_number }}/delete" onsubmit="return confirm('Delete draft {{ o.order_number }}?')"><button class="h-7 px-space-md inline-flex items-center gap-space-xs rounded border border-crit/40 bg-crit/10 text-crit hover:bg-crit hover:text-white font-label-mono-sm text-label-mono-sm">{{ icon("delete", 15) }}Delete</button></form>
+      </div>
+      {% endif %}
+
       <div class="p-space-md bg-surface-container rounded border-l-2 border-ai/60 flex flex-col gap-space-sm">
         <div class="flex items-center gap-space-xs font-label-mono-xs text-label-mono-xs text-ai uppercase">{{ icon("smart_toy", 14) }}AI Dispatcher Diagnostic</div>
         <p class="font-body-lg text-body-lg text-on-surface">{{ o.ai_diagnostic }}</p>
@@ -91,9 +99,9 @@
       {{ icon("history", 18, "text-primary") }}
       <div class="min-w-0">
         <div class="font-label-mono-sm text-label-mono-sm text-on-surface">{{ o.customer_name }} Customer Profile</div>
-        <div class="font-label-mono-xs text-label-mono-xs text-outline">{{ o.customer_profile }}</div>
+        <div class="font-label-mono-xs text-label-mono-xs text-outline">{{ o.customer_profile or "No customer profile recorded" }}</div>
       </div>
     </div>
-    <span class="font-label-mono-sm text-label-mono-sm text-tertiary whitespace-nowrap">{{ o.customer_otd }}% OTD</span>
+    <span class="font-label-mono-sm text-label-mono-sm text-tertiary whitespace-nowrap">{{ ("%s%% OTD"|format(o.customer_otd)) if o.customer_otd is not none else "OTD —" }}</span>
   </section>
 </div>

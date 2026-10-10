@@ -1,6 +1,6 @@
 # Project Overview
 
-_Last updated: 2026-10-10 (after M05)_
+_Last updated: 2026-10-10 (after M06)_
 
 ## Goal
 
@@ -18,14 +18,15 @@ The AI must never invent quantities or dates, approve plans, place POs, or relea
 | Area | State |
 |---|---|
 | Frontend (5 screens) | Built — FastAPI + Jinja2 + HTMX/Alpine, matches the Stitch designs |
-| Data | Fictional in-memory dataset behind a repository layer |
+| Data | `DATA_BACKEND=supabase`: pages read an RLS-filtered DB snapshot; `mock`: in-memory fictional data (M06) |
 | Supabase | Cloud dev project: full spec §6 schema (24 tables, RLS default-deny) + fictional seed (M04). Auth/policies next (M05) |
 | Configuration | `app/config.py` + `.env` (template `.env.example`) |
 | CI | GitHub Actions runs `pytest` on push |
 | Planning engine (OR-Tools CP-SAT) | Not started — "Re-run CP-SAT" returns the cached run |
 | AI assistant | Scripted replies grounded in repository data; no LLM connected |
 | Auth | Supabase Auth sign-in, 7 spec roles, RLS policies on all tables, HTTP-only cookie sessions (M05) |
-| Tests | 103 passing: 49 app + 54 DB (`tests/db`, need `DATABASE_URL`; skipped in CI) |
+| Editing | Draft sales orders, inventory, PO lines, BOM revision workflow, approval decisions (Supabase mode) |
+| Tests | 126 passing: 65 app + 61 DB (`tests/db`, need `DATABASE_URL`; skipped in CI) |
 
 ## Architecture today
 
@@ -71,7 +72,10 @@ app/
   models.py             Pydantic models mirroring spec §6
   planning.py           Deterministic planning helpers (unit-tested)
   assistant.py          Scripted assistant (spec §11.1 tool names)
-  data/repository.py    Data-access layer
+  data/repository.py    Page logic over the request's dataset (mock or Supabase)
+  data/dataset.py       Per-request dataset + user token (context variables)
+  data/supabase_dataset.py  planning_snapshot() → models; 30 s cache per token
+  data/writes.py        Writes via PostgREST as the user (RLS enforced)
   data/mock_data.py     Fictional dataset
   routes/               health (/healthz), auth (/login, /logout), dashboard, workbench, orders, engineering, assistant
   templates/            base.html, pages, components/ (macros), partials/ (HTMX fragments)
@@ -93,7 +97,8 @@ development-khaled/     This engineering log
 | `/dashboard` | Executive Dashboard | KPIs computed from data; approval gate refuses planner sign-off (server-side) |
 | `/workbench` | Planning Workbench | Custom Gantt; baseline v4.2 ↔ scenario v4.3; critical-path / shortage / PM filters |
 | `/orders` | Sales Orders & Demand | Search, status tabs, priority, pagination, order inspector |
-| `/engineering` | Engineering & BOM | Multilevel BOM explosion, shortages filter, scrap +5% simulation, validation |
+| `/inventory` | Inventory & Purchasing | Balances, QC holds, PO lines; stores/purchasing edit inline (M06) |
+| `/engineering` | Engineering & BOM | Multilevel BOM, revision history + approval workflow, scrap simulation, validation |
 | `/assistant` | AI Planning Assistant | Scripted grounded replies; approval submission needs both confirmations (server-checked) |
 
 ## Run locally

@@ -7,8 +7,9 @@ built from the Google Stitch designs in [design/stitch/](design/stitch/) (design
 > **New to the project?** Start with the engineering log in [development-khaled/](development-khaled/) —
 > milestones, decisions, and troubleshooting.
 
-> **All data is fictional demo data** (spec §13). Sign-in and roles use Supabase Auth (M05); pages still render
-> in-memory data until M06. No solver or LLM is connected yet.
+> **All data is fictional demo data** (spec §13). Sign-in and roles use Supabase Auth (M05). Set
+> `DATA_BACKEND=supabase` in `.env` to run every page on the database (M06); `mock` uses in-memory data.
+> No solver or LLM is connected yet.
 
 ## Stack
 - FastAPI + Jinja2 server-rendered pages, HTMX for partial updates, Alpine.js for small client toggles

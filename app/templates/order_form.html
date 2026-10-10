@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% from "components/ui.html" import icon, button, badge %}
+{% block title %}{{ "New" if is_new else "Edit" }} {{ order.order_number }}{% endblock %}
+{% block content %}
+{% set field = "h-8 px-space-sm bg-surface-container-lowest text-on-surface font-body-lg text-body-lg rounded border border-hairline focus:border-cobalt outline-none w-full" %}
+{% set label = "flex flex-col gap-space-xs font-label-mono-xs text-label-mono-xs text-outline uppercase" %}
+<div class="p-space-xl flex flex-col gap-space-xl max-w-5xl">
+  <div class="flex flex-col gap-space-sm">
+    <nav class="font-label-mono-xs text-label-mono-xs text-outline uppercase" aria-label="Breadcrumb"><a class="hover:text-primary" href="/orders">Sales Orders</a> / <span class="text-primary">{{ "New Draft" if is_new else "Edit Draft" }}</span></nav>
+    <div class="flex flex-wrap items-center gap-space-md">
+      <h1 class="font-headline-lg text-headline-lg text-on-surface font-mono">{{ order.order_number }}</h1>
+      {{ badge("Draft", "info") }}
+    </div>
+    <p class="font-body-sm text-body-sm text-on-surface-variant">Drafts can be edited freely. Confirming locks the lines' engineering configuration once planning starts (spec §6.7).</p>
+  </div>
+
+  {% if errors %}
+  <div class="p-space-md rounded border border-crit/40 bg-crit/10 text-crit flex flex-col gap-space-xs font-label-mono-sm text-label-mono-sm" role="alert">
+    {% for e in errors %}<span class="flex items-start gap-space-xs">{{ icon("error", 15) }}{{ e }}</span>{% endfor %}
+  </div>
+  {% endif %}
+
+  <form method="post" action="/orders/save" class="flex flex-col gap-space-xl"
+        x-data='{ lines: {{ order.lines|tojson }} }'>
+    <input type="hidden" name="order_number" value="{{ order.order_number }}">
+    <section class="bg-surface-container-low rounded p-space-lg grid grid-cols-1 md:grid-cols-2 gap-space-md">
+      <label class="{{ label }}">Customer *<input name="customer_name" required maxlength="200" value="{{ order.customer_name }}" class="{{ field }} normal-case"></label>
+      <label class="{{ label }}">Customer PO / Reference<input name="customer_reference" maxlength="100" value="{{ order.customer_reference }}" class="{{ field }} normal-case"></label>
+      <label class="{{ label }}">Order Date *<input type="date" name="order_date" required value="{{ order.order_date }}" class="{{ field }}"></label>
+      <label class="{{ label }}">Requested Delivery *<input type="date" name="requested_delivery_date" required value="{{ order.requested_delivery_date }}" class="{{ field }}"></label>
+      <label class="{{ label }}">Priority
+        <select name="priority" class="{{ field }} normal-case">
+          {% for p in priorities %}<option value="{{ p }}" {% if p == order.priority %}selected{% endif %}>{{ p }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="{{ label }}">Notes<input name="notes" maxlength="500" value="{{ order.notes }}" class="{{ field }} normal-case"></label>
+    </section>
+
+    <section class="bg-surface-container-low rounded overflow-hidden">
+      <div class="p-space-lg bg-surface-container flex items-center justify-between gap-space-md">
+        <h2 class="font-headline-sm text-headline-sm text-on-surface">Order Lines</h2>
+        <button type="button" @click="lines.push({product_code: '', quantity: '', unit_price: '', tags: '', notes: ''})"
+                class="h-7 px-space-md inline-flex items-center gap-space-xs rounded bg-surface-container-high text-on-surface hover:bg-surface-container-highest font-label-mono-sm text-label-mono-sm">{{ icon("add", 15) }}Add line</button>
+      </div>
+      <div class="overflow-x-auto scroll-thin">
+        <table class="w-full min-w-[820px] text-left border-collapse">
+          <thead><tr class="bg-surface-container-lowest text-outline font-label-mono-xs text-label-mono-xs uppercase border-b border-hairline">
+            <th class="py-space-sm px-space-md w-10">#</th><th class="py-space-sm px-space-md">Product (active finished goods)</th>
+            <th class="py-space-sm px-space-md w-24">Qty</th><th class="py-space-sm px-space-md w-32">Unit Price</th>
+            <th class="py-space-sm px-space-md w-40">Valve Tags</th><th class="py-space-sm px-space-md">Line Notes</th><th class="w-10"></th></tr></thead>
+          <tbody>
+            <template x-for="(line, i) in lines" :key="i">
+              <tr class="border-b border-surface-container">
+                <td class="py-space-sm px-space-md font-label-mono-sm text-label-mono-sm text-outline" x-text="i + 1"></td>
+                <td class="py-space-sm px-space-md">
+                  <select name="product_code" x-model="line.product_code" class="{{ field }}" aria-label="Product">
+                    <option value="">— choose —</option>
+                    {% for p in products %}<option value="{{ p.code }}">{{ p.code }} · {{ p.name }}{{ "" if p.ready else " (needs BOM/routing)" }}</option>{% endfor %}
+                  </select>
+                </td>
+                <td class="py-space-sm px-space-md"><input name="quantity" x-model="line.quantity" inputmode="numeric" class="{{ field }}" aria-label="Quantity"></td>
+                <td class="py-space-sm px-space-md"><input name="unit_price" x-model="line.unit_price" inputmode="decimal" class="{{ field }}" aria-label="Unit price"></td>
+                <td class="py-space-sm px-space-md"><input name="tags" x-model="line.tags" maxlength="120" class="{{ field }}" aria-label="Valve tags"></td>
+                <td class="py-space-sm px-space-md"><input name="line_notes" x-model="line.notes" maxlength="200" class="{{ field }}" aria-label="Line notes"></td>
+                <td class="py-space-sm px-space-sm">
+                  <button type="button" @click="lines.splice(i, 1)" x-show="lines.length > 1" class="text-outline hover:text-crit" aria-label="Remove line">{{ icon("delete", 16) }}</button>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="flex flex-wrap items-center justify-end gap-space-sm">
+      {{ button("Cancel", None, "ghost", href="/orders" if is_new else "/orders?selected=" ~ order.order_number) }}
+      <button class="h-8 px-space-lg inline-flex items-center gap-space-xs bg-primary text-on-primary hover:bg-primary-fixed font-label-mono-sm text-label-mono-sm rounded font-semibold">{{ icon("save", 15) }}Save Draft</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

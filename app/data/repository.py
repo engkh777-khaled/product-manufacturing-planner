@@ -1,8 +1,8 @@
-"""Data-access layer. The single swap point for Supabase / the Python planning API.
+"""Data-access layer: every page reads through these functions.
 
-Every page reads through these functions; today they serve the fictional in-memory
-dataset in `mock_data`. Write actions (approval submissions) are kept in process
-memory and recorded in the audit log.
+They operate on the request's dataset (app.data.dataset): the fictional in-memory `mock_data`, or a
+Supabase snapshot filtered by the signed-in user's RLS (DATA_BACKEND=supabase, M06). Writes that must
+persist go through app.data.writes.
 """
 
 from __future__ import annotations
@@ -10,7 +10,8 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 
 from app import planning
-from app.data import mock_data as db
+from app.data import dataset
+from app.data.dataset import current as ds
 from app.models import (
     AuditEntry,
     CurrentUser,
@@ -71,7 +72,7 @@ def _matches_tab(view: dict, tab: str) -> bool:
 
 
 def list_orders(tab: str = "all", q: str = "", priority: str = "") -> list[dict]:
-    views = [order_view(o) for o in db.SALES_ORDERS]
+    views = [order_view(o) for o in ds().SALES_ORDERS]
     q = q.strip().lower()
     if q:
         views = [v for v in views if q in " ".join([
@@ -84,20 +85,42 @@ def list_orders(tab: str = "all", q: str = "", priority: str = "") -> list[dict]
     return sorted(views, key=lambda v: (v["late"] is not None, -(v["late"] or 0)))
 
 
+def orderable_products() -> list[dict]:
+    """Active finished goods (spec §6.1: inactive products cannot be ordered), with engineering readiness."""
+    rows = getattr(ds(), "PRODUCT_ROWS", None)
+    if rows is None:
+        candidates = [(p.product_code, p.name, p.status) for p in ds().PRODUCTS]
+    else:
+        candidates = [(c, p["name"], p["product_status"]) for c, p in rows.items() if p["item_type"] == "finished_good"]
+    return [{"code": code, "name": name,
+             "ready": code in ds().ROUTINGS and getattr(ds().BOMS.get(code), "status", "") == "Approved"}
+            for code, name, status in sorted(candidates) if status == "Active"]
+
+
+def next_order_number() -> str:
+    numbers = [int(o.order_number.split("-")[1]) for o in ds().SALES_ORDERS
+               if o.order_number.startswith("SO-") and o.order_number.split("-")[1].isdigit()]
+    return f"SO-{max(numbers, default=1000) + 1}"
+
+
+def order_for_edit(order_number: str) -> dict | None:
+    return getattr(ds(), "ORDER_EDIT", {}).get(order_number)
+
+
 def tab_counts() -> dict[str, int]:
-    views = [order_view(o) for o in db.SALES_ORDERS]
+    views = [order_view(o) for o in ds().SALES_ORDERS]
     return {key: sum(_matches_tab(v, key) for v in views) for key, _ in ORDER_TABS}
 
 
 def get_order(order_number: str) -> dict | None:
-    for o in db.SALES_ORDERS:
+    for o in ds().SALES_ORDERS:
         if o.order_number == order_number:
             return order_view(o)
     return None
 
 
 def order_kpis() -> dict:
-    views = [order_view(o) for o in db.SALES_ORDERS]
+    views = [order_view(o) for o in ds().SALES_ORDERS]
     active = [v for v in views if v["o"].status not in (OrderStatus.COMPLETED, OrderStatus.CANCELLED)]
     known = [v for v in active if v["late"] is not None]
     on_time = [v for v in known if v["late"] <= 0]
@@ -119,7 +142,7 @@ def order_kpis() -> dict:
 
 def work_center_views() -> list[dict]:
     out = []
-    for wc in db.WORK_CENTERS:
+    for wc in ds().WORK_CENTERS:
         pct = planning.util_pct(wc.scheduled_hours, wc.capacity_hours)
         out.append({"wc": wc, "pct": pct, "band": planning.util_band(pct),
                     "headroom": wc.capacity_hours - wc.scheduled_hours})
@@ -131,7 +154,7 @@ def bottleneck() -> dict:
 
 
 def machine_index() -> dict[str, tuple]:
-    return {m.machine_code: (wc, m) for wc in db.WORK_CENTERS for m in wc.machines}
+    return {m.machine_code: (wc, m) for wc in ds().WORK_CENTERS for m in wc.machines}
 
 
 # --- Material ----------------------------------------------------------------------
@@ -139,10 +162,11 @@ def machine_index() -> dict[str, tuple]:
 
 def purchase_orders(open_only: bool = True) -> list[dict]:
     out = []
-    for po in db.PURCHASE_ORDERS:
+    for po in ds().PURCHASE_ORDERS:
         if open_only and po.status == "Received":
             continue
-        slip = None if po.expected_delivery_date is None else (po.expected_delivery_date - po.required_date).days
+        slip = None if po.expected_delivery_date is None or po.required_date is None \
+            else (po.expected_delivery_date - po.required_date).days
         out.append({"po": po, "slip": slip, "open_qty": po.ordered_quantity - po.received_quantity})
     return out
 
@@ -150,7 +174,7 @@ def purchase_orders(open_only: bool = True) -> list[dict]:
 def shortage_skus() -> list[str]:
     """Components short for their linked order's build quantity (approved BOMs only)."""
     skus = []
-    for code, bom in db.BOMS.items():
+    for code, bom in ds().BOMS.items():
         if bom.status != "Approved":
             continue
         skus += [r["item"].component_code for r in bom_view(code)["shortages"]]
@@ -169,7 +193,7 @@ def alerts() -> list[dict]:
     b = bottleneck()
     out.append({"severity": "crit", "type": "Capacity overload",
                 "text": f"{b['wc'].code} {b['wc'].name} at {b['pct']:.0f}%"})
-    for v in [order_view(o) for o in db.SALES_ORDERS]:
+    for v in [order_view(o) for o in ds().SALES_ORDERS]:
         if not v["o"].data_complete:
             out.append({"severity": "warn", "type": "Missing BOM / routing",
                         "text": f"{v['o'].order_number}: {v['o'].constraint_detail}"})
@@ -180,14 +204,14 @@ def alerts() -> list[dict]:
 
 
 def products():
-    return db.PRODUCTS
+    return ds().PRODUCTS
 
 
 def bom_view(product_code: str, scrap_delta: float = 0.0) -> dict:
-    product = next((p for p in db.PRODUCTS if p.product_code == product_code), db.PRODUCTS[0])
-    bom = db.BOMS.get(product.product_code)
-    routing = db.ROUTINGS.get(product.product_code)
-    linked = next((o for o in db.SALES_ORDERS if o.product_code == product.product_code
+    product = next((p for p in ds().PRODUCTS if p.product_code == product_code), ds().PRODUCTS[0])
+    bom = ds().BOMS.get(product.product_code)
+    routing = ds().ROUTINGS.get(product.product_code)
+    linked = next((o for o in ds().SALES_ORDERS if o.product_code == product.product_code
                    and o.bom_status == "Approved"), None)
     build_qty = linked.quantity if linked else 1
     rows = planning.explode_bom(bom.items, build_qty, scrap_delta) if bom else []
@@ -206,10 +230,10 @@ def bom_view(product_code: str, scrap_delta: float = 0.0) -> dict:
 
 
 def validate_bom(product_code: str) -> list[dict]:
-    bom = db.BOMS[product_code]
+    bom = ds().BOMS[product_code]
     checks = planning.validate_bom(bom.items, bom.status, bom_view(product_code)["build_qty"])
-    checks.append({"name": "Approved routing present", "ok": product_code in db.ROUTINGS,
-                   "detail": db.ROUTINGS[product_code].revision if product_code in db.ROUTINGS else "Missing routing"})
+    checks.append({"name": "Approved routing present", "ok": product_code in ds().ROUTINGS,
+                   "detail": ds().ROUTINGS[product_code].revision if product_code in ds().ROUTINGS else "Missing routing"})
     return checks
 
 
@@ -223,23 +247,28 @@ BAR_PX = 32
 
 
 def schedule_versions() -> list[ScheduleVersion]:
-    return list(db.SCHEDULE_VERSIONS.values())
+    return list(ds().SCHEDULE_VERSIONS.values())
 
 
-def get_version(key: str) -> ScheduleVersion:
-    return db.SCHEDULE_VERSIONS.get(key, db.SCHEDULE_VERSIONS["v4.2"])
+def baseline() -> ScheduleVersion:
+    versions = list(ds().SCHEDULE_VERSIONS.values())
+    return next((v for v in versions if v.is_baseline), versions[0])
+
+
+def get_version(key: str | None) -> ScheduleVersion:
+    return ds().SCHEDULE_VERSIONS.get(key or "", None) or baseline()
 
 
 def _x(t: datetime) -> float:
-    return planning.hours_between(db.GANTT_START, t) * HOUR_PX
+    return planning.hours_between(ds().GANTT_START, t) * HOUR_PX
 
 
 def gantt_view(version_key: str) -> dict:
     version = get_version(version_key)
-    days = [db.GANTT_START + timedelta(days=i) for i in range(db.GANTT_DAYS)]
+    days = [ds().GANTT_START + timedelta(days=i) for i in range(ds().GANTT_DAYS)]
     rows, y = [], 0
     machine_y: dict[str, int] = {}
-    for wc in db.WORK_CENTERS:
+    for wc in ds().WORK_CENTERS:
         rows.append({"kind": "group", "wc": wc, "y": y, "h": GROUP_ROW_PX})
         y += GROUP_ROW_PX
         for m in wc.machines:
@@ -249,22 +278,30 @@ def gantt_view(version_key: str) -> dict:
     # Final operation of each order; flagged late when it finishes after the requested date
     last_op: dict[str, ScheduledOperation] = {}
     for op in version.operations:
+        if op.machine_code not in machine_y:
+            continue
         if op.order_number not in last_op or op.end > last_op[op.order_number].end:
             last_op[op.order_number] = op
-    requested = {o.order_number: o.requested_delivery_date for o in db.SALES_ORDERS}
+    requested = {o.order_number: o.requested_delivery_date for o in ds().SALES_ORDERS}
+
+    window_start, window_end = ds().GANTT_START, ds().GANTT_START + timedelta(days=ds().GANTT_DAYS)
+    visible = [op for op in version.operations
+               if op.machine_code in machine_y and op.end > window_start and op.start < window_end]
 
     bars, by_key = [], {}
-    for op in version.operations:
-        x0, x1 = _x(op.start), _x(op.end)
-        is_last = last_op[op.order_number] is op
+    for op in visible:
+        x0, x1 = _x(max(op.start, window_start)), _x(min(op.end, window_end))
+        is_last = last_op.get(op.order_number) is op
         bar = {"op": op, "x": x0, "w": max(x1 - x0, 20), "y": machine_y[op.machine_code] + (MACHINE_ROW_PX - BAR_PX) // 2,
-               "color": db.ORDER_COLORS.get(op.order_number, "bg-primary text-on-primary"),
-               "late": is_last and op.end.date() > requested[op.order_number]}
+               "color": order_color(op.order_number),
+               "late": is_last and op.order_number in requested and op.end.date() > requested[op.order_number]}
         bars.append(bar)
         by_key[f"{op.order_number}:{op.op_code}"] = bar
     blocks = [{"b": b, "x": _x(b.start), "w": _x(b.end) - _x(b.start),
-               "y": machine_y[b.machine_code] + 4, "h": MACHINE_ROW_PX - 8} for b in version.blocks]
-    markers = [{"m": mk, "x": _x(mk.at), "y": machine_y[mk.machine_code]} for mk in version.markers]
+               "y": machine_y[b.machine_code] + 4, "h": MACHINE_ROW_PX - 8} for b in version.blocks
+              if b.machine_code in machine_y and b.end > window_start and b.start < window_end]
+    markers = [{"m": mk, "x": _x(mk.at), "y": machine_y[mk.machine_code]} for mk in version.markers
+               if mk.machine_code in machine_y and window_start <= mk.at < window_end]
     arrows = []
     for a, b in version.dependencies:
         if a not in by_key or b not in by_key:
@@ -283,7 +320,7 @@ def gantt_view(version_key: str) -> dict:
         "blocks": blocks,
         "markers": markers,
         "arrows": arrows,
-        "width": db.GANTT_DAYS * DAY_PX,
+        "width": ds().GANTT_DAYS * DAY_PX,
         "height": y,
         "day_px": DAY_PX,
         "today_x": _x(datetime(2025, 11, 20, 14, 32)),
@@ -292,35 +329,56 @@ def gantt_view(version_key: str) -> dict:
 
 def active_order_legend() -> list[dict]:
     seen = []
-    for op in get_version("v4.2").operations:
+    for op in baseline().operations:
         if op.order_number not in [s["order"] for s in seen]:
-            o = get_order(op.order_number)["o"]
+            view = get_order(op.order_number)
+            if view is None:
+                continue
+            o = view["o"]
             seen.append({"order": op.order_number, "label": f'{o.spec_title}',
-                         "color": db.ORDER_COLORS.get(op.order_number, "bg-primary")})
+                         "color": order_color(op.order_number)})
     return seen
 
 
 def scenario_comparison() -> dict:
-    base, cand = get_version("v4.2"), get_version("v4.3")
+    """Baseline vs the most recent scenario (the baseline itself only if it is the only version)."""
+    base = baseline()
+    others = [v for v in ds().SCHEDULE_VERSIONS.values() if not v.is_baseline]
+    cand = max(others, key=lambda v: v.run_number) if others else base
     return {"base": base, "cand": cand}
+
+
+_FALLBACK_COLORS = ["bg-primary text-on-primary", "bg-primary-fixed text-on-primary-fixed",
+                    "bg-tertiary-container text-on-tertiary-container", "bg-cobalt text-white",
+                    "bg-secondary-container text-on-secondary-container", "bg-surface-bright text-on-surface"]
+
+
+def order_color(order_number: str) -> str:
+    known = ds().ORDER_COLORS.get(order_number)
+    if known:
+        return known
+    return _FALLBACK_COLORS[sum(map(ord, order_number)) % len(_FALLBACK_COLORS)]
 
 
 # --- Approvals / audit -------------------------------------------------------------------
 
 
 def approval_requests():
-    return db.APPROVAL_REQUESTS
+    return ds().APPROVAL_REQUESTS
 
 
 def record_audit(action: str, entity: str, user: CurrentUser, reason: str = "") -> AuditEntry:
     entry = AuditEntry(at=datetime.now(), user=user.name, action=action, entity=entity, reason=reason)
     AUDIT_LOG.append(entry)
+    if dataset.is_supabase():
+        from app.data import writes  # local import avoids a cycle (writes reads the dataset)
+        writes.insert_audit(action, entity, reason)
     return entry
 
 
 def request_decision(request_id: str, decision: str, user: CurrentUser) -> dict:
     """Approve/reject a plan. Server-side authorization (spec §5): only an approver, never the requester."""
-    req = next((r for r in db.APPROVAL_REQUESTS if r.id == request_id), None)
+    req = next((r for r in ds().APPROVAL_REQUESTS if r.id == request_id), None)
     if req is None:
         return {"ok": False, "message": f"Approval request {request_id} not found."}
     if not user.can_approve:
@@ -332,7 +390,13 @@ def request_decision(request_id: str, decision: str, user: CurrentUser) -> dict:
         return {"ok": False, "message": "You cannot decide on a plan you submitted yourself."}
     if req.status != "Pending":
         return {"ok": False, "message": f"{req.id} is already {req.status.lower()}."}
-    req.status = "Approved" if decision == "Commit" else "Rejected"
+    new_status = "Approved" if decision == "Commit" else "Rejected"
+    if dataset.is_supabase():
+        from app.data import writes
+        result = writes.decide_approval(request_id, new_status)
+        if not result.ok:
+            return {"ok": False, "message": result.message}
+    req.status = new_status
     record_audit(decision, request_id, user)
     return {"ok": True, "message": f"{req.schedule_version} {req.status.lower()}."}
 
@@ -340,6 +404,6 @@ def request_decision(request_id: str, decision: str, user: CurrentUser) -> dict:
 def submit_for_approval(version_key: str, notes: str, user: CurrentUser) -> dict:
     """Records a submission. The plan is never auto-approved (spec §2 / §11.3 rule 10)."""
     version = get_version(version_key)
-    req = next((r for r in db.APPROVAL_REQUESTS if r.schedule_version == version.key), None)
+    req = next((r for r in ds().APPROVAL_REQUESTS if r.schedule_version == version.key), None)
     entry = record_audit("Submitted for approval", f"schedule {version.key}", user, notes)
-    return {"version": version, "request": req, "entry": entry, "approver": db.APPROVER}
+    return {"version": version, "request": req, "entry": entry, "approver": ds().APPROVER}

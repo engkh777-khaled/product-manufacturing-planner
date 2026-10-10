@@ -1,0 +1,140 @@
+"""Writes to Supabase as the signed-in user (M06).
+
+Every call forwards the user's access token to PostgREST, so Row Level Security decides what is allowed —
+the app checks roles too, but the database is the final authority (spec §5). Errors come back as
+WriteResult messages that are safe to show in the UI.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from typing import Any
+
+import httpx
+import jwt
+
+from app import auth
+from app.data import dataset, supabase_dataset
+
+ERROR_MESSAGES = {
+    "42501": "You don't have permission to make this change.",
+    "23505": "That record already exists.",
+    "23503": "This record is referenced elsewhere or points to something missing.",
+    "PGRST116": "Record not found.",
+}
+
+
+@dataclass
+class WriteResult:
+    ok: bool
+    message: str
+    data: Any = field(default=None)
+
+
+def _rest(method: str, path: str, *, json=None, params=None, prefer: str = "return=representation") -> WriteResult:
+    token = dataset.access_token()
+    settings = auth.settings()
+    if not token or not settings.supabase_configured:
+        return WriteResult(False, "Saving requires DATA_BACKEND=supabase and a signed-in user.")
+    headers = {"apikey": settings.supabase_publishable_key, "Authorization": f"Bearer {token}",
+               "Content-Type": "application/json", "Prefer": prefer}
+    try:
+        r = httpx.request(method, f"{settings.supabase_url.rstrip('/')}/rest/v1/{path}", headers=headers,
+                          json=json, params=params, timeout=20)
+    except httpx.HTTPError:
+        return WriteResult(False, "Supabase is unreachable. Nothing was saved.")
+    if r.status_code >= 400:
+        body = r.json() if r.headers.get("content-type", "").startswith("application/json") else {}
+        code = body.get("code", "")
+        if code == "23514" or code == "P0001":  # CHECK / raised by our functions: the message explains the rule
+            return WriteResult(False, f"Rejected: {body.get('message', 'a data rule was violated')}.")
+        return WriteResult(False, ERROR_MESSAGES.get(code, f"Save failed ({r.status_code}: {body.get('message', 'error')})."))
+    supabase_dataset.invalidate()  # every user's next page load sees the change
+    data = r.json() if r.content and r.headers.get("content-type", "").startswith("application/json") else None
+    return WriteResult(True, "Saved.", data)
+
+
+def _patch_one(path: str, filters: dict, values: dict, not_found: str) -> WriteResult:
+    result = _rest("PATCH", path, json=values, params=filters)
+    if result.ok and not result.data:
+        # RLS hides rows the user may not change: PostgREST then updates nothing instead of raising.
+        return WriteResult(False, not_found)
+    return result
+
+
+def _user_id() -> str | None:
+    token = dataset.access_token()
+    return jwt.decode(token, options={"verify_signature": False}).get("sub") if token else None  # verified in middleware
+
+
+# ------------------------------------------------------------------ sales orders
+
+def save_draft_order(payload: dict) -> WriteResult:
+    result = _rest("POST", "rpc/save_draft_sales_order", json={"p": payload}, prefer="return=minimal")
+    if result.ok:
+        result.message = f"{payload['order_number']} saved as Draft."
+    return result
+
+
+def confirm_order(order_number: str) -> WriteResult:
+    result = _rest("POST", "rpc/confirm_sales_order", json={"p_order_number": order_number}, prefer="return=minimal")
+    if result.ok:
+        result.message = f"{order_number} confirmed."
+    return result
+
+
+def delete_draft_order(order_number: str) -> WriteResult:
+    result = _rest("DELETE", "sales_orders", params={"order_number": f"eq.{order_number}", "status": "eq.Draft"})
+    if result.ok and not result.data:
+        return WriteResult(False, f"{order_number} is not a Draft you may delete.")
+    if result.ok:
+        result.message = f"{order_number} deleted."
+    return result
+
+
+# ------------------------------------------------------------------ inventory & purchasing
+
+def update_inventory(balance_id: str, on_hand: float, reserved: float, quality_hold: float) -> WriteResult:
+    return _patch_one("inventory_balances", {"id": f"eq.{balance_id}"},
+                      {"on_hand_quantity": on_hand, "reserved_quantity": reserved, "quality_hold_quantity": quality_hold},
+                      "You don't have permission to adjust inventory (stores or admin role required).")
+
+
+def update_po_line(line_id: str, values: dict) -> WriteResult:
+    return _patch_one("purchase_order_items", {"id": f"eq.{line_id}"}, values,
+                      "You don't have permission to update purchase order lines.")
+
+
+# ------------------------------------------------------------------ engineering revisions
+
+def submit_bom_for_review(bom_id: str) -> WriteResult:
+    return _patch_one("bom_headers", {"id": f"eq.{bom_id}", "status": "eq.Draft"}, {"status": "Under Review"},
+                      "Only Draft revisions can be submitted, by engineering or admin.")
+
+
+def return_bom_to_draft(bom_id: str) -> WriteResult:
+    return _patch_one("bom_headers", {"id": f"eq.{bom_id}", "status": "eq.Under Review"}, {"status": "Draft"},
+                      "Only revisions Under Review can be returned to Draft.")
+
+
+def approve_bom(bom_id: str) -> WriteResult:
+    result = _rest("POST", "rpc/approve_bom_revision", json={"p_bom_header_id": bom_id}, prefer="return=minimal")
+    if result.ok:
+        result.message = "Revision approved; the previous approved revision is now Superseded."
+    return result
+
+
+# ------------------------------------------------------------------ approvals & audit
+
+def decide_approval(request_number: str, status: str) -> WriteResult:
+    return _patch_one("approval_requests", {"request_number": f"eq.{request_number}", "status": "eq.Pending"},
+                      {"status": status, "decided_at": datetime.now(timezone.utc).isoformat(), "approver_id": _user_id()},
+                      "This request is not pending, or you may not decide it (approvers cannot decide their own requests).")
+
+
+def insert_audit(action: str, entity: str, reason: str = "") -> None:
+    """Best effort: an audit write failure must not block the user's action (M07 makes auditing transactional)."""
+    _rest("POST", "audit_logs", prefer="return=minimal", json={
+        "user_id": _user_id(), "action": action, "entity_type": "app", "reason": reason or None,
+        "after_data": {"entity": entity}})

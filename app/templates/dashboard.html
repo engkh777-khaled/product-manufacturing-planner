@@ -229,6 +229,7 @@
         </div>
       </section>
 
+      {% if approval %}
       <section class="bg-surface-container-low rounded overflow-hidden">
         {% call panel_header("Schedule Approval Gate", "how_to_reg", None) %}
           {{ badge(approval.status ~ " release", "warn") }}
@@ -257,6 +258,7 @@
           <div id="approval-result" aria-live="polite"></div>
         </div>
       </section>
+      {% endif %}
     </div>
   </div>
 </div>

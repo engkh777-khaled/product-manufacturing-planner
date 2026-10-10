@@ -159,3 +159,20 @@ _Reference (M05)_
 Check, in order: cookies `pmp_access` / `pmp_refresh` exist (browser dev tools); `/healthz` shows Supabase reachable;
 the user has at least one row in `public.user_roles` (users without a role are treated as signed out because
 `me()` returns no roles and RLS hides all data); re-run `python -m scripts.seed_demo_users` after a DB reset.
+
+## Page shows "Plant data unavailable" (503)
+_Reference (M06)_
+
+With `DATA_BACKEND=supabase` the app refuses to show demo data when the snapshot fails. Check `/healthz`, that you are
+signed in, and that the user has a role (no role → RLS returns no rows). Switch back with `DATA_BACKEND=mock`.
+
+## `ZoneInfoNotFoundError: 'America/Chicago'` on Windows
+_Seen 2026-10-10 (M06)_
+
+Windows has no IANA time-zone database. `pip install tzdata` (in requirements.txt).
+
+## A component shows as short by 1 unit although stock equals the order quantity
+_Seen 2026-10-10 (M06)_
+
+Expected: required = qty ÷ (1 − scrap) is rounded **up** to whole parts (e.g. 10 valves with 2 % scrap need 11
+bodies). Increase stock or check the scrap factor; it is not a bug.

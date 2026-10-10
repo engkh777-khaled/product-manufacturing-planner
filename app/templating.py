@@ -5,7 +5,7 @@ from pathlib import Path
 
 from fastapi.templating import Jinja2Templates
 
-from app.data import mock_data as db
+from app.data.dataset import current as ds
 from app.data import repository as repo
 
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
@@ -14,6 +14,7 @@ NAV = [
     ("/dashboard", "dashboard", "Executive Dashboard"),
     ("/workbench", "view_timeline", "Planning Workbench"),
     ("/orders", "receipt_long", "Sales Orders & Demand"),
+    ("/inventory", "inventory_2", "Inventory & Purchasing"),
     ("/engineering", "schema", "Engineering & BOM"),
     ("/assistant", "psychology", "AI Planning Assistant"),
 ]
@@ -42,12 +43,13 @@ def shell_context(request) -> dict:
     """Globals for the header / sidebar. The user comes from the session (app.auth)."""
     b = repo.bottleneck()
     kpis = repo.order_kpis()
-    active_machines = sum(1 for wc in db.WORK_CENTERS for m in wc.machines if not m.down)
-    total_machines = sum(len(wc.machines) for wc in db.WORK_CENTERS)
-    baseline = repo.get_version("v4.2")
+    active_machines = sum(1 for wc in ds().WORK_CENTERS for m in wc.machines if not m.down)
+    total_machines = sum(len(wc.machines) for wc in ds().WORK_CENTERS)
+    baseline = repo.baseline()
     return {
         "nav": NAV,
-        "plant": db.PLANT,
+        "plant": ds().PLANT,
+        "data_source": getattr(ds(), "SOURCE", "mock"),
         "user": getattr(request.state, "user", None),
         "solver_label": f"CP-SAT Solver: {baseline.solver_status.replace('_', ' ').title()} (Run #{baseline.run_number})",
         "alert_count": len(repo.alerts()),

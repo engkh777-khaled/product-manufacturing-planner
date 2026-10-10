@@ -3,6 +3,9 @@
 {% block title %}Sales Orders & Demand{% endblock %}
 {% block content %}
 <div class="p-space-xl flex flex-col gap-space-xl" x-data="{ sel: '{{ selected or '' }}' }">
+  {% if msg %}
+  <div class="p-space-md rounded border border-primary/30 bg-primary/10 text-primary flex items-center gap-space-sm font-label-mono-sm text-label-mono-sm" role="status">{{ icon("info", 16) }}<span>{{ msg }}</span></div>
+  {% endif %}
   <div class="flex flex-col gap-space-sm">
     <nav class="font-label-mono-xs text-label-mono-xs text-outline uppercase" aria-label="Breadcrumb">Sec 12.2 / Demand Management / <span class="text-primary">Discrete Sales Pipeline</span></nav>
     <div class="flex flex-wrap items-center gap-space-md">
@@ -12,8 +15,12 @@
     <div class="flex flex-wrap gap-space-sm">
       {{ button("Export ERP Sync", "download", "secondary") }}
       {{ button("Lead-Time Modeler", "tune", "secondary", href="/workbench") }}
-      <button type="button" disabled title="Order entry form is not part of this demo build"
+      {% if can_edit %}
+      <a href="/orders/new" class="h-7 px-space-md inline-flex items-center gap-space-xs bg-cobalt hover:bg-cobalt-dark text-white font-label-mono-sm text-label-mono-sm rounded">{{ icon("add_circle", 15) }}Create Customer Sales Order</a>
+      {% else %}
+      <button type="button" disabled title="Requires DATA_BACKEND=supabase and the planner or admin role"
               class="h-7 px-space-md inline-flex items-center gap-space-xs bg-cobalt text-white font-label-mono-sm text-label-mono-sm rounded disabled:opacity-50 disabled:cursor-not-allowed">{{ icon("add_circle", 15) }}Create Customer Sales Order</button>
+      {% endif %}
     </div>
   </div>
 

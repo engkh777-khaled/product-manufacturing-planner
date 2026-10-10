@@ -83,6 +83,7 @@ class BomItem(BaseModel):
 
 
 class BomHeader(BaseModel):
+    id: str | None = None  # database id (None for mock data)
     product_code: str
     revision: str
     status: str  # Draft | Under Review | Approved | Superseded | Obsolete
@@ -137,8 +138,8 @@ class SalesOrder(BaseModel):
     order_number: str
     customer_name: str
     customer_reference: str
-    customer_profile: str
-    customer_otd: float
+    customer_profile: str = ""
+    customer_otd: float | None = None
     product_code: str
     spec_title: str
     spec_detail: str
@@ -179,7 +180,7 @@ class PurchaseOrder(BaseModel):
     linked_order: str
     ordered_quantity: int
     received_quantity: int
-    required_date: date
+    required_date: date | None
     expected_delivery_date: date | None
     status: str  # Open | In Transit | QC Hold | Late
     quality_status: str = ""

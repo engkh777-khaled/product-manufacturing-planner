@@ -45,6 +45,51 @@
     {% endfor %}
   </div>
 
+  {% if msg %}
+  <div class="p-space-md rounded border border-primary/30 bg-primary/10 text-primary flex items-center gap-space-sm font-label-mono-sm text-label-mono-sm" role="status">{{ icon("info", 16) }}<span>{{ msg }}</span></div>
+  {% endif %}
+
+  {% if revisions %}
+  <section class="bg-surface-container-low rounded overflow-hidden">
+    <div class="p-space-md bg-surface-container flex flex-wrap items-center justify-between gap-space-sm">
+      <h2 class="flex items-center gap-space-sm font-headline-sm text-headline-sm text-on-surface">{{ icon("history", 18, "text-primary") }}BOM Revision History</h2>
+      <span class="font-label-mono-xs text-label-mono-xs text-outline">Draft → Under Review (engineering) → Approved (approver)</span>
+    </div>
+    <div class="overflow-x-auto scroll-thin">
+      <table class="w-full min-w-[720px] text-left border-collapse font-label-mono-sm text-label-mono-sm">
+        <thead><tr class="bg-surface-container-lowest text-outline font-label-mono-xs text-label-mono-xs uppercase border-b border-hairline">
+          <th class="py-space-sm px-space-md">Revision</th><th class="py-space-sm px-space-md">Status</th><th class="py-space-sm px-space-md">Effective</th>
+          <th class="py-space-sm px-space-md">ECO</th><th class="py-space-sm px-space-md">Approved by</th><th class="py-space-sm px-space-md text-right">Actions</th></tr></thead>
+        <tbody>
+          {% for r in revisions %}
+          {% set tone = {"Approved": "ok", "Under Review": "warn", "Draft": "info", "Superseded": "muted", "Obsolete": "muted"}[r.status] %}
+          <tr class="border-b border-surface-container">
+            <td class="py-space-sm px-space-md text-on-surface">{{ r.revision }}</td>
+            <td class="py-space-sm px-space-md">{{ badge(r.status, tone) }}</td>
+            <td class="py-space-sm px-space-md text-on-surface-variant">{{ r.effective_from|d("%b %d, %Y") }}{% if r.effective_to %} → {{ r.effective_to|d("%b %d, %Y") }}{% endif %}</td>
+            <td class="py-space-sm px-space-md text-on-surface-variant">{{ r.eco_number }}</td>
+            <td class="py-space-sm px-space-md text-on-surface-variant">{{ r.approved_by }}</td>
+            <td class="py-space-sm px-space-md">
+              <div class="flex justify-end gap-space-xs">
+                {% if r.id and r.status == "Draft" and can_engineer %}
+                <form method="post" action="/engineering/revisions/{{ r.id }}/submit?product={{ p.product_code }}"><button class="h-7 px-space-sm rounded bg-surface-container-high text-on-surface hover:bg-surface-container-highest">Submit for review</button></form>
+                {% endif %}
+                {% if r.id and r.status == "Under Review" and can_approve %}
+                <form method="post" action="/engineering/revisions/{{ r.id }}/approve?product={{ p.product_code }}"><button class="h-7 px-space-sm rounded bg-primary text-on-primary font-semibold">Approve</button></form>
+                {% endif %}
+                {% if r.id and r.status == "Under Review" and (can_approve or can_engineer) %}
+                <form method="post" action="/engineering/revisions/{{ r.id }}/return?product={{ p.product_code }}"><button class="h-7 px-space-sm rounded text-on-surface-variant hover:bg-surface-container-high">Return to draft</button></form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+
   <div id="bom-validation" aria-live="polite"></div>
 
   <div class="grid grid-cols-1 2xl:grid-cols-12 gap-space-xl items-start">

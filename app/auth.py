@@ -170,14 +170,14 @@ def demo_user() -> CurrentUser:
     return mock_data.CURRENT_USER
 
 
-async def resolve_session(request: Request) -> tuple[CurrentUser | None, Session | None, bool]:
-    """Returns (user, new_session_to_store, clear_cookies)."""
+async def resolve_session(request: Request) -> tuple[CurrentUser | None, Session | None, bool, str | None]:
+    """Returns (user, new_session_to_store, clear_cookies, valid_access_token)."""
     if settings().auth_mode == "disabled":
-        return demo_user(), None, False
+        return demo_user(), None, False, None
     access = request.cookies.get(ACCESS_COOKIE)
     refresh_token = request.cookies.get(REFRESH_COOKIE)
     if not access and not refresh_token:
-        return None, None, False
+        return None, None, False, None
     new_session = None
     try:
         if not access:
@@ -185,22 +185,22 @@ async def resolve_session(request: Request) -> tuple[CurrentUser | None, Session
         await verify_access_token(access)
     except jwt.ExpiredSignatureError:
         if not refresh_token:
-            return None, None, True
+            return None, None, True, None
         try:
             new_session = await refresh(refresh_token)
             access = new_session.access_token
             await verify_access_token(access)
         except (AuthError, jwt.InvalidTokenError):
-            return None, None, True
+            return None, None, True, None
     except jwt.InvalidTokenError:
-        return None, None, True  # forged, malformed or wrong audience: drop the cookies
+        return None, None, True, None  # forged, malformed or wrong audience: drop the cookies
     except AuthError:
-        return None, None, False  # Auth service unreachable: keep cookies, ask again next request
+        return None, None, False, None  # Auth service unreachable: keep cookies, ask again next request
     try:
         user = await fetch_identity(access)
     except AuthError:
-        return None, new_session, False
-    return user, new_session, False
+        return None, new_session, False, None
+    return user, new_session, False, access
 
 
 def store_session(response, session: Session) -> None:

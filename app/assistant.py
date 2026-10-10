@@ -39,7 +39,7 @@ def _order_answer(order_number: str) -> dict:
         verdict = f"Yes, under the current baseline. Projected completion is {proj} against a requested date of {req} ({view['variance']})."
     return {
         "tools": ["get_order_details", "validate_order_readiness", "check_material_availability",
-                  "get_schedule_status(v4.2)", "explain_delivery_risk"],
+                  f"get_schedule_status({repo.baseline().key})", "explain_delivery_risk"],
         "status": "FEASIBLE_WITH_LATENESS" if view["late"] > 0 else "FEASIBLE",
         "paragraphs": [
             verdict,
@@ -68,17 +68,18 @@ def _bottleneck_answer() -> dict:
 
 
 def _compare_answer() -> dict:
-    b, c = repo.get_version("v4.2"), repo.get_version("v4.3")
+    cmp = repo.scenario_comparison()
+    b, c = cmp["base"], cmp["cand"]
     return {
-        "tools": ["get_schedule_status(v4.2)", "get_schedule_status(v4.3)"],
+        "tools": [f"get_schedule_status({b.key})", f"get_schedule_status({c.key})"],
         "status": "OK",
         "paragraphs": [
             f"v{c.version_number} (run #{c.run_number}) differs from baseline v{b.version_number} by: {c.change_summary}.",
             f"Late orders {b.late_orders} → {c.late_orders}; total lateness {b.total_lateness_h}h → {c.total_lateness_h}h; "
             f"added cost ${c.overtime_cost:,.0f}. Hard violations: {c.hard_violations}. v{c.version_number} is {c.status} — "
-            f"it is not the approved baseline until {repo.approval_requests()[0].approver} signs off.",
+            f"it is not the approved baseline until an authorized approver signs off.",
         ],
-        "links": [("Compare in Workbench", "/workbench?version=v4.3")],
+        "links": [("Compare in Workbench", f"/workbench?version={c.key}")],
     }
 
 

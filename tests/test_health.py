@@ -61,7 +61,7 @@ def test_degraded_when_supabase_unreachable(monkeypatch):
 
 
 def test_degraded_when_supabase_backend_selected_but_not_configured():
-    use_settings(data_backend="supabase")
+    use_settings(data_backend="supabase", auth_mode="supabase")
     r = client.get("/healthz")
     assert r.status_code == 503
 

@@ -1,6 +1,6 @@
 # Backend Roadmap — Supabase + Python
 
-_Written 2026-10-10 · Updated 2026-10-10: **cloud-first** (D-014), M03–M05 done_
+_Written 2026-10-10 · Updated 2026-10-10: **cloud-first** (D-014), M03–M06 done_
 
 Each milestone ends with a **test gate**: commands any developer can run on their own machine to prove the
 milestone works. A milestone is not done until its gate passes and its file exists in [milestones/](milestones/).
@@ -124,12 +124,14 @@ npx supabase db reset --linked   # wipes the DEV project, re-applies all migrati
 Manual: log in as `planner@example.com`, then as `approver@example.com`. The approval buttons behave differently.
 Details: [milestones/M05-auth-roles-rls.md](milestones/M05-auth-roles-rls.md).
 
-### M06 — Supabase repository & master-data editing
+### M06 — Supabase repository & master-data editing ✅ Done 2026-10-10
 **Goal:** The app runs on the database instead of mock data, and users can edit master data.
 - `SupabaseRepository` implementing the same functions as `app/data/repository.py`. Switch via `DATA_BACKEND`.
 - Create and edit draft sales orders, with line validation (spec §6.7: never silently change engineering config).
 - New screen **Inventory & Purchasing** (spec §12.4): balances, reservations, quality holds, open POs.
 - Engineering screen: BOM revision status workflow (Draft → Under Review → Approved).
+
+Details: [milestones/M06-supabase-repository-and-editing.md](milestones/M06-supabase-repository-and-editing.md).
 
 **Test gate**
 ```powershell

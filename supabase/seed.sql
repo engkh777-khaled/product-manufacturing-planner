@@ -314,26 +314,26 @@ from (values
   ('ST-PTFE-08',   'WH-MAIN', '',             30,  0,  0),
   ('GS-PK-008',    'WH-MAIN', '',             40,  0,  0),
   ('LV-WR-08',     'WH-MAIN', '',             20,  0,  0),
-  ('BD-F22-14',    'WH-YARD', 'F22-7731',     4,   0,  0),
+  ('BD-F22-14',    'WH-YARD', 'F22-7731',     5,   0,  0),
   ('BL-STL-14',    'WH-MAIN', '',             5,   0,  0),
   ('ST-STL-14',    'WH-MAIN', '',             9,   0,  0),
   ('ST-IN718-M24', 'WH-MAIN', '',             0,   0,  0),    -- PO-8815 in transit
   ('GS-PK-014',    'WH-MAIN', '',             6,   0,  0),
-  ('BD-CF8M-06',   'WH-MAIN', '',             18,  0,  0),
+  ('BD-CF8M-06',   'WH-MAIN', '',             20,  0,  0),
   ('PL-CF8M-06',   'WH-MAIN', '',             40,  0,  0),
   ('SP-IN-06',     'WH-MAIN', '',             20,  0,  0),
-  ('BD-CF8M-04',   'WH-MAIN', '',             10,  0,  0),
+  ('BD-CF8M-04',   'WH-MAIN', '',             12,  0,  0),
   ('PL-CF8M-04',   'WH-MAIN', '',             22,  0,  0),
   ('SP-X750-04',   'WH-MAIN', '',             12,  0,  0),
-  ('BD-316L-12',   'WH-MAIN', 'CRY-316L-55',  2,   0,  0),
-  ('BL-316L-12',   'WH-MAIN', '',             2,   0,  0),
+  ('BD-316L-12',   'WH-MAIN', 'CRY-316L-55',  3,   0,  0),
+  ('BL-316L-12',   'WH-MAIN', '',             3,   0,  0),
   ('SL-KELF-12',   'WH-MAIN', '',             6,   0,  0),
-  ('BN-EXT-12',    'WH-MAIN', '',             2,   0,  0),
-  ('BD-WCC-04',    'WH-MAIN', '',             8,   0,  0),
+  ('BN-EXT-12',    'WH-MAIN', '',             3,   0,  0),
+  ('BD-WCC-04',    'WH-MAIN', '',             9,   0,  0),
   ('PG-MNL-04',    'WH-MAIN', '',             9,   0,  0),
   ('CG-410-04',    'WH-MAIN', '',             9,   0,  0),
   ('GS-PK-004',    'WH-MAIN', '',             12,  0,  0),
-  ('BD-CF8M-G06',  'WH-MAIN', '',             5,   0,  0),
+  ('BD-CF8M-G06',  'WH-MAIN', '',             6,   0,  0),
   ('WG-CF8M-06',   'WH-MAIN', '',             6,   0,  0),
   ('BN-EXT-06',    'WH-MAIN', '',             6,   0,  0),
   ('GS-PK-006',    'WH-MAIN', '',             10,  0,  0),
@@ -542,3 +542,51 @@ from public.planning_runs pr where pr.run_number = 1038;
 insert into public.approval_requests (request_number, schedule_version_id, status, requested_at)
 select 'APR-1042', sv.id, 'Pending', '2025-11-20 14:12-06'
 from public.schedule_versions sv where sv.version_number = '4.3';
+
+-- ------------------------------------------------------------------ M06 additions
+-- Which routing operation consumes each V-600 BOM line (drives "shortage blocked" on the Gantt).
+update public.bom_items bi set operation_reference = v.op
+from (values (1, 'OP-020'), (2, 'OP-020'), (3, 'OP-040'), (4, 'OP-030'), (5, 'OP-050'), (6, 'OP-050'), (7, 'OP-070')) as v (line, op),
+     public.bom_headers bh, public.products p
+where bi.bom_header_id = bh.id and bh.product_id = p.id and p.product_code = 'V-600-TBV-10'
+  and bh.revision = 'Rev C' and bi.line_number = v.line;
+update public.bom_items bi set operation_reference = v.op
+from (values (1, 'OP-020'), (2, 'OP-020'), (3, 'OP-040'), (4, 'OP-030'), (5, 'OP-050'), (6, 'OP-070')) as v (line, op),
+     public.bom_headers bh, public.products p
+where bi.bom_header_id = bh.id and bh.product_id = p.id and p.product_code = 'V-600-TBV-10'
+  and bh.revision = 'Rev B' and bi.line_number = v.line;
+
+-- Capacity outputs of the (seeded, pre-solver) planning runs. M09 recomputes these from real schedules.
+update public.schedule_versions set metrics = metrics || '{
+  "load_source": "seed (fictional) — recomputed by the solver from M09",
+  "work_center_load": {
+    "WC-10": {"scheduled_hours": 187.2, "capacity_hours": 240, "queue_note": "Queue: 3 Pallets • Avg Setup: 42m"},
+    "WC-14": {"scheduled_hours": 148.8, "capacity_hours": 240, "queue_note": "Queue: 1 Flange casting • Tooling OK"},
+    "WC-22": {"scheduled_hours": 211.2, "capacity_hours": 240, "queue_note": "Queue: 4 Seat pockets • Shield gas: 98%"},
+    "WC-30": {"scheduled_hours": 170.4, "capacity_hours": 240, "queue_note": "3 Crews manned • Torque cal: Active"},
+    "WC-35": {"scheduled_hours": 196.8, "capacity_hours": 240, "queue_note": "Bay A crane booked 06:00–14:00"},
+    "WC-40": {"scheduled_hours": 230.4, "capacity_hours": 240, "queue_note": "Critical Backlog: 7 valves • Wait Time: 14.2h"},
+    "WC-50": {"scheduled_hours": 129.6, "capacity_hours": 240, "queue_note": "Cure Oven: Running Nominally"}},
+  "machine_utilization": {"MC-010": 94, "MC-014": 78, "VT-001": 62, "WL-002": 88, "WL-005": 65, "SA-008": 72, "SA-012": 81,
+                          "FA-001": 96, "FA-002": 60, "TE-001": 100, "TE-004": 50, "ND-001": 40, "SF-001": 55, "SF-003": 70}
+}'::jsonb where version_number = '4.2';
+update public.schedule_versions set metrics = metrics || '{
+  "load_source": "seed (fictional) — recomputed by the solver from M09",
+  "work_center_load": {
+    "WC-10": {"scheduled_hours": 187.2, "capacity_hours": 240, "queue_note": "Queue: 3 Pallets • Avg Setup: 42m"},
+    "WC-14": {"scheduled_hours": 148.8, "capacity_hours": 240, "queue_note": "Queue: 1 Flange casting • Tooling OK"},
+    "WC-22": {"scheduled_hours": 211.2, "capacity_hours": 240, "queue_note": "Queue: 4 Seat pockets • Shield gas: 98%"},
+    "WC-30": {"scheduled_hours": 172.9, "capacity_hours": 240, "queue_note": "3 Crews manned • Torque cal: Active"},
+    "WC-35": {"scheduled_hours": 200.8, "capacity_hours": 240, "queue_note": "Bay A crane booked 06:00–14:00"},
+    "WC-40": {"scheduled_hours": 236.4, "capacity_hours": 248, "queue_note": "Saturday OT shift on TE-001 (+8h capacity)"},
+    "WC-50": {"scheduled_hours": 134.6, "capacity_hours": 240, "queue_note": "Cure Oven: Running Nominally"}},
+  "machine_utilization": {"MC-010": 94, "MC-014": 78, "VT-001": 62, "WL-002": 88, "WL-005": 65, "SA-008": 72, "SA-012": 83,
+                          "FA-001": 97, "FA-002": 60, "TE-001": 100, "TE-004": 50, "ND-001": 40, "SF-001": 55, "SF-003": 73}
+}'::jsonb where version_number = '4.3';
+
+-- (inventory quantities include scrap allowance so only the story's shortages remain)
+-- Required dates that MRP will compute in M08 (needed to show supplier slippage now).
+update public.planning_alerts set details = details || '{"required_date": "2025-11-24"}'::jsonb
+where alert_type = 'late_supplier_receipt' and details ->> 'po_number' = 'PO-8821';
+update public.planning_alerts set details = details || '{"required_date": "2025-11-19"}'::jsonb
+where alert_type = 'quality_hold' and details ->> 'po_number' = 'PO-8840';

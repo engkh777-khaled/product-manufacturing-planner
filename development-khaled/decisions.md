@@ -225,3 +225,34 @@ _2026-10-10 · M05_
 **Decision.** `scripts/seed_demo_users.py` creates the 7 fictional role users through `DATABASE_URL`. Their shared
 password is generated into the developer's `.env` (`DEMO_USER_PASSWORD`) and only a bcrypt hash is stored in Postgres.
 `seed.sql` contains no users. Re-run the script after `supabase db reset --linked`.
+
+## D-020 — One RLS-filtered snapshot per request, converted to the existing models
+_2026-10-10 · M06_
+
+**Context.** Pages, repository logic and tests were built on in-memory models. The database has a different
+(normalised) shape, and spec §4 requires planning views to use a consistent snapshot.
+
+**Decision.** `public.planning_snapshot()` (SECURITY INVOKER, one statement) returns everything the caller may see.
+`app/data/supabase_dataset.py` converts it into the same models as `mock_data`; the request middleware installs it
+in a context variable that the repository reads via `ds()`. Cached 30 s per token, invalidated after writes.
+If Supabase fails the request gets 503 — never a silent fallback to demo data.
+
+**Consequences.** Both backends share all page logic and tests (offline tests use a recorded snapshot). The whole
+plant is loaded per request; acceptable for the MVP data size — revisit with targeted RPCs for real volumes.
+
+## D-021 — Multi-row writes are SECURITY INVOKER database functions
+_2026-10-10 · M06_
+
+**Decision.** Writes that touch several rows (save a draft order with its lines, confirm an order, approve a BOM
+revision and supersede the previous one) are Postgres functions called via `/rest/v1/rpc`, running with the caller's
+RLS. Single-row edits use PostgREST PATCH with the user's token. An RLS-hidden row makes PATCH update nothing, which
+the app reports as "no permission".
+
+**Consequences.** Atomic changes without a service-role key in the app; the database re-validates every rule.
+
+## D-022 — Capacity loads are planning-run outputs stored on the schedule version
+_2026-10-10 · M06_
+
+**Decision.** Work-center load and machine utilisation live in `schedule_versions.metrics`
+(`work_center_load`, `machine_utilization`), like other run KPIs. Until the solver exists they are labelled seed
+values (`load_source`); M09 writes computed values into the same keys.

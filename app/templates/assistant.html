@@ -183,7 +183,7 @@
         <dl class="grid grid-cols-2 gap-space-md font-label-mono-xs text-label-mono-xs">
           <div><dt class="text-outline uppercase">Target version &amp; scenario</dt><dd class="text-primary mt-space-xs">Proposed plan run #{{ c.run_number }} (v{{ c.version_number }}, Scenario C)</dd></div>
           <div><dt class="text-outline uppercase">Constraint validation</dt><dd class="text-on-surface mt-space-xs">{{ c.hard_violations }} hard / {{ c.soft_violations }} soft</dd></div>
-          <div><dt class="text-outline uppercase">Designated approver</dt><dd class="text-on-surface mt-space-xs flex items-center gap-space-xs">{{ icon("badge", 14) }}{{ approval.approver }}, {{ approver_role }}</dd></div>
+          <div><dt class="text-outline uppercase">Designated approver</dt><dd class="text-on-surface mt-space-xs flex items-center gap-space-xs">{{ icon("badge", 14) }}{{ approval.approver if approval else "Authorized approver" }}, {{ approver_role }}</dd></div>
           <div><dt class="text-outline uppercase">Committed delivery</dt><dd class="text-on-surface mt-space-xs">Not committed — approver decides</dd></div>
           <div><dt class="text-outline uppercase">Customer requested</dt><dd class="text-on-surface mt-space-xs">{{ plan_order.o.order_number }}: {{ plan_order.o.requested_delivery_date|d("%d-%b-%Y") }}</dd></div>
           <div><dt class="text-outline uppercase">Scenario finish</dt><dd class="text-primary mt-space-xs">29-Nov-2025 (buffer: 1d)</dd></div>

@@ -1,0 +1,34 @@
+{% from "components/ui.html" import icon, badge %}
+<tr id="inv-{{ r.id }}" class="border-b border-surface-container font-label-mono-sm text-label-mono-sm" x-data="{ editing: false }">
+  <td class="py-space-sm px-space-md">
+    <div class="text-on-surface">{{ r.product_code }}</div>
+    <div class="font-body-sm text-body-sm text-on-surface-variant">{{ r.product_name }}</div>
+  </td>
+  <td class="py-space-sm px-space-md text-on-surface-variant">{{ r.warehouse_code }}</td>
+  <td class="py-space-sm px-space-md text-outline">{{ r.lot_number or "—" }}</td>
+  <template x-if="!editing">
+    <td class="py-space-sm px-space-md text-right text-on-surface">{{ r.on_hand|num(0) }}</td>
+  </template>
+  <template x-if="!editing">
+    <td class="py-space-sm px-space-md text-right text-on-surface-variant">{{ r.reserved|num(0) }}</td>
+  </template>
+  <template x-if="!editing">
+    <td class="py-space-sm px-space-md text-right {{ 'text-warn' if r.quality_hold else 'text-on-surface-variant' }}">{{ r.quality_hold|num(0) }}</td>
+  </template>
+  <template x-if="editing">
+    <td colspan="3" class="py-space-sm px-space-md">
+      <form class="flex items-center justify-end gap-space-xs" hx-post="/inventory/balances/{{ r.id }}" hx-target="#inv-{{ r.id }}" hx-swap="outerHTML">
+        <label class="sr-only" for="oh-{{ r.id }}">On hand</label><input id="oh-{{ r.id }}" name="on_hand" value="{{ r.on_hand|num(0) }}" inputmode="decimal" class="w-20 h-7 px-space-xs text-right bg-surface-container-lowest rounded border border-hairline focus:border-cobalt outline-none">
+        <label class="sr-only" for="rs-{{ r.id }}">Reserved</label><input id="rs-{{ r.id }}" name="reserved" value="{{ r.reserved|num(0) }}" inputmode="decimal" class="w-20 h-7 px-space-xs text-right bg-surface-container-lowest rounded border border-hairline focus:border-cobalt outline-none">
+        <label class="sr-only" for="qh-{{ r.id }}">QC hold</label><input id="qh-{{ r.id }}" name="quality_hold" value="{{ r.quality_hold|num(0) }}" inputmode="decimal" class="w-20 h-7 px-space-xs text-right bg-surface-container-lowest rounded border border-hairline focus:border-cobalt outline-none">
+        <button class="h-7 px-space-sm rounded bg-primary text-on-primary font-semibold">Save</button>
+        <button type="button" @click="editing = false" class="h-7 px-space-sm rounded text-on-surface-variant hover:bg-surface-container-high">Cancel</button>
+      </form>
+    </td>
+  </template>
+  <td class="py-space-sm px-space-md text-right font-semibold {{ 'text-crit' if r.net_available <= 0 else 'text-ok' }}">{{ r.net_available|num(0) }}</td>
+  <td class="py-space-sm px-space-md text-right whitespace-nowrap">
+    {% if message is defined and message %}<span class="mr-space-sm {{ 'text-ok' if ok else 'text-crit' }}">{{ message }}</span>{% endif %}
+    {% if can_edit_stock and r.id %}<button type="button" x-show="!editing" @click="editing = true" class="text-primary hover:underline">Adjust</button>{% endif %}
+  </td>
+</tr>

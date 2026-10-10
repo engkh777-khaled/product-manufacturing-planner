@@ -33,6 +33,7 @@ from app.models import (
     WorkCenter,
 )
 
+SOURCE = "mock"  # app.data.dataset: which backend produced this dataset
 PLANT = "Valvetech Plant 04 - Houston TX"
 PLANNING_HORIZON = (date(2025, 11, 15), date(2025, 12, 15))
 GANTT_START = datetime(2025, 11, 17, 0, 0)
@@ -624,3 +625,27 @@ ASSISTANT_QUICK_PROMPTS = [
     "What changed between v4.2 and v4.3?",
     "Which orders are most at risk?",
 ]
+
+
+# --- Lists used by the Inventory & Purchasing and BOM revision screens (M06) -----------------------
+
+INVENTORY = [
+    {"id": None, "product_code": item.component_code, "product_name": item.name, "warehouse_code": "WH-MAIN",
+     "lot_number": "", "on_hand": item.on_hand, "reserved": item.reserved, "quality_hold": item.quality_hold,
+     "net_available": max(item.on_hand - item.reserved - item.quality_hold, 0)}
+    for bom in BOMS.values() for item in bom.items if item.on_hand is not None
+]
+
+PO_LINES = [
+    {"id": None, "po_number": po.po_number, "line_number": 1, "supplier_name": po.supplier_name,
+     "product_code": po.detail, "product_name": po.item, "ordered": po.ordered_quantity, "received": po.received_quantity,
+     "open": po.ordered_quantity - po.received_quantity, "expected": po.expected_delivery_date, "status": po.status,
+     "quality_status": po.quality_status or "Not Inspected", "warehouse_code": "WH-DOCK", "notes": po.note}
+    for po in PURCHASE_ORDERS
+]
+
+BOM_REVISIONS = {
+    code: [{"id": None, "revision": b.revision, "status": b.status, "effective_from": b.effective_from,
+            "effective_to": None, "eco_number": b.eco_number, "approved_by": b.approved_by}]
+    for code, b in BOMS.items()
+}

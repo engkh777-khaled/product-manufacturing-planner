@@ -5,7 +5,7 @@
 | **Date** | 2026-10-10 |
 | **Author** | Khaled (implemented with Claude Code) |
 | **Status** | Done |
-| **Commits** | _see git log — "M05" commit_ |
+| **Commits** | `8579b2e` |
 | **Spec sections** | §5 (roles, permissions, security requirements), §11.3 rule 10 (AI never approves) |
 
 ## Goal

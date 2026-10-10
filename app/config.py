@@ -36,6 +36,8 @@ class Settings(BaseSettings):
     def _auth_mode_is_safe(self) -> "Settings":
         if self.auth_mode == "disabled" and self.app_env not in ("development", "test"):
             raise ValueError("AUTH_MODE=disabled is only allowed when APP_ENV is development or test")
+        if self.data_backend == "supabase" and self.auth_mode != "supabase":
+            raise ValueError("DATA_BACKEND=supabase reads data as the signed-in user: it requires AUTH_MODE=supabase")
         return self
 
     @property
