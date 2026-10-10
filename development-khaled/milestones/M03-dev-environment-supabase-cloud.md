@@ -5,7 +5,7 @@
 | **Date** | 2026-10-10 |
 | **Author** | Khaled (implemented with Claude Code) |
 | **Status** | Done |
-| **Commits** | _see git log — "M03" commit_ |
+| **Commits** | `14092f0` |
 | **Spec sections** | §3 (stack), §5 security requirements (secrets server-side) |
 
 ## Goal
@@ -44,13 +44,15 @@ Actual response:
  "supabase":{"configured":true,"reachable":true,"latency_ms":441,"auth_version":"v2.197.0"}}
 ```
 
+CI: first GitHub Actions run on `14092f0` — **success** ([run](https://github.com/engkh777-khaled/product-manufacturing-planner/actions/runs/38039872895)).
+
 ## Known gaps / follow-ups
 - **Database password** of the dev project is unknown (project was created via the Supabase API/MCP).
   Reset it in Dashboard → Project Settings → Database before M04 (`npx supabase link`, `DATABASE_URL`).
 - **Secret API key** not configured yet. Needed from M06.
-- CI workflow is committed but was not yet observed running on GitHub at the time of writing.
 - Data still comes from the mock repository (`DATA_BACKEND=mock`). Supabase serves data from M06.
 
 ## Problems hit
+- Push of `.github/workflows/tests.yml` needs the `workflow` OAuth scope. Fixed with `gh auth refresh -s workflow`.
 - `GET /rest/v1/` returns 401 "Secret API key required" with a publishable key, so the health probe uses
   `/auth/v1/health` instead. See [troubleshooting.md](../troubleshooting.md).

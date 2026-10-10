@@ -82,3 +82,15 @@ _Seen 2026-10-10 (M03)_
 
 **Fix.** Dashboard → Project Settings → Database → *Reset database password*. Store it only in `.env`
 (`DATABASE_URL`) and enter it when `npx supabase link` asks.
+
+## Push rejected: "refusing to allow an OAuth App to create or update workflow"
+_Seen 2026-10-10 (M03)_
+
+**Cause.** The GitHub CLI token had scopes `gist, read:org, repo` but not `workflow`, which is required to push
+files under `.github/workflows/`.
+
+**Fix.**
+```bash
+echo | gh auth refresh --hostname github.com --scopes workflow   # approve the code at github.com/login/device
+gh auth status                                                   # scopes now include 'workflow'
+```

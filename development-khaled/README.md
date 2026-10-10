@@ -22,7 +22,7 @@ Every milestone adds a file here. Nothing is deleted: if a decision is reversed,
 | M00 | 2026-10-10 | [Project specification](milestones/M00-project-specification.md) | Done | `b7e2f07` |
 | M01 | 2026-10-10 | [Frontend from Stitch designs](milestones/M01-frontend-from-stitch-designs.md) | Done | `afb6ce1` |
 | M02 | 2026-10-10 | [GitHub repository & push setup](milestones/M02-github-repository.md) | Done | `afb6ce1` |
-| M03 | 2026-10-10 | [Dev environment & configuration (Supabase cloud)](milestones/M03-dev-environment-supabase-cloud.md) | Done | see git log |
+| M03 | 2026-10-10 | [Dev environment & configuration (Supabase cloud)](milestones/M03-dev-environment-supabase-cloud.md) | Done | `14092f0` |
 | M04 | — | [Database schema, constraints & seed data](backend-roadmap.md#m04--database-schema-constraints--seed-data-spec-6-phase-1) | Next | — |
 | M05 | — | [Authentication, roles & RLS](backend-roadmap.md#m05--authentication-roles--row-level-security-spec-5) | Planned | — |
 | M06 | — | [Supabase repository & master-data editing](backend-roadmap.md#m06--supabase-repository--master-data-editing) | Planned | — |
