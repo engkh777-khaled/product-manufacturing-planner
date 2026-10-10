@@ -1,0 +1,79 @@
+{# Reusable UI macros — Precision Industrial Operations design system #}
+
+{% macro icon(name, size=16, cls="") -%}
+<span class="material-symbols-outlined {{ cls }}" style="font-size: {{ size }}px" aria-hidden="true">{{ name }}</span>
+{%- endmacro %}
+
+{# variant: primary | secondary | ghost | critical #}
+{% macro button(label, icon_name=None, variant="secondary", href=None, cls="", attrs="") -%}
+{% set base = "h-7 px-space-md inline-flex items-center justify-center gap-space-xs font-label-mono-sm text-label-mono-sm rounded transition-colors whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed" %}
+{% set styles = {
+  "primary": "bg-primary text-on-primary hover:bg-primary-fixed hover:text-on-primary-fixed font-semibold",
+  "secondary": "bg-surface-container-high text-on-surface hover:bg-surface-container-highest",
+  "ghost": "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface",
+  "critical": "border border-crit/40 bg-crit/10 text-crit hover:bg-crit hover:text-white",
+} %}
+{% if href %}
+<a href="{{ href }}" class="{{ base }} {{ styles[variant] }} {{ cls }}" {{ attrs|safe }}>{% if icon_name %}{{ icon(icon_name, 15) }}{% endif %}<span>{{ label }}</span></a>
+{% else %}
+<button type="button" class="{{ base }} {{ styles[variant] }} {{ cls }}" {{ attrs|safe }}>{% if icon_name %}{{ icon(icon_name, 15) }}{% endif %}<span>{{ label }}</span></button>
+{% endif %}
+{%- endmacro %}
+
+{# tone: crit | warn | ok | info | ai | muted #}
+{% macro badge(label, tone="muted", cls="") -%}
+{% set tones = {
+  "crit": "bg-crit/10 border-crit/30 text-crit",
+  "warn": "bg-warn/10 border-warn/30 text-warn",
+  "ok": "bg-ok/10 border-ok/30 text-ok",
+  "info": "bg-primary/10 border-primary/30 text-primary",
+  "ai": "bg-ai/10 border-ai/30 text-ai",
+  "muted": "bg-surface-container-highest border-outline-variant text-on-surface-variant",
+} %}
+<span class="inline-flex items-center h-[18px] px-[6px] border rounded font-label-mono-xs text-label-mono-xs uppercase whitespace-nowrap {{ tones[tone] }} {{ cls }}">{{ label }}</span>
+{%- endmacro %}
+
+{% macro kpi_card(label, icon_name, icon_cls="text-primary", cls="") -%}
+<div class="p-space-lg bg-surface-container-low rounded flex flex-col justify-between gap-space-sm min-w-0 {{ cls }}">
+  <div class="flex items-start justify-between gap-space-sm text-outline">
+    <span class="font-label-mono-xs text-label-mono-xs uppercase tracking-wider">{{ label }}</span>
+    {{ icon(icon_name, 18, icon_cls) }}
+  </div>
+  {{ caller() }}
+</div>
+{%- endmacro %}
+
+{% macro panel_header(title, icon_name=None, subtitle=None, icon_cls="text-primary") -%}
+<div class="p-space-lg bg-surface-container flex flex-wrap items-center justify-between gap-space-md">
+  <div class="flex items-center gap-space-md min-w-0">
+    {% if icon_name %}{{ icon(icon_name, 20, icon_cls) }}{% endif %}
+    <div class="min-w-0">
+      <h2 class="font-headline-sm text-headline-sm text-on-surface">{{ title }}</h2>
+      {% if subtitle %}<p class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">{{ subtitle }}</p>{% endif %}
+    </div>
+  </div>
+  {% if caller %}<div class="flex flex-wrap items-center gap-space-xs">{{ caller() }}</div>{% endif %}
+</div>
+{%- endmacro %}
+
+{# band: normal | constrained | bottleneck #}
+{% macro util_bar(pct, band, threshold=None, height="h-3") -%}
+{% set fill = {"normal": "bg-primary", "constrained": "bg-warn", "bottleneck": "bg-crit"}[band] %}
+<div class="w-full {{ height }} bg-surface-container-lowest rounded-sm overflow-hidden relative" role="progressbar"
+     aria-valuenow="{{ pct|round|int }}" aria-valuemin="0" aria-valuemax="100">
+  <div class="h-full {{ fill }}" style="width: {{ [pct, 100]|min }}%"></div>
+  {% if threshold %}<div class="absolute top-0 bottom-0 w-0.5 bg-outline" style="left: {{ threshold }}%" title="Constrained threshold {{ threshold }}%"></div>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro band_text(band) -%}
+{{ {"normal": "text-primary", "constrained": "text-warn", "bottleneck": "text-crit"}[band] }}
+{%- endmacro %}
+
+{% macro tone_text(tone) -%}
+{{ {"crit": "text-crit", "warn": "text-warn", "ok": "text-ok", "muted": "text-on-surface-variant", "info": "text-primary"}[tone] }}
+{%- endmacro %}
+
+{% macro tone_bar(tone) -%}
+{{ {"crit": "bg-crit", "warn": "bg-warn", "ok": "bg-ok", "muted": "bg-outline", "info": "bg-primary"}[tone] }}
+{%- endmacro %}

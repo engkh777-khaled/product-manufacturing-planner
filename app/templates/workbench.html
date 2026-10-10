@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% from "components/ui.html" import icon, button, badge %}
+{% block title %}Planning Workbench{% endblock %}
+{% block content %}
+<div x-data="{ critical: false, shortage: false, pm: true }" class="flex flex-col">
+  {# Toolbar #}
+  <div class="px-space-xl py-space-md bg-surface-container-low flex flex-col gap-space-sm">
+    <div class="flex flex-wrap items-center gap-space-md">
+      <label class="flex items-center gap-space-sm px-space-sm h-8 bg-surface-container rounded font-label-mono-sm text-label-mono-sm text-on-surface-variant">
+        {{ icon("account_tree", 15, "text-primary") }}<span class="uppercase">Schedule Plan:</span>
+        <select name="version" class="h-7 bg-surface-container-lowest text-on-surface rounded border border-hairline focus:border-cobalt outline-none px-space-sm font-label-mono-sm text-label-mono-sm"
+                hx-get="/workbench" hx-target="#gantt-region" hx-select="#gantt-region" hx-swap="outerHTML" hx-push-url="true">
+          {% for v in versions %}<option value="{{ v.key }}" {% if v.key == version.key %}selected{% endif %}>{{ v.label }}</option>{% endfor %}
+        </select>
+      </label>
+      <div class="flex items-center gap-space-xs px-space-sm h-8 bg-surface-container rounded font-label-mono-sm text-label-mono-sm text-on-surface-variant">
+        {{ icon("date_range", 15, "text-primary") }}<span>Rolling Horizon: <b class="text-on-surface">{{ horizon[0]|d }} – {{ horizon[1]|d("%b %d, %Y") }}</b></span>{{ badge("4 weeks", "info", "ml-space-xs") }}
+      </div>
+    </div>
+    <div class="flex flex-wrap items-center justify-between gap-space-sm">
+      <div class="flex flex-wrap items-center gap-space-xs" role="group" aria-label="Gantt filters">
+        <button type="button" @click="critical = !critical; shortage = false" :aria-pressed="critical"
+                :class="critical ? 'bg-crit/15 text-crit border-crit/40' : 'bg-surface-container text-on-surface-variant border-transparent'"
+                class="h-7 px-space-md inline-flex items-center gap-space-xs rounded border font-label-mono-sm text-label-mono-sm">{{ icon("alt_route", 15) }}Critical Path</button>
+        <button type="button" @click="shortage = !shortage; critical = false" :aria-pressed="shortage"
+                :class="shortage ? 'bg-warn/15 text-warn border-warn/40' : 'bg-surface-container text-on-surface-variant border-transparent'"
+                class="h-7 px-space-md inline-flex items-center gap-space-xs rounded border font-label-mono-sm text-label-mono-sm">{{ icon("warning", 15) }}Shortage Blockers</button>
+        <button type="button" @click="pm = !pm" :aria-pressed="pm"
+                :class="pm ? 'bg-surface-container-high text-on-surface border-hairline' : 'bg-surface-container text-on-surface-variant border-transparent'"
+                class="h-7 px-space-md inline-flex items-center gap-space-xs rounded border font-label-mono-sm text-label-mono-sm">{{ icon("build", 15) }}Maintenance PM</button>
+      </div>
+      <div class="flex flex-wrap items-center gap-space-xs">
+        {{ button("Simulate Scenario", "science", "secondary", href="/assistant") }}
+        {{ button("Export Dispatch", "download", "secondary") }}
+        <button type="button" hx-post="/workbench/run" hx-include="[name=version]" hx-target="#solver-toast"
+                class="h-7 px-space-md inline-flex items-center gap-space-xs bg-cobalt hover:bg-cobalt-dark text-white font-label-mono-sm text-label-mono-sm rounded">
+          {{ icon("autorenew", 15) }}Re-run CP-SAT
+        </button>
+        {{ button("Submit for Approval", "verified", "primary", href="/assistant#approval") }}
+      </div>
+    </div>
+    <div id="solver-toast" aria-live="polite"></div>
+    <div class="flex items-center gap-space-md overflow-x-auto scroll-thin font-label-mono-xs text-label-mono-xs text-on-surface-variant whitespace-nowrap pb-space-xs">
+      <span class="uppercase text-outline">Active Sales Orders:</span>
+      {% for l in legend %}
+      <span class="flex items-center gap-space-xs"><span class="w-2.5 h-2.5 rounded-sm {{ l.color.split(' ')[0] }}"></span>{{ l.order }} ({{ l.label }})</span>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# Gantt #}
+  {% set g = gantt %}
+  <section id="gantt-region" class="flex flex-col">
+    <div class="px-space-xl py-space-sm flex flex-wrap items-center justify-between gap-space-sm bg-surface-container-lowest border-y border-hairline font-label-mono-xs text-label-mono-xs">
+      <div class="flex flex-wrap items-center gap-space-md text-on-surface-variant">
+        <span>Run #{{ version.run_number }}</span>
+        {{ badge(version.solver_status, "warn" if "LATENESS" in version.solver_status else "ok") }}
+        {{ badge(version.status, "ok" if version.status == "Approved" else "info") }}
+        <span>{{ version.change_summary }}</span>
+      </div>
+      <div class="flex flex-wrap items-center gap-space-md text-outline">
+        <span class="flex items-center gap-space-xs"><span class="w-3 h-2 rounded-sm hatch-crit"></span>Downtime</span>
+        <span class="flex items-center gap-space-xs"><span class="w-3 h-2 rounded-sm hatch-muted border border-outline"></span>PM</span>
+        <span class="flex items-center gap-space-xs"><span class="w-3 h-2 rounded-sm bg-ai/30 border border-ai"></span>Approved OT</span>
+        <span class="flex items-center gap-space-xs"><span class="w-0.5 h-3 bg-warn"></span>Material ready</span>
+        <span class="flex items-center gap-space-xs"><span class="w-3 h-2 rounded-sm ring-1 ring-crit"></span>Late finish</span>
+      </div>
+    </div>
+    <div class="overflow-auto scroll-thin max-h-[calc(100vh-270px)] min-h-[420px] bg-surface-container-low">
+      <div class="gantt flex" :class="{ 'f-critical': critical, 'f-shortage': shortage, 'f-nopm': !pm }" style="width: {{ 300 + g.width }}px">
+        {# Lane labels #}
+        <div class="sticky left-0 z-20 w-[300px] shrink-0 bg-surface-container-low border-r border-hairline">
+          <div class="sticky top-0 z-10 h-10 px-space-md flex items-center justify-between bg-surface-container-lowest border-b border-hairline font-label-mono-xs text-label-mono-xs text-outline uppercase">
+            <span>Work Center / Asset ID</span><span>Util.</span>
+          </div>
+          {% for r in g.rows %}
+            {% if r.kind == "group" %}
+            <div class="px-space-md flex items-center justify-between bg-surface-container font-label-mono-xs text-label-mono-xs uppercase" style="height: {{ r.h }}px">
+              <span class="flex items-center gap-space-xs text-primary">{{ icon(r.wc.group_icon, 14) }}{{ r.wc.group }}</span>
+              <span class="text-on-surface-variant normal-case">{{ r.wc.unit_label }}</span>
+            </div>
+            {% else %}
+            <div class="px-space-md flex items-center justify-between gap-space-sm border-b border-surface-container {{ 'bg-crit/5' if r.m.down }}" style="height: {{ r.h }}px">
+              <div class="min-w-0">
+                <div class="font-label-mono-sm text-label-mono-sm truncate {{ 'text-crit' if r.m.down else 'text-on-surface' }}">{{ r.m.name }}</div>
+                <div class="font-label-mono-xs text-label-mono-xs text-outline truncate">{{ r.m.machine_code }} • {{ r.m.description }}</div>
+              </div>
+              {% set tone = "crit" if r.m.utilization > 92 else ("warn" if r.m.utilization >= 85 else "info") %}
+              {{ badge(r.m.utilization|int ~ "%", tone) }}
+            </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+
+        {# Timeline #}
+        <div class="relative shrink-0" style="width: {{ g.width }}px">
+          <div class="sticky top-0 z-10 h-10 flex bg-surface-container-lowest border-b border-hairline">
+            {% for day in g.days %}
+            <div class="shrink-0 flex flex-col justify-center px-space-sm border-l border-surface-container font-label-mono-xs text-label-mono-xs {{ 'text-outline' if day.weekday() >= 5 else 'text-on-surface-variant' }}" style="width: {{ g.day_px }}px">
+              <span>{{ day.strftime("%a")|upper }} {{ day.day }}</span>
+              <span class="text-outline normal-case">{{ "Weekend" if day.weekday() >= 5 else "S1 · S2" }}</span>
+            </div>
+            {% endfor %}
+          </div>
+          <div class="relative" style="height: {{ g.height }}px">
+            {# Weekend shading + day grid #}
+            {% for day in g.days %}
+            <div class="absolute top-0 bottom-0 border-l border-surface-container {{ 'hatch-muted' if day.weekday() >= 5 }}" style="left: {{ loop.index0 * g.day_px }}px; width: {{ g.day_px }}px"></div>
+            {% endfor %}
+            {# Row backgrounds #}
+            {% for r in g.rows %}
+            <div class="absolute inset-x-0 {{ 'bg-surface-container/70' if r.kind == 'group' else 'border-b border-surface-container' }} {{ 'bg-crit/5' if r.kind == 'machine' and r.m.down }}" style="top: {{ r.y }}px; height: {{ r.h }}px"></div>
+            {% endfor %}
+            {# PM / downtime / OT blocks #}
+            {% for b in g.blocks %}
+            {% set cls = {"downtime": "hatch-crit border border-crit/60 text-crit", "pm": "pm-block hatch-muted border border-outline text-on-surface-variant", "ot": "bg-ai/20 border border-ai/70 text-ai"}[b.b.kind] %}
+            <div class="absolute rounded-sm px-space-xs flex items-center gap-space-xs overflow-hidden font-label-mono-xs text-label-mono-xs {{ cls }}"
+                 style="left: {{ b.x }}px; width: {{ b.w }}px; top: {{ b.y }}px; height: {{ b.h }}px" title="{{ b.b.label }}: {{ b.b.start|d('%b %d %H:%M') }} → {{ b.b.end|d('%b %d %H:%M') }}">
+              {{ icon("build" if b.b.kind == "pm" else ("block" if b.b.kind == "downtime" else "more_time"), 12) }}<span class="truncate">{{ b.b.label }}</span>
+            </div>
+            {% endfor %}
+            {# Dependency arrows #}
+            <svg class="absolute inset-0 pointer-events-none" width="{{ g.width }}" height="{{ g.height }}" aria-hidden="true">
+              <defs>
+                <marker id="arrow" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#38bdf8"/></marker>
+              </defs>
+              {% for a in g.arrows %}<path d="{{ a.d }}" fill="none" stroke="#38bdf8" stroke-width="1" stroke-dasharray="{{ '' if a.critical else '3 3' }}" marker-end="url(#arrow)" opacity="0.8"/>{% endfor %}
+            </svg>
+            {# Operation bars #}
+            {% for b in g.bars %}
+            <a href="/orders?selected={{ b.op.order_number }}"
+               class="op absolute rounded px-space-xs py-[2px] flex flex-col justify-center overflow-hidden transition-opacity hover:ring-1 hover:ring-[#38bdf8] {{ b.color }} {{ 'is-critical' if b.op.critical_path }} {{ 'is-shortage ring-2 ring-warn' if b.op.shortage_blocked }} {{ 'ring-2 ring-crit' if b.late }}"
+               style="left: {{ b.x }}px; width: {{ b.w }}px; top: {{ b.y }}px; height: 32px"
+               title="{{ b.op.order_number }} {{ b.op.op_code }}: {{ b.op.name }}&#10;{{ b.op.start|d('%a %b %d %H:%M') }} → {{ b.op.end|d('%a %b %d %H:%M') }}{% if b.op.note %}&#10;{{ b.op.note }}{% endif %}{% if b.late %}&#10;Finishes after requested date{% endif %}">
+              <div class="flex items-center justify-between gap-space-xs font-label-mono-xs text-label-mono-xs">
+                <span class="truncate">{{ b.op.op_code }}: {{ b.op.name }}</span>
+                <span class="shrink-0 opacity-80">{{ b.op.order_number[3:] }}</span>
+              </div>
+              {% if b.w > 110 and b.op.note %}<div class="font-label-mono-xs text-[9px] leading-[11px] opacity-75 truncate">{{ b.op.note }}</div>{% endif %}
+            </a>
+            {% endfor %}
+            {# Material readiness markers #}
+            {% for mk in g.markers %}
+            <div class="absolute z-[5] flex items-start" style="left: {{ mk.x }}px; top: {{ mk.y }}px; height: 52px">
+              <div class="w-0.5 h-full bg-warn"></div>
+              <span class="ml-px px-space-xs bg-warn text-black font-label-mono-xs text-[9px] rounded-sm whitespace-nowrap">{{ mk.m.label }} {{ mk.m.at|d }}</span>
+            </div>
+            {% endfor %}
+            {# Now line #}
+            <div class="absolute top-0 bottom-0 w-px bg-tertiary/70 z-[6]" style="left: {{ g.today_x }}px" title="Snapshot: Nov 20 14:32"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {# What-if comparison strip #}
+  {% set b, c = cmp.base, cmp.cand %}
+  <section class="p-space-xl grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-12 gap-space-md">
+    <div class="sm:col-span-2 2xl:col-span-12 flex flex-wrap items-center justify-between gap-space-sm p-space-md bg-surface-container rounded">
+      <span class="flex items-center gap-space-sm font-label-mono-sm text-label-mono-sm text-on-surface">{{ icon("compare_arrows", 16, "text-primary") }}What-If Comparison: Baseline v{{ b.version_number }} vs Scenario v{{ c.version_number }}</span>
+      <span class="flex items-center gap-space-sm font-label-mono-xs text-label-mono-xs text-on-surface-variant">{{ icon("rule", 14) }}Constraint violations: {{ c.hard_violations }} hard / {{ c.soft_violations }} soft</span>
+      {{ button("Adopt Scenario v" ~ c.version_number ~ " as Proposed Plan", "done_all", "primary", href="/assistant#approval") }}
+    </div>
+    {% set metrics = [
+      ("Late Orders", "event_busy", b.late_orders, c.late_orders, "", ""),
+      ("Total Lateness", "schedule", b.total_lateness_h ~ "h", c.total_lateness_h ~ "h", "", ""),
+      ("Overtime + Expedite", "payments", "$" ~ b.overtime_cost|num, "+$" ~ c.overtime_cost|num, "", ""),
+    ] %}
+    {% for label, ic, bv, cv, _a, _b in metrics %}
+    <div class="2xl:col-span-2 p-space-lg bg-surface-container-low rounded flex flex-col gap-space-sm">
+      <div class="flex items-center justify-between text-outline font-label-mono-xs text-label-mono-xs uppercase">{{ label }}{{ icon(ic, 16) }}</div>
+      <div class="flex items-baseline gap-space-xs font-metric-display text-metric-display">
+        <span class="text-crit">{{ bv }}</span><span class="font-label-mono-xs text-label-mono-xs text-outline">vs</span><span class="text-primary">{{ cv }}</span>
+      </div>
+      <div class="flex justify-between font-label-mono-xs text-label-mono-xs text-on-surface-variant"><span>Baseline v{{ b.version_number }}</span><span class="text-primary">Scenario v{{ c.version_number }}</span></div>
+    </div>
+    {% endfor %}
+    <div class="2xl:col-span-2 p-space-lg bg-surface-container-low rounded flex flex-col gap-space-sm">
+      <div class="flex items-center justify-between text-outline font-label-mono-xs text-label-mono-xs uppercase">CP-SAT Engine{{ icon("bolt", 16) }}</div>
+      <div class="flex items-baseline gap-space-xs"><span class="font-metric-display text-metric-display text-tertiary">{{ c.solve_seconds }}s</span><span class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">Run #{{ c.run_number }}</span></div>
+      <div class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">Independent validation: {{ "passed" if c.hard_violations == 0 else "failed" }}</div>
+    </div>
+    <div class="sm:col-span-2 2xl:col-span-4 p-space-lg bg-surface-container-high rounded flex gap-space-md border-l-2 border-ai/60">
+      {{ icon("psychology", 22, "text-ai") }}
+      <div class="flex flex-col gap-space-xs min-w-0">
+        <h3 class="font-headline-sm text-headline-sm text-on-surface">OR-Tools AI Recommendation</h3>
+        <span class="font-label-mono-xs text-label-mono-xs text-primary">{{ c.change_summary }}</span>
+        <p class="font-body-sm text-body-sm text-on-surface-variant">Scenario v{{ c.version_number }} recovers SO-1005 (Shell Offshore GOM) from Dec 03 to Nov 29 at a cost of ${{ c.overtime_cost|num }}. SO-1012 remains late (VTL capacity) — no change in this scenario. Human approval required before adoption.</p>
+        <a href="/assistant" class="font-label-mono-xs text-label-mono-xs text-primary underline self-end">View solver trace</a>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

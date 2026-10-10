@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% from "components/ui.html" import icon, button, badge, util_bar %}
+{% from "components/chat.html" import user_msg, agent_shell, agent_reply, tool_trace %}
+{% block title %}AI Planning Assistant{% endblock %}
+{% block content %}
+{% set o = detail.o %}
+{% set b, c = cmp.base, cmp.cand %}
+<div class="px-space-xl py-space-sm bg-surface-container-lowest border-b border-hairline flex items-center gap-space-md overflow-x-auto scroll-thin whitespace-nowrap font-label-mono-xs text-label-mono-xs">
+  {{ badge("Engine", "info") }}
+  <span class="flex items-center gap-space-xs text-on-surface-variant">{{ icon("balance", 14) }}Principle: “The planning engine calculates; the AI explains, assists, and coordinates.”</span>
+  <span class="text-primary">Deterministic Trace v2.4</span><span class="text-outline">Snapshot: 2025-11-20 14:32:09 UTC</span>
+</div>
+
+<div class="p-space-xl grid grid-cols-1 2xl:grid-cols-12 gap-space-xl items-start">
+  {# Conversation #}
+  <section class="2xl:col-span-7 bg-surface-container-low rounded flex flex-col min-w-0 h-[calc(100vh-140px)] min-h-[560px]">
+    <div class="p-space-md flex flex-col gap-space-sm border-b border-surface-container">
+      <div class="flex flex-wrap items-center gap-space-sm">
+        <span class="flex items-center gap-space-xs px-space-sm py-space-xs bg-surface-container rounded font-label-mono-sm text-label-mono-sm text-on-surface">{{ icon("forum", 15, "text-primary") }}Diagnostic Dialogue #PL-4092</span>
+        {{ badge("Scripted demo — no LLM connected", "ai") }}
+      </div>
+      <div class="flex flex-wrap items-center gap-space-sm font-label-mono-xs text-label-mono-xs">
+        <span class="flex items-center gap-space-xs text-on-surface-variant">{{ icon("center_focus_strong", 14) }}Focused Context:
+          <a class="text-primary hover:underline" href="/orders?selected={{ o.order_number }}">Sales Order {{ o.order_number }} ({{ o.customer_name }})</a> &amp; Schedule Version {{ b.version_number }}</span>
+      </div>
+      <div class="flex flex-wrap gap-space-xs">
+        {{ button("Reset Context", "restart_alt", "ghost", href="/assistant") }}
+        {{ button("Export Log", "download", "ghost") }}
+      </div>
+    </div>
+
+    <div id="thread" class="flex-1 overflow-y-auto scroll-thin p-space-md flex flex-col gap-space-lg" aria-live="polite">
+      {{ user_msg(question, "14:30:12") }}
+      {% if first_reply %}
+        {{ agent_reply(first_reply) }}
+      {% else %}
+      {% call agent_shell() %}
+        {{ tool_trace(["get_order_details(SO-1005)", "validate_order_readiness()", "calculate_material_requirements()", "check_material_availability()", "get_schedule_status(v4.2)"]) }}
+        <div class="flex flex-col gap-space-xs font-label-mono-xs text-label-mono-xs">
+          <div class="flex flex-wrap items-center gap-space-sm p-space-sm bg-surface-container rounded">{{ icon("terminal", 14, "text-outline") }}<span class="text-on-surface">Tool executed: OR-Tools CP-SAT solver run #{{ b.run_number }}</span>{{ badge("Status: " ~ b.solver_status, "warn") }}</div>
+          <div class="flex flex-wrap items-center gap-space-sm p-space-sm bg-surface-container rounded">{{ icon("inventory_2", 14, "text-outline") }}<span class="text-on-surface">Tool executed: Check material availability</span>{{ badge("Shortage: ACT-DA-400 (0 / 6), " ~ po.po_number ~ " ETA " ~ po.expected_delivery_date|d, "crit") }}</div>
+          <div class="flex flex-wrap items-center gap-space-sm p-space-sm bg-surface-container rounded">{{ icon("speed", 14, "text-outline") }}<span class="text-on-surface">Tool executed: Work-center capacity {{ bottleneck.wc.code }}</span>{{ badge("Utilization: " ~ bottleneck.pct|round|int ~ "%", "crit") }}</div>
+        </div>
+        <div class="p-space-md bg-surface-container rounded flex flex-col gap-space-md">
+          <p class="font-body-lg text-[16px] leading-7 text-on-surface">The current proposed schedule finishes on <b class="text-crit">{{ o.projected_completion|d("%d %B") }}</b>, {{ detail.late }} days after the requested date of <b>{{ o.requested_delivery_date|d("%d %B") }}</b>. The main constraints driving this delay are:</p>
+          <ol class="flex flex-col gap-space-sm font-body-lg text-body-lg text-on-surface">
+            <li class="flex gap-space-sm"><span class="text-crit font-mono">1.</span><span><b>Material constraint:</b> Pneumatic actuator ({{ po.po_number }}, {{ po.supplier_name }}) arrives {{ po.expected_delivery_date|d("%d %B") }} vs. need {{ po.required_date|d("%d %B") }}; OP-070 actuator mounting cannot start before receipt.</span></li>
+            <li class="flex gap-space-sm"><span class="text-crit font-mono">2.</span><span><b>Capacity constraint:</b> Hydrostatic Rig 1 ({{ bottleneck.wc.code }}, {{ bottleneck.pct|round|int }}% loaded) has confirmed downtime Nov 24–25 and is booked with SO-1008 / SO-1012 through 28 November; the next weekday slot is 1 December.</span></li>
+          </ol>
+          <div>
+            <h3 class="font-label-mono-xs text-label-mono-xs text-outline uppercase mb-space-sm">Recommended solver remediation scenarios</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-space-sm">
+              {% for title, desc, outcome, best in [
+                  ("Scenario A", "Expedite " ~ po.po_number ~ " supplier delivery to 25 November (air freight est. $650)", "Delivers Dec 01 (+24h)", False),
+                  ("Scenario B", "Enable Saturday overtime shift on Hydro Rig 1 (Nov 29, 8 hrs)", "Delivers Dec 01 (+24h)", False),
+                  ("Scenario C (Optimal)", "Combined expedite + overtime: finishes Nov 29, 1 day ahead of deadline", "Finishes Nov 29 (On-Time)", True)] %}
+              <div class="p-space-sm rounded flex flex-col gap-space-xs {{ 'bg-primary/10 border border-primary/40' if best else 'bg-surface-container-lowest' }}">
+                <span class="flex items-center gap-space-xs font-label-mono-xs text-label-mono-xs text-primary">{% if best %}{{ icon("verified", 14) }}{% endif %}{{ title }}</span>
+                <span class="font-body-sm text-body-sm text-on-surface">{{ desc }}</span>
+                <span class="font-label-mono-xs text-label-mono-xs {{ 'text-ok' if best else 'text-warn' }}">{{ outcome }}</span>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% endcall %}
+
+      {{ user_msg("Simulate Option C and generate comparison.", "14:31:05") }}
+
+      {% call agent_shell() %}
+        <div class="flex items-center gap-space-xs p-space-sm bg-surface-container-lowest rounded font-label-mono-xs text-label-mono-xs text-on-surface-variant">{{ icon("sync", 14, "text-primary") }}simulate_order_change(scenario=C) → finite-capacity simulation with Google OR-Tools CP-SAT…</div>
+        <div class="p-space-md bg-surface-container rounded flex flex-col gap-space-md">
+          <div class="flex flex-wrap items-start justify-between gap-space-sm">
+            <div>
+              <h3 class="font-headline-sm text-headline-sm text-on-surface">Simulation Analysis: Baseline vs Scenario C</h3>
+              <p class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">Deterministic CP-SAT run matrix #{{ c.run_number }}-C</p>
+            </div>
+            {{ badge("Solver: complete (" ~ c.solve_seconds ~ "s)", "ok") }}
+          </div>
+          <div class="overflow-x-auto scroll-thin">
+            <table class="w-full min-w-[520px] font-label-mono-sm text-label-mono-sm">
+              <thead><tr class="bg-surface-container-lowest text-outline font-label-mono-xs text-label-mono-xs uppercase">
+                <th class="py-space-sm px-space-sm text-left">Metric / Operational Factor</th><th class="py-space-sm px-space-sm text-right">Baseline (v{{ b.version_number }})</th>
+                <th class="py-space-sm px-space-sm text-right">Scenario C (Simulated)</th><th class="py-space-sm px-space-sm text-right">Variance / Delta</th></tr></thead>
+              <tbody class="divide-y divide-surface-container-high">
+                {% for label, bv, cv, dv, bcls in [
+                  ("Target customer promise date", o.requested_delivery_date|d("%d-%b-%Y"), o.requested_delivery_date|d("%d-%b-%Y"), "—", "text-on-surface"),
+                  ("Calculated ready-for-ship date", o.projected_completion|d("%d-%b-%Y"), "29-Nov-2025", "-4.0 Days (-96h)", "text-crit"),
+                  ("Order tardiness", "+" ~ detail.late ~ " Days Late", "0 Days (On-Time)", "-" ~ detail.late ~ " Days", "text-crit"),
+                  ("Plant late orders (horizon)", b.late_orders, c.late_orders, (c.late_orders - b.late_orders), "text-on-surface"),
+                  ("Total plant lateness", b.total_lateness_h ~ "h", c.total_lateness_h ~ "h", (c.total_lateness_h - b.total_lateness_h) ~ "h", "text-on-surface"),
+                  ("Added operational cost", "$" ~ b.overtime_cost|num, "$" ~ c.overtime_cost|num ~ " (Freight + OT)", "+$" ~ (c.overtime_cost - b.overtime_cost)|num ~ " net", "text-on-surface")] %}
+                <tr><td class="py-space-sm px-space-sm text-on-surface">{{ label }}</td><td class="py-space-sm px-space-sm text-right {{ bcls }}">{{ bv }}</td>
+                    <td class="py-space-sm px-space-sm text-right text-primary">{{ cv }}</td><td class="py-space-sm px-space-sm text-right text-tertiary">{{ dv }}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <div class="p-space-sm bg-surface-container-lowest rounded flex flex-col gap-space-xs font-label-mono-xs text-label-mono-xs">
+            <div class="flex justify-between text-outline"><span>Routing micro-timeline: Hydro Rig 1 &amp; Pack-out</span><span>Nov 24 → Dec 03</span></div>
+            <div class="flex items-center gap-space-sm"><span class="w-20 shrink-0 text-on-surface-variant">Baseline</span>
+              <div class="flex-1 h-5 flex rounded-sm overflow-hidden bg-surface-container">
+                <div class="w-[22%] hatch-crit" title="Rig 1 downtime"></div><div class="w-[30%] bg-surface-container-highest flex items-center justify-center text-on-surface">{{ po.po_number }} wait</div>
+                <div class="w-[48%] bg-crit/80 flex items-center justify-center text-white">Hydro → Pack (Dec 03)</div></div></div>
+            <div class="flex items-center gap-space-sm"><span class="w-20 shrink-0 text-on-surface-variant">Scenario C</span>
+              <div class="flex-1 h-5 flex rounded-sm overflow-hidden bg-surface-container">
+                <div class="w-[22%] hatch-crit"></div><div class="w-[15%] bg-cobalt flex items-center justify-center text-white">Expedited</div>
+                <div class="w-[20%] bg-ai/60 flex items-center justify-center text-white">Sat OT Hydro</div><div class="w-[10%] bg-tertiary text-on-tertiary flex items-center justify-center">Nov 29</div></div></div>
+          </div>
+          <div class="flex flex-wrap items-center justify-between gap-space-sm">
+            <p class="font-body-sm text-body-sm text-on-surface-variant">Recommended next step: transfer parameters to the human sign-off panel.</p>
+            {{ button("Stage Plan to Approval Panel", "move_to_inbox", "primary", href="#approval") }}
+          </div>
+        </div>
+      {% endcall %}
+      {% endif %}
+    </div>
+
+    <div class="p-space-md border-t border-surface-container flex flex-col gap-space-sm">
+      <div class="flex items-center gap-space-xs overflow-x-auto scroll-thin whitespace-nowrap font-label-mono-xs text-label-mono-xs">
+        <span class="text-outline">Quick Prompts:</span>
+        {% for qp in quick_prompts %}
+        <button type="button" hx-post="/assistant/message" hx-vals='{{ {"prompt": qp}|tojson }}' hx-target="#thread" hx-swap="beforeend scroll:bottom"
+                class="px-space-sm py-space-xs bg-surface-container rounded text-on-surface hover:bg-surface-container-high">{{ qp }}</button>
+        {% endfor %}
+      </div>
+      <form class="flex items-center gap-space-sm" hx-post="/assistant/message" hx-target="#thread" hx-swap="beforeend scroll:bottom"
+            hx-on::after-request="if (event.detail.successful) this.reset()">
+        <label class="relative flex-1">
+          <span class="sr-only">Message</span>
+          {{ icon("terminal", 16, "text-outline absolute left-space-md top-1/2 -translate-y-1/2 pointer-events-none") }}
+          <input name="prompt" required maxlength="500" autocomplete="off" placeholder="Ask the scheduling engine (e.g. 'Why is SO-1012 late?')"
+                 class="w-full h-10 pl-10 pr-space-md bg-surface-container-lowest text-on-surface placeholder:text-outline font-body-lg text-body-lg rounded border border-hairline focus:border-cobalt outline-none">
+        </label>
+        <button class="h-10 px-space-lg inline-flex items-center gap-space-xs bg-primary text-on-primary hover:bg-primary-fixed font-label-mono-sm text-label-mono-sm rounded font-semibold">Send{{ icon("send", 15) }}</button>
+      </form>
+    </div>
+  </section>
+
+  {# Evidence + approval #}
+  <div class="2xl:col-span-5 flex flex-col gap-space-md min-w-0">
+    <section class="bg-surface-container-low rounded p-space-lg flex flex-col gap-space-md">
+      <div class="flex items-start justify-between gap-space-sm">
+        <h2 class="flex items-center gap-space-sm font-headline-sm text-headline-sm text-on-surface">{{ icon("fact_check", 20, "text-primary") }}Live Constraint Diagnostic &amp; Evidence Traceability</h2>
+        {{ badge("Audit ID #EV-9901", "muted") }}
+      </div>
+      <div class="flex justify-between font-label-mono-xs text-label-mono-xs uppercase"><span class="text-outline">Hard constraints (CP-SAT, run #{{ c.run_number }})</span><span class="text-primary">6 of 6 verified</span></div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-space-xs font-label-mono-xs text-label-mono-xs">
+        {% for name, detail_txt in [("Precedence", "BOM depth 4"), ("Material readiness", "PO-8821 Nov 25 exp."), ("Exclusive resources", "Rig 1 non-preempt"),
+                                    ("Shift calendars", "+8h Sat OT added"), ("Mandatory hydro test", "API 6D spec"), ("Batch limits", "Oven min 4 valves")] %}
+        <div class="flex items-center justify-between gap-space-sm p-space-sm bg-surface-container rounded">
+          <span class="flex items-center gap-space-xs text-on-surface">{{ icon("check_circle", 14, "text-ok") }}{{ name }}</span><span class="text-on-surface-variant text-right">{{ detail_txt }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="p-space-sm bg-surface-container rounded flex flex-col gap-space-sm font-label-mono-xs text-label-mono-xs">
+        <div class="flex justify-between"><span class="text-outline uppercase">{{ plan_order.o.order_number }} risk classification</span>
+          <span><span class="text-crit line-through">{{ plan_order.risk.value }} (baseline)</span> → <span class="text-primary">Medium (scenario C, 1d margin)</span></span></div>
+        <div class="flex justify-between text-on-surface"><span>Material supply margin (scenario C)</span><span>PO-8821 ETA Nov 25 → need Nov 29</span></div>
+        {{ util_bar(66, "normal", None, "h-1.5") }}
+        <div class="flex justify-between text-on-surface"><span>Testing cell over-utilization</span><span class="text-crit">{{ bottleneck.pct|round|int }}% ({{ bottleneck.band }})</span></div>
+        {{ util_bar(bottleneck.pct, bottleneck.band, None, "h-1.5") }}
+        <p class="text-outline">Rule-based classification (spec §9) — not a statistical probability.</p>
+      </div>
+    </section>
+
+    <section class="p-space-lg rounded bg-secondary-container/30 border border-secondary-container flex gap-space-md">
+      {{ icon("shield", 22, "text-primary") }}
+      <div>
+        <h2 class="font-label-mono-xs text-label-mono-xs text-primary uppercase mb-space-xs">AI Safety Policy &amp; Authority Bounds</h2>
+        <p class="font-body-lg text-body-lg text-on-surface">LLM and automated agents <b>cannot approve plans, commit binding delivery dates to customers, place purchase orders, or release production work orders.</b> Human sign-off is mandatory.</p>
+      </div>
+    </section>
+
+    <section id="approval" class="bg-surface-container-low rounded p-space-lg flex flex-col gap-space-md scroll-mt-20">
+      <div class="flex items-start justify-between gap-space-sm">
+        <h2 class="flex items-center gap-space-sm font-headline-sm text-headline-sm text-on-surface">{{ icon("assignment_turned_in", 20, "text-primary") }}Submit Plan for Human Approval</h2>
+        {{ badge("ISO-9001 Trace", "muted") }}
+      </div>
+      <form class="flex flex-col gap-space-md" x-data="{ expedite: false, overtime: false }"
+            hx-post="/assistant/submit" hx-target="#submit-result">
+        <input type="hidden" name="version" value="{{ c.key }}">
+        <dl class="grid grid-cols-2 gap-space-md font-label-mono-xs text-label-mono-xs">
+          <div><dt class="text-outline uppercase">Target version &amp; scenario</dt><dd class="text-primary mt-space-xs">Proposed plan run #{{ c.run_number }} (v{{ c.version_number }}, Scenario C)</dd></div>
+          <div><dt class="text-outline uppercase">Constraint validation</dt><dd class="text-on-surface mt-space-xs">{{ c.hard_violations }} hard / {{ c.soft_violations }} soft</dd></div>
+          <div><dt class="text-outline uppercase">Designated approver</dt><dd class="text-on-surface mt-space-xs flex items-center gap-space-xs">{{ icon("badge", 14) }}{{ approval.approver }}, {{ approver_role }}</dd></div>
+          <div><dt class="text-outline uppercase">Committed delivery</dt><dd class="text-on-surface mt-space-xs">Not committed — approver decides</dd></div>
+          <div><dt class="text-outline uppercase">Customer requested</dt><dd class="text-on-surface mt-space-xs">{{ plan_order.o.order_number }}: {{ plan_order.o.requested_delivery_date|d("%d-%b-%Y") }}</dd></div>
+          <div><dt class="text-outline uppercase">Scenario finish</dt><dd class="text-primary mt-space-xs">29-Nov-2025 (buffer: 1d)</dd></div>
+        </dl>
+        <label class="flex flex-col gap-space-xs font-label-mono-xs text-label-mono-xs text-outline uppercase">Planner verification notes
+          <textarea name="notes" rows="3" class="p-space-sm bg-surface-container-lowest text-on-surface font-body-lg text-body-lg normal-case rounded border border-hairline focus:border-cobalt outline-none">Simulated combined actuator freight expedite and 1 hydro shift overtime. Recovers Shell Offshore delivery date.</textarea>
+        </label>
+        <label class="flex items-start gap-space-sm font-label-mono-xs text-label-mono-xs text-on-surface cursor-pointer">
+          <input type="checkbox" name="expedite_confirmed" value="true" x-model="expedite" class="mt-0.5 accent-[#0284c7]">
+          Material PO expedite fee approved by production supervisor ($650)
+        </label>
+        <label class="flex items-start gap-space-sm font-label-mono-xs text-label-mono-xs text-on-surface cursor-pointer">
+          <input type="checkbox" name="overtime_confirmed" value="true" x-model="overtime" class="mt-0.5 accent-[#0284c7]">
+          Overtime staffing roster verified with Rig 1 team lead (8 man-hours)
+        </label>
+        <div class="flex flex-wrap items-center justify-end gap-space-sm">
+          {{ button("Cancel", None, "ghost", href="/workbench") }}
+          <button type="submit" :disabled="!(expedite && overtime)"
+                  class="h-8 px-space-lg inline-flex items-center gap-space-xs bg-primary text-on-primary hover:bg-primary-fixed font-label-mono-sm text-label-mono-sm rounded font-semibold disabled:opacity-40 disabled:cursor-not-allowed">
+            {{ icon("send", 15) }}Submit for Authorized Approval
+          </button>
+        </div>
+        <div id="submit-result" aria-live="polite"></div>
+      </form>
+    </section>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% from "components/ui.html" import icon %}
+{% if error %}
+<div class="p-space-md rounded border border-crit/40 bg-crit/10 text-crit flex items-start gap-space-sm font-label-mono-sm text-label-mono-sm" role="alert">
+  {{ icon("error", 16) }}<span>{{ error }}</span>
+</div>
+{% else %}
+<div class="p-space-md rounded border border-ok/30 bg-ok/10 flex flex-col gap-space-xs font-label-mono-sm text-label-mono-sm" role="status">
+  <span class="flex items-center gap-space-xs text-ok">{{ icon("outgoing_mail", 16) }}Submitted — awaiting approver</span>
+  <span class="text-on-surface">Schedule v{{ result.version.version_number }} (run #{{ result.version.run_number }}) sent to {{ result.approver }}{% if result.request %} as {{ result.request.id }}{% endif %}.</span>
+  <span class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">Status remains <b>Proposed</b>. Baseline v4.2 stays active until a human approver signs off. Logged {{ result.entry.at.strftime("%H:%M:%S") }} by {{ result.entry.user }}.</span>
+</div>
+{% endif %}

@@ -1,0 +1,85 @@
+{% from "components/ui.html" import icon, badge, tone_text, tone_bar %}
+<section class="bg-surface-container-low rounded overflow-hidden">
+  <div class="p-space-md flex flex-wrap items-center justify-between gap-space-sm font-label-mono-sm text-label-mono-sm">
+    <span class="text-on-surface">{{ total }} Sales Orders • Sorted by Lateness Variance DESC</span>
+    <span class="text-outline font-label-mono-xs text-label-mono-xs">Source: demo repository (fictional)</span>
+  </div>
+  <div class="overflow-x-auto scroll-thin">
+    <table class="w-full min-w-[860px] text-left border-collapse">
+      <thead>
+        <tr class="bg-surface-container-lowest text-outline font-label-mono-xs text-label-mono-xs uppercase border-b border-hairline">
+          <th class="py-space-md px-space-md">Order ID &amp; Customer</th>
+          <th class="py-space-md px-space-md">Valve Specification</th>
+          <th class="py-space-md px-space-md text-center">Qty / Lines</th>
+          <th class="py-space-md px-space-md">BOM &amp; Routing</th>
+          <th class="py-space-md px-space-md">Requested / Projected</th>
+          <th class="py-space-md px-space-md">Variance</th>
+          <th class="py-space-md px-space-md">Readiness</th>
+        </tr>
+      </thead>
+      <tbody class="font-label-mono-sm text-label-mono-sm">
+        {% for v in rows %}
+        {% set o = v.o %}
+        <tr class="cursor-pointer transition-colors border-l-2 {{ loop.cycle('bg-surface-container-low', 'bg-[#131d31]') }} hover:bg-surface-container-high/60"
+            :class="sel === '{{ o.order_number }}' ? '!bg-surface-container-high border-l-[#38bdf8]' : 'border-l-transparent'"
+            hx-get="/orders/{{ o.order_number }}/inspector" hx-target="#inspector" hx-trigger="click, keyup[key=='Enter']"
+            @click="sel = '{{ o.order_number }}'" tabindex="0" aria-label="Open {{ o.order_number }}">
+          <td class="py-space-md px-space-md">
+            <div class="flex items-stretch gap-space-sm">
+              <span class="w-1 rounded-sm {{ tone_bar(v.tone) }}"></span>
+              <div>
+                <div class="font-semibold text-primary text-label-mono-lg">{{ o.order_number }}</div>
+                <div class="font-body-sm text-body-sm text-on-surface">{{ o.customer_name }}</div>
+                <div class="font-label-mono-xs text-label-mono-xs text-outline">{{ o.customer_reference }}</div>
+              </div>
+            </div>
+          </td>
+          <td class="py-space-md px-space-md">
+            <div class="text-on-surface">{{ o.spec_title }}</div>
+            <div class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">{{ o.spec_detail }}</div>
+            <div class="font-label-mono-xs text-label-mono-xs text-outline">Tag: {{ o.tag }}</div>
+          </td>
+          <td class="py-space-md px-space-md text-center">
+            <div class="text-on-surface text-label-mono-lg">{{ o.quantity }}</div>
+            <div class="font-label-mono-xs text-label-mono-xs text-outline">{{ o.lines|length }} Line{{ "s" if o.lines|length > 1 }}</div>
+          </td>
+          <td class="py-space-md px-space-md">
+            <div class="{{ 'text-primary' if o.bom_status == 'Approved' else 'text-warn' }}">{{ o.bom_revision }}</div>
+            <div class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">{{ o.routing_revision }}</div>
+            <div class="font-label-mono-xs text-label-mono-xs text-outline">{{ o.work_centers }}</div>
+          </td>
+          <td class="py-space-md px-space-md whitespace-nowrap">
+            <div class="text-on-surface-variant">Req: <span class="text-on-surface">{{ o.requested_delivery_date|d("%b %d, %Y") }}</span></div>
+            <div class="text-on-surface-variant">Proj: <span class="{{ tone_text(v.tone) }}">{{ o.projected_completion|d("%b %d, %Y") }}</span></div>
+          </td>
+          <td class="py-space-md px-space-md">
+            {{ badge(v.variance, v.tone) }}
+            <div class="font-label-mono-xs text-label-mono-xs mt-space-xs {{ tone_text(v.tone) }}">{{ v.risk.value }} Risk</div>
+          </td>
+          <td class="py-space-md px-space-md">
+            <div class="flex items-start gap-space-xs max-w-[150px] {{ tone_text(v.tone) }}">{{ icon(o.constraint_icon, 14) }}<span>{{ o.readiness }}</span></div>
+            <div class="font-label-mono-xs text-label-mono-xs text-outline">{{ o.status.value }}</div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="py-space-xl px-space-md text-center text-on-surface-variant font-label-mono-sm text-label-mono-sm">No orders match these filters.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="p-space-md bg-surface-container flex flex-wrap items-center justify-between gap-space-md font-label-mono-xs text-label-mono-xs text-on-surface-variant">
+    <div class="flex flex-wrap items-center gap-space-md">
+      <span class="flex items-center gap-space-xs"><span class="w-2 h-2 rounded-full bg-crit"></span>High risk / late</span>
+      <span class="flex items-center gap-space-xs"><span class="w-2 h-2 rounded-full bg-warn"></span>Constrained buffer</span>
+      <span class="flex items-center gap-space-xs"><span class="w-2 h-2 rounded-full bg-ok"></span>In tolerance</span>
+      <span class="flex items-center gap-space-xs"><span class="w-2 h-2 rounded-full bg-outline"></span>Unknown (needs data)</span>
+    </div>
+    <div class="flex items-center gap-space-xs">
+      <span>Page {{ page }} of {{ pages }}</span>
+      {% for p in range(1, pages + 1) %}
+      <button type="button" hx-get="/orders/table?page={{ p }}" hx-include="#order-filters" hx-target="#orders-table"
+              class="w-7 h-7 rounded {{ 'bg-surface-container-highest text-on-surface' if p == page else 'hover:bg-surface-container-high' }}">{{ p }}</button>
+      {% endfor %}
+    </div>
+  </div>
+</section>

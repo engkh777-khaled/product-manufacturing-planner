@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body { margin: 0; padding: 0; }
+  body { overscroll-behavior: none; }
+  /* Tabular figures everywhere numbers appear in monospace (DESIGN.md › Typography) */
+  .font-mono, [class*="font-label-mono"], [class*="font-metric-display"] {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+  [x-cloak] { display: none !important; }
+}
+
+@layer components {
+  .material-symbols-outlined {
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 20;
+    line-height: 1;
+    vertical-align: middle;
+  }
+  .icon-fill { font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 20; }
+
+  /* Diagonal hash striping for PM / constrained buffer blocks (DESIGN.md › Gantt) */
+  .hatch-crit {
+    background-image: repeating-linear-gradient(
+      -45deg, rgba(239, 68, 68, 0.45) 0 6px, rgba(239, 68, 68, 0.12) 6px 12px);
+  }
+  .hatch-warn {
+    background-image: repeating-linear-gradient(
+      -45deg, rgba(245, 158, 11, 0.4) 0 6px, rgba(245, 158, 11, 0.1) 6px 12px);
+  }
+  .hatch-muted {
+    background-image: repeating-linear-gradient(
+      -45deg, rgba(137, 146, 155, 0.18) 0 4px, transparent 4px 10px);
+  }
+
+  /* Gantt filter modes: dim bars that are not part of the highlighted set */
+  .gantt.f-critical .op:not(.is-critical) { opacity: 0.22; }
+  .gantt.f-shortage .op:not(.is-shortage) { opacity: 0.22; }
+  .gantt.f-nopm .pm-block { display: none; }
+
+  .scroll-thin::-webkit-scrollbar { height: 6px; width: 6px; }
+  .scroll-thin::-webkit-scrollbar-thumb { background: #2d3449; border-radius: 3px; }
+  .scroll-thin::-webkit-scrollbar-track { background: transparent; }
+
+  .htmx-request .htmx-hide-on-request { display: none; }
+  .htmx-indicator { display: none; }
+  .htmx-request .htmx-indicator, .htmx-request.htmx-indicator { display: inline-flex; }
+}

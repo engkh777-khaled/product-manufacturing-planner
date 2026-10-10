@@ -1,0 +1,5 @@
+{% from "components/chat.html" import user_msg, agent_reply %}
+{% if reply %}
+{{ user_msg(prompt, now.strftime("%H:%M:%S")) }}
+{{ agent_reply(reply) }}
+{% endif %}

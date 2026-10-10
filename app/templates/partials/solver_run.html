@@ -1,0 +1,7 @@
+{% from "components/ui.html" import icon %}
+<div class="flex items-start gap-space-sm p-space-md rounded border border-primary/30 bg-primary/10 text-primary font-label-mono-xs text-label-mono-xs" role="status"
+     x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 7000)">
+  {{ icon("info", 15) }}
+  <span>Planning service is not connected in this demo build. Showing cached run #{{ v.run_number }}:
+    <b>{{ v.solver_status }}</b> in {{ v.solve_seconds }}s, {{ v.hard_violations }} hard / {{ v.soft_violations }} soft violations. Request logged to audit trail.</span>
+</div>

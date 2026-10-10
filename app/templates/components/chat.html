@@ -1,0 +1,44 @@
+{% from "components/ui.html" import icon, badge %}
+
+{% macro user_msg(text, time, name="Sarah Chen (Sr. Planner)") -%}
+<div class="flex justify-end gap-space-sm">
+  <div class="max-w-[85%] p-space-md bg-surface-container-high rounded">
+    <div class="flex justify-end gap-space-sm font-label-mono-xs text-label-mono-xs text-outline mb-space-xs"><span>{{ name }}</span><span>{{ time }}</span></div>
+    <p class="font-body-lg text-[16px] leading-6 text-on-surface">{{ text }}</p>
+  </div>
+  <div class="w-8 h-8 shrink-0 rounded bg-cobalt flex items-center justify-center">{{ icon("person", 18, "text-white") }}</div>
+</div>
+{%- endmacro %}
+
+{% macro agent_shell() -%}
+<div class="flex gap-space-sm">
+  <div class="w-8 h-8 shrink-0 rounded bg-cobalt-dark flex items-center justify-center">{{ icon("smart_toy", 18, "text-white") }}</div>
+  <div class="flex-1 min-w-0 flex flex-col gap-space-sm">{{ caller() }}</div>
+</div>
+{%- endmacro %}
+
+{% macro tool_trace(tools, status=None) -%}
+{% if tools %}
+<div class="p-space-md bg-surface-container-lowest rounded font-label-mono-xs text-label-mono-xs">
+  <div class="flex items-center justify-between text-outline uppercase mb-space-xs"><span class="flex items-center gap-space-xs">{{ icon("data_object", 14) }}Agent tool calls &amp; verification chain</span>
+    {% if status %}{{ badge(status, "warn" if "LATENESS" in status or status == "NEEDS_DATA" else ("ai" if status in ("POLICY", "DEMO") else "ok")) }}{% endif %}</div>
+  <div class="text-on-surface-variant">Invoking tools:
+    {% for t in tools %}<span class="text-primary">{{ t }}{{ "," if not loop.last }}</span> {% endfor %}</div>
+</div>
+{% endif %}
+{%- endmacro %}
+
+{% macro agent_reply(reply) -%}
+{% call agent_shell() %}
+  {{ tool_trace(reply.tools, reply.status) }}
+  <div class="p-space-md bg-surface-container rounded flex flex-col gap-space-sm">
+    {% for para in reply.paragraphs %}<p class="font-body-lg text-body-lg text-on-surface">{{ para }}</p>{% endfor %}
+    {% if reply.links %}
+    <div class="flex flex-wrap gap-space-md pt-space-xs font-label-mono-xs text-label-mono-xs">
+      {% for label, href in reply.links %}<a href="{{ href }}" class="text-primary hover:underline flex items-center gap-space-xs">{{ label }}{{ icon("arrow_forward", 12) }}</a>{% endfor %}
+    </div>
+    {% endif %}
+    <div class="font-label-mono-xs text-label-mono-xs text-outline">Scripted demo reply · figures sourced from planning data</div>
+  </div>
+{% endcall %}
+{%- endmacro %}

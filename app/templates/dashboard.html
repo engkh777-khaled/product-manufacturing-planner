@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+{% from "components/ui.html" import icon, button, badge, kpi_card, panel_header, util_bar, band_text, tone_text %}
+{% block title %}Executive Dashboard{% endblock %}
+{% block content %}
+<div class="px-space-xl py-space-md bg-surface-container-low flex flex-wrap items-center justify-between gap-space-md">
+  <div class="flex items-center gap-space-lg flex-wrap">
+    <div class="flex items-center gap-space-sm">
+      <span class="w-2 h-2 rounded-full bg-tertiary"></span>
+      <h1 class="font-headline-sm text-headline-sm text-on-surface tracking-tight">Executive Manufacturing Dashboard</h1>
+      <span class="px-space-sm py-space-xs bg-surface-container text-tertiary font-label-mono-xs text-label-mono-xs uppercase rounded">Shift Alpha (06:00 - 18:00)</span>
+    </div>
+    <div class="flex items-center gap-space-xs text-on-surface-variant font-label-mono-sm text-label-mono-sm">
+      {{ icon("verified_user", 15, "text-outline") }}
+      <span>Baseline v{{ baseline.version_number }} committed by {{ baseline.approved_by }} ({{ approver_role }})</span>
+    </div>
+  </div>
+  <div class="flex items-center gap-space-md">
+    <div class="hidden sm:flex items-center gap-space-xs px-space-sm py-space-xs bg-surface-container rounded text-outline font-label-mono-xs text-label-mono-xs">
+      {{ icon("tune", 13, "text-tertiary") }}<span>Engine: CP-SAT · Run #{{ baseline.run_number }}</span>
+    </div>
+    {{ button("Export Plant Report", "download", "secondary") }}
+  </div>
+</div>
+
+<div class="p-space-xl flex flex-col gap-space-xl">
+  {# KPI row #}
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-space-md">
+    {% call kpi_card("OTD Forecast Rate", "trending_up", "text-tertiary") %}
+      <div class="flex items-baseline gap-space-xs">
+        <span class="font-metric-display text-metric-display {{ 'text-on-surface' if kpis.otd_pct >= 95 else 'text-warn' }}">{{ kpis.otd_pct }}%</span>
+      </div>
+      <div class="flex items-center justify-between text-on-surface-variant font-label-mono-xs text-label-mono-xs">
+        <span>Target: 95.0%</span><span class="text-tertiary">Late orders: {{ kpis.late }}</span>
+      </div>
+    {% endcall %}
+    {% call kpi_card("Active Sales Orders", "receipt_long") %}
+      <div class="flex items-baseline gap-space-xs">
+        <span class="font-metric-display text-metric-display text-on-surface">{{ kpis.active_count }}</span>
+        {{ badge(kpis.at_risk|length ~ " high risk", "crit") }}
+      </div>
+      <div class="flex items-center justify-between text-on-surface-variant font-label-mono-xs text-label-mono-xs">
+        <span>In Production: {{ kpis.in_production }}</span><span>{{ kpis.valves }} valves</span>
+      </div>
+    {% endcall %}
+    {% call kpi_card("Delivery Risk Flag", "warning", "text-crit") %}
+      <div class="flex items-baseline gap-space-xs">
+        <span class="font-metric-display text-metric-display text-crit">{{ kpis.at_risk|length }}</span>
+        <span class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">Orders Pending Action</span>
+      </div>
+      <div class="flex items-center justify-between gap-space-sm text-on-surface-variant font-label-mono-xs text-label-mono-xs">
+        {% for v in kpis.at_risk[:2] %}<span class="{{ 'text-crit' if loop.first else 'text-warn' }} truncate">{{ v.o.order_number }}: {{ v.variance }}</span>{% endfor %}
+      </div>
+    {% endcall %}
+    {% call kpi_card("Pacing Work-Center", "speed", "text-crit") %}
+      <div>
+        <div class="font-label-mono-sm text-label-mono-sm text-crit truncate font-semibold">{{ bottleneck.wc.code }} {{ bottleneck.wc.group }}</div>
+        <div class="flex items-baseline gap-space-xs mt-0.5">
+          <span class="font-metric-display text-metric-display text-on-surface">{{ bottleneck.pct|round|int }}%</span>
+          <span class="font-label-mono-xs text-label-mono-xs text-crit">Headroom {{ bottleneck.headroom|num(1) }}h</span>
+        </div>
+      </div>
+      <div class="truncate text-on-surface-variant font-label-mono-xs text-label-mono-xs">{{ bottleneck.wc.queue_note }}</div>
+    {% endcall %}
+    {% call kpi_card("Active Shortages", "inventory_2", "text-warn") %}
+      <div class="flex items-baseline gap-space-xs">
+        <span class="font-metric-display text-metric-display text-warn">{{ shortage_skus|length }}</span>
+        <span class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">BOM SKUs</span>
+      </div>
+      <div class="truncate text-on-surface-variant font-label-mono-xs text-label-mono-xs" title="{{ shortage_skus|join(', ') }}">{{ shortage_skus|join(", ") }}</div>
+    {% endcall %}
+    {% call kpi_card("Schedule Release", "task_alt", "text-tertiary") %}
+      <div class="flex items-baseline gap-space-xs">
+        <span class="font-metric-display text-metric-display text-tertiary">v{{ baseline.version_number }}</span>
+        {{ badge("Locked", "muted") }}
+      </div>
+      <div class="truncate text-on-surface-variant font-label-mono-xs text-label-mono-xs">Approved: {{ baseline.approved_by }}</div>
+    {% endcall %}
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-12 gap-space-xl items-start">
+    {# LEFT #}
+    <div class="xl:col-span-8 flex flex-col gap-space-xl min-w-0">
+      <section class="bg-surface-container-low rounded flex flex-col overflow-hidden">
+        {% call panel_header("Orders at Delivery Risk & Expedite Queue", "notification_important", "CP-SAT constraint infeasibility & bottleneck interventions", "text-crit") %}
+          {{ badge(risk_orders|selectattr("tone", "equalto", "crit")|list|length ~ " critical", "crit") }}
+          {{ badge(risk_orders|selectattr("tone", "equalto", "warn")|list|length ~ " watchlist", "warn") }}
+        {% endcall %}
+        <div class="overflow-x-auto scroll-thin">
+          <table class="w-full min-w-[860px] text-left border-collapse">
+            <thead>
+              <tr class="bg-surface-container-lowest text-outline font-label-mono-xs text-label-mono-xs uppercase border-b border-hairline">
+                <th class="py-space-md px-space-md">Order &amp; Customer</th>
+                <th class="py-space-md px-space-md">Valve Specification</th>
+                <th class="py-space-md px-space-md">Requested</th>
+                <th class="py-space-md px-space-md">Plan Forecast</th>
+                <th class="py-space-md px-space-md">Limiting Constraint</th>
+                <th class="py-space-md px-space-md text-center">Risk</th>
+                <th class="py-space-md px-space-md text-right">Recommended Action</th>
+              </tr>
+            </thead>
+            <tbody class="font-label-mono-sm text-label-mono-sm">
+              {% for v in risk_orders %}
+              <tr class="{{ loop.cycle('bg-surface-container-low', 'bg-[#131d31]') }} hover:bg-surface-container-high/40 transition-colors">
+                <td class="py-space-md px-space-md">
+                  <a href="/orders?selected={{ v.o.order_number }}" class="font-semibold text-primary hover:underline">{{ v.o.order_number }}</a>
+                  <div class="font-body-sm text-body-sm text-on-surface-variant truncate max-w-[150px]">{{ v.o.customer_name }}</div>
+                </td>
+                <td class="py-space-md px-space-md">
+                  <div class="text-on-surface">{{ v.o.spec_title }}</div>
+                  <div class="font-label-mono-xs text-label-mono-xs text-outline">{{ v.o.spec_detail }}</div>
+                </td>
+                <td class="py-space-md px-space-md text-on-surface">{{ v.o.requested_delivery_date|d }}</td>
+                <td class="py-space-md px-space-md font-semibold {{ tone_text(v.tone) }}">
+                  {{ v.o.projected_completion|d }}
+                  <div class="font-label-mono-xs text-label-mono-xs font-normal">{{ v.variance }}</div>
+                </td>
+                <td class="py-space-md px-space-md">
+                  <div class="flex items-center gap-space-xs font-semibold {{ tone_text(v.tone) }}">{{ icon(v.o.constraint_icon, 14) }}<span>{{ v.o.limiting_constraint }}</span></div>
+                  <div class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">{{ v.o.constraint_detail }}</div>
+                </td>
+                <td class="py-space-md px-space-md text-center">{{ badge(v.risk.value, v.tone) }}</td>
+                <td class="py-space-md px-space-md text-right">
+                  {{ button(v.o.recommended_action, None, "primary" if v.tone == "crit" else "secondary", href="/assistant?order=" ~ v.o.order_number) }}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="p-space-md bg-surface-container flex flex-wrap items-center justify-between gap-space-sm">
+          <span class="font-label-mono-xs text-label-mono-xs text-outline">Showing {{ risk_orders|length }} constrained orders • {{ kpis.active_count - risk_orders|length }} nominal orders progressing to schedule</span>
+          <a class="font-label-mono-xs text-label-mono-xs text-primary hover:text-primary-fixed flex items-center gap-space-xs" href="/orders">
+            <span>View All {{ kpis.active_count }} Sales Orders</span>{{ icon("arrow_forward", 13) }}
+          </a>
+        </div>
+      </section>
+
+      <section class="p-space-xl bg-surface-container-low rounded flex flex-col gap-space-lg">
+        <div class="flex flex-wrap items-center justify-between gap-space-md">
+          <div>
+            <h2 class="font-headline-sm text-headline-sm text-on-surface">Work-Center Finite Capacity Utilization</h2>
+            <p class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">Scheduled load vs 2-shift operating capacity (horizon: 14 days)</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-space-lg font-label-mono-xs text-label-mono-xs text-on-surface-variant">
+            <span class="flex items-center gap-space-xs"><span class="w-2.5 h-2.5 bg-primary rounded-sm"></span>Normal (&lt;85%)</span>
+            <span class="flex items-center gap-space-xs"><span class="w-2.5 h-2.5 bg-warn rounded-sm"></span>Constrained (85-92%)</span>
+            <span class="flex items-center gap-space-xs"><span class="w-2.5 h-2.5 bg-crit rounded-sm"></span>Bottleneck (&gt;92%)</span>
+          </div>
+        </div>
+        <div class="flex flex-col gap-space-md">
+          {% for v in work_centers %}
+          <div class="p-space-md rounded flex flex-col gap-space-xs {{ 'bg-surface-container-high' if v.band == 'bottleneck' else 'bg-surface-container' }}">
+            <div class="flex flex-wrap items-center justify-between gap-space-sm">
+              <div class="flex items-center gap-space-sm min-w-0">
+                {% if v.band == "bottleneck" %}<span class="w-2 h-2 rounded-full bg-crit animate-pulse"></span>{% endif %}
+                <span class="font-label-mono-sm text-label-mono-sm font-semibold {{ 'text-crit' if v.band == 'bottleneck' else 'text-on-surface' }}">{{ v.wc.code }}: {{ v.wc.name }}</span>
+                <span class="hidden md:inline font-label-mono-xs text-label-mono-xs text-outline">({{ v.wc.detail }})</span>
+                {% if v.band == "bottleneck" %}{{ badge("Bottleneck", "crit") }}{% endif %}
+              </div>
+              <div class="flex items-center gap-space-md font-label-mono-sm text-label-mono-sm">
+                <span class="text-on-surface-variant">{{ v.wc.scheduled_hours|num(1) }}h / {{ v.wc.capacity_hours|num }}h</span>
+                <span class="font-bold {{ band_text(v.band) }}">{{ v.pct|round|int }}%</span>
+              </div>
+            </div>
+            {{ util_bar(v.pct, v.band, 85 if v.band == "bottleneck" else None) }}
+            <div class="flex flex-wrap items-center justify-between gap-space-sm text-outline font-label-mono-xs text-label-mono-xs mt-0.5">
+              <span class="{{ 'text-crit' if v.band == 'bottleneck' }}">{{ v.wc.queue_note }}</span>
+              <span class="{{ band_text(v.band) }}">{% if v.band == "bottleneck" %}Exceeds max safe schedule threshold (&gt;92%){% elif v.band == "constrained" %}Near limit: {{ v.headroom|num(1) }}h margin{% else %}Available headroom: {{ v.headroom|num(1) }}h{% endif %}</span>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="flex flex-wrap items-center justify-between gap-space-md pt-space-sm">
+          <span class="flex items-center gap-space-xs font-label-mono-xs text-label-mono-xs text-on-surface-variant">{{ icon("monitoring", 14) }}Overall shop-floor finite loading: {{ (work_centers|sum(attribute="wc.scheduled_hours") / work_centers|sum(attribute="wc.capacity_hours") * 100)|round(1) }}% (target ceiling: 82.0%)</span>
+          {{ button("Re-level Bottleneck via CP-SAT", "tune", "primary", href="/workbench?version=v4.3") }}
+        </div>
+      </section>
+    </div>
+
+    {# RIGHT #}
+    <div class="xl:col-span-4 flex flex-col gap-space-xl min-w-0">
+      <section id="shortages" class="bg-surface-container-low rounded overflow-hidden">
+        {% call panel_header("Material Shortages & Inbound POs", "inventory", "Upcoming receipts vs assembly release dates", "text-warn") %}
+          {{ badge(shortage_skus|length ~ " critical SKUs", "warn") }}
+        {% endcall %}
+        <div class="p-space-md flex flex-col gap-space-md">
+          {% for p in pos %}
+          {% set tone = "crit" if p.po.status == "Late" else ("warn" if p.po.status == "QC Hold" else "info") %}
+          <div class="p-space-md bg-surface-container rounded flex flex-col gap-space-xs">
+            <div class="flex items-start justify-between gap-space-sm">
+              <span class="font-label-mono-sm text-label-mono-sm text-primary font-semibold">{{ p.po.po_number }} • {{ p.po.item }}</span>
+              {{ badge(p.po.status ~ (" +" ~ p.slip ~ "d" if p.slip and p.slip > 0 else ""), tone) }}
+            </div>
+            <div class="font-body-sm text-body-sm text-on-surface">{{ p.po.detail }} <span class="text-on-surface-variant">(linked to {{ p.po.linked_order }})</span></div>
+            <div class="grid grid-cols-2 gap-space-sm font-label-mono-xs text-label-mono-xs text-outline">
+              <span>Factory need: <b class="text-on-surface">{{ p.po.required_date|d }}</b></span>
+              <span>Supplier ETA: <b class="{{ tone_text(tone) if tone != 'info' else 'text-tertiary' }}">{{ p.po.expected_delivery_date|d }}</b></span>
+            </div>
+            <div class="flex items-center justify-between gap-space-sm font-label-mono-xs text-label-mono-xs text-on-surface-variant">
+              <span>{{ p.po.supplier_name }}{% if p.po.quality_status %} · {{ p.po.quality_status }}{% endif %}</span>
+              <span class="text-on-surface-variant">{{ p.po.note }}</span>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="bg-surface-container-low rounded overflow-hidden">
+        {% call panel_header("AI Planning Copilot", "psychology", "Explains solver results — never approves", "text-ai") %}
+          <span class="flex items-center gap-space-xs font-label-mono-xs text-label-mono-xs text-tertiary"><span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>Telemetry Active</span>
+        {% endcall %}
+        <div class="p-space-md flex flex-col gap-space-md">
+          {% for ins in insights %}
+          <div class="p-space-md bg-surface-container rounded flex flex-col gap-space-sm border-l-2 border-ai/60">
+            <div class="flex items-center justify-between font-label-mono-xs text-label-mono-xs uppercase">
+              <span class="text-ai">{{ ins.kind }}</span><span class="text-outline normal-case">{{ ins.age }}</span>
+            </div>
+            <p class="font-body-lg text-body-lg text-on-surface">{{ ins.html|safe }}</p>
+            {% if ins.facts %}
+            <div class="grid grid-cols-2 gap-space-sm p-space-sm bg-surface-container-lowest rounded font-label-mono-xs text-label-mono-xs">
+              {% for k, val in ins.facts %}<span class="text-on-surface-variant">{{ k }}: <b class="text-tertiary">{{ val }}</b></span>{% endfor %}
+            </div>
+            {% endif %}
+            <div class="flex flex-wrap gap-space-sm">
+              {% for label, href in ins.actions %}{{ button(label, None, "primary" if loop.first else "secondary", href=href) }}{% endfor %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="bg-surface-container-low rounded overflow-hidden">
+        {% call panel_header("Schedule Approval Gate", "how_to_reg", None) %}
+          {{ badge(approval.status ~ " release", "warn") }}
+        {% endcall %}
+        <div class="p-space-md flex flex-col gap-space-md">
+          <div class="p-space-md bg-surface-container rounded flex flex-col gap-space-sm font-label-mono-sm text-label-mono-sm">
+            <div class="flex items-start justify-between gap-space-sm">
+              <div>
+                <div class="text-on-surface font-semibold">Proposed Schedule Run #{{ approval.run_number }}</div>
+                <div class="font-label-mono-xs text-label-mono-xs text-outline">Compiled {{ approval.compiled_at }} by {{ approval.requested_by }}</div>
+              </div>
+              {{ badge(approval.schedule_version ~ "-candidate", "info") }}
+            </div>
+            <div class="grid grid-cols-2 gap-space-sm font-label-mono-xs text-label-mono-xs text-on-surface-variant">
+              <span>Total scheduled ops: <b class="text-on-surface">{{ approval.total_ops }}</b></span>
+              <span>Constraint violations: <b class="text-on-surface">{{ approval.hard_violations }} hard / {{ approval.soft_violations }} soft</b></span>
+              <span>Shop OEE forecast: <b class="text-on-surface">{{ approval.oee_forecast }}%</b></span>
+              <span>Changeover penalties: <b class="text-on-surface">{{ approval.changeover_delta }}</b></span>
+            </div>
+            <div class="font-label-mono-xs text-label-mono-xs text-outline">Required sign-off: {{ approval.approver }} ({{ approver_role }})</div>
+          </div>
+          <form class="flex flex-wrap gap-space-sm" hx-post="/approvals/{{ approval.id }}/decision" hx-target="#approval-result">
+            <button name="decision" value="Commit" class="h-7 px-space-md inline-flex items-center gap-space-xs bg-primary text-on-primary hover:bg-primary-fixed font-label-mono-sm text-label-mono-sm rounded font-semibold">{{ icon("done_all", 15) }}Commit to Plant</button>
+            <button name="decision" value="Reject" class="h-7 px-space-md inline-flex items-center gap-space-xs border border-crit/40 bg-crit/10 text-crit hover:bg-crit hover:text-white font-label-mono-sm text-label-mono-sm rounded">{{ icon("close", 15) }}Reject &amp; Re-run</button>
+          </form>
+          <div id="approval-result" aria-live="polite"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+{% endblock %}

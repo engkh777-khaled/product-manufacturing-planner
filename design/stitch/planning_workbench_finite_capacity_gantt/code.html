@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"background":"#0b1326","primary":"#93ccff","error-container":"#93000a","surface-dim":"#0b1326","on-surface":"#dae2fd","on-background":"#dae2fd","outline":"#89929b","on-surface-variant":"#bfc7d2","outline-variant":"#3f4850","surface-container-highest":"#2d3449","tertiary-fixed-dim":"#7bd0ff","inverse-surface":"#dae2fd","on-primary-fixed":"#001d31","tertiary-fixed":"#c4e7ff","surface-tint":"#93ccff","surface":"#0b1326","surface-container-lowest":"#060e20","secondary-fixed":"#cde5ff","inverse-on-surface":"#283044","tertiary":"#7bd0ff","surface-container-high":"#222a3d","surface-container":"#171f33","on-primary-fixed-variant":"#004b73","primary-fixed":"#cce5ff","tertiary-container":"#009bd1","error":"#ffb4ab","on-error":"#690005","on-primary-container":"#002c47","secondary":"#94ccff","primary-container":"#3198dc","on-secondary":"#003352","surface-bright":"#31394d","secondary-container":"#0168a0","on-tertiary-container":"#002d40","primary-fixed-dim":"#93ccff","on-tertiary-fixed":"#001e2c","on-error-container":"#ffdad6","surface-container-low":"#131b2e","secondary-fixed-dim":"#94ccff","on-primary":"#003351","on-tertiary-fixed-variant":"#004c69","on-tertiary":"#00354a","surface-variant":"#2d3449","inverse-primary":"#006398","on-secondary-fixed-variant":"#004b74","on-secondary-container":"#c9e3ff","on-secondary-fixed":"#001d32"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"margin-mobile":"0.75rem","space-xl":"1rem","space-md":"0.5rem","space-lg":"0.75rem","space-xs":"0.125rem","space-sm":"0.25rem","margin":"1rem","gutter-mobile":"0.5rem","gutter":"0.75rem"},"fontFamily":{"label-mono-lg":["JetBrains Mono"],"metric-display":["JetBrains Mono"],"body-sm":["Geist"],"body-lg":["Geist"],"headline-sm":["Geist"],"label-mono-sm":["JetBrains Mono"],"label-mono-xs":["JetBrains Mono"],"headline-xl":["Geist"],"headline-lg":["Geist"]},"fontSize":{"label-mono-lg":["13px",{"lineHeight":"16px","letterSpacing":"-0.01em","fontWeight":"500"}],"metric-display":["24px",{"lineHeight":"28px","letterSpacing":"-0.03em","fontWeight":"700"}],"body-sm":["12px",{"lineHeight":"16px","letterSpacing":"0em","fontWeight":"400"}],"body-lg":["14px",{"lineHeight":"20px","letterSpacing":"0em","fontWeight":"400"}],"headline-sm":["16px",{"lineHeight":"22px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-mono-sm":["11px",{"lineHeight":"14px","letterSpacing":"0.02em","fontWeight":"500"}],"label-mono-xs":["10px",{"lineHeight":"12px","letterSpacing":"0.04em","fontWeight":"600"}],"headline-xl":["28px",{"lineHeight":"34px","letterSpacing":"-0.02em","fontWeight":"600"}],"headline-lg":["22px",{"lineHeight":"28px","letterSpacing":"-0.015em","fontWeight":"600"}]}}}};</script></head><body class="bg-background font-body-lg text-body-lg text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 z-50 bg-surface-container-low/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.35)]"><div class="h-14 w-full px-space-lg flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md shrink-0"><img alt="Product Manufacturing Planner Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1WPPP3fII0a-5AP74ybEDShUVNt8WerjvIzc5pWOWLF1YnPk_SmYUrk-KGwFX8kN_AS6khFLQu5XB8-i1TPdiD6axsbXTrDi1Ytip4XuM8tf-gCEIuO3QZUD_oDx-aO7B1kqsFmZiRB4ULfwmLfMf0R3bIj5qvv5zI4_NkLt7S43LUK4pDGeiBG26g0xIL6cMTbmgCGJ5e7IlHkP82g7hU5oE5aAP2LbNevxNfhrRVySKmqTxBBbihl"/><div class="flex flex-col"><div class="flex items-center gap-space-sm"><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight">Product Manufacturing Planner</span><span class="px-space-sm py-space-xs bg-surface-container-highest text-primary font-label-mono-xs text-label-mono-xs uppercase rounded">v3.4-PROD</span></div><span class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">Precision Valve Operations &amp; Scheduling</span></div><div class="h-6 w-px bg-outline-variant mx-space-xs hidden xl:block"></div><div class="hidden xl:flex items-center gap-space-xs px-space-sm py-space-xs bg-surface-container-high rounded"><span class="material-symbols-outlined text-tertiary text-[14px]">factory</span><span class="font-label-mono-sm text-label-mono-sm text-on-surface">Valvetech Plant 04 - Houston TX</span></div><div class="hidden lg:flex items-center gap-space-xs px-space-sm py-space-xs bg-surface-container rounded"><span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span><span class="font-label-mono-xs text-label-mono-xs text-tertiary-fixed">CP-SAT Solver: Optimal (Run #1042)</span></div></div><div class="flex-1 max-w-xl mx-space-md hidden md:block"><div class="relative flex items-center"><span class="material-symbols-outlined text-outline text-[16px] absolute left-space-sm pointer-events-none">search</span><input class="w-full h-7 pl-8 pr- space-md bg-surface-container-lowest text-on-surface placeholder:text-outline font-label-mono-sm text-label-mono-sm rounded outline-none focus:bg-surface-container-high transition-colors" placeholder="Search Sales Orders (SO-), BOMs, Valve Tags, or Heat Lots..." type="text"/></div></div><div class="flex items-center gap-space-sm shrink-0"><button class="h-7 px-space-md bg-surface-container-high hover:bg-surface-container-highest hover:text-on-surface text-on-surface-variant font-label-mono-sm text-label-mono-sm rounded flex items-center gap-space-xs transition-colors" type="button"><span class="material-symbols-outlined text-[15px]">add</span><span>New Order</span></button><button class="h-7 px-space-md bg-primary hover:bg-primary-fixed hover:text-on-primary-fixed text-on-primary font-label-mono-sm text-label-mono-sm rounded flex items-center gap-space-xs transition-colors shadow-sm" type="button"><span class="material-symbols-outlined text-[15px]">bolt</span><span>Run Solver</span></button><div class="h-6 w-px bg-outline-variant mx-space-xs"></div><button class="relative p-space-xs hover:bg-surface-container-high hover:text-on-surface text-on-surface-variant rounded transition-colors" title="Shortage Notifications" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-error-container text-on-error font-label-mono-xs text-label-mono-xs rounded-full flex items-center justify-center">3</span></button><div class="flex items-center gap-space-sm pl-space-xs"><div class="text-right hidden sm:block"><div class="font-body-sm text-body-sm text-on-surface font-medium leading-none">Sarah Chen</div><div class="font-label-mono-xs text-label-mono-xs text-outline leading-tight mt-0.5">Sr. Production Planner</div></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></div></header><aside class="fixed left-0 top-14 bottom-0 w-64 bg-surface-container-low shadow-[1px_0_8px_rgba(0,0,0,0.3)] z-40 flex flex-col justify-between"><div class="p-space-md flex flex-col gap-space-lg"><div class="px-space-sm"><span class="font-label-mono-xs text-label-mono-xs text-outline uppercase tracking-wider">Manufacturing Ops</span></div><nav class="flex flex-col gap-space-xs" data-active-classes="bg-primary-container text-on-primary-container font-semibold rounded"><a class="flex items-center gap-space-md px-space-md py-space-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors rounded" data-path="executive-dashboard" href="#"><span class="material-symbols-outlined text-[18px]">dashboard</span><span class="font-body-sm text-body-sm">Executive Dashboard</span></a><a aria-current="page" class="flex items-center gap-space-md px-space-md py-space-sm transition-colors bg-primary-container text-on-primary-container font-semibold rounded" data-path="planning-workbench" href="#"><span class="material-symbols-outlined text-[18px]">view_timeline</span><span class="font-body-sm text-body-sm">Planning Workbench</span></a><a class="flex items-center gap-space-md px-space-md py-space-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors rounded" data-path="sales-orders-and-demand" href="#"><span class="material-symbols-outlined text-[18px]">receipt_long</span><span class="font-body-sm text-body-sm">Sales Orders &amp; Demand</span></a><a class="flex items-center gap-space-md px-space-md py-space-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors rounded" data-path="engineering-and-bom" href="#"><span class="material-symbols-outlined text-[18px]">schema</span><span class="font-body-sm text-body-sm">Engineering &amp; BOM</span></a><a class="flex items-center gap-space-md px-space-md py-space-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors rounded" data-path="ai-planning-assistant" href="#"><span class="material-symbols-outlined text-[18px]">psychology</span><span class="font-body-sm text-body-sm">AI Planning Assistant</span></a></nav><div class="px-space-sm pt-space-md border-t border-outline-variant/30"><span class="font-label-mono-xs text-label-mono-xs text-outline uppercase tracking-wider">Telemetry Feed</span><div class="mt-space-sm flex flex-col gap-space-xs"><div class="flex justify-between items-center py-space-xs"><span class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">Active Cells</span><span class="font-label-mono-sm text-label-mono-sm text-on-surface">14 / 16</span></div><div class="flex justify-between items-center py-space-xs"><span class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">Critical Shortages</span><span class="font-label-mono-xs text-label-mono-xs text-error font-medium">3 Skids</span></div><div class="flex justify-between items-center py-space-xs"><span class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">OTD Forecast</span><span class="font-label-mono-sm text-label-mono-sm text-tertiary">98.4%</span></div></div></div></div><div class="p-space-md bg-surface-container-lowest/60 m-space-md rounded"><div class="flex items-center justify-between"><span class="font-label-mono-xs text-label-mono-xs text-outline">Engine: Google OR-Tools</span><span class="w-2 h-2 rounded-full bg-secondary"></span></div><div class="font-label-mono-xs text-label-mono-xs text-on-surface-variant mt-space-xs">Next Sync: 00:04:18</div></div></aside><div class="pl-64"><main class="w-full pt-14 bg-background min-h-screen"><div class="flex flex-col w-full">
+<!-- Workbench Header Ribbon -->
+<div class="px-space-md py-space-sm bg-surface-container-low flex flex-col gap-space-sm shadow-sm">
+<div class="flex flex-wrap items-center justify-between gap-space-sm">
+<!-- Left: Horizon & Scenario Selector -->
+<div class="flex items-center gap-space-md flex-wrap">
+<div class="flex items-center gap-space-xs bg-surface-container-high px-space-sm py-space-xs rounded shadow-inner">
+<span class="material-symbols-outlined text-primary text-[16px]">account_tree</span>
+<span class="font-label-mono-xs text-label-mono-xs text-on-surface-variant uppercase">Schedule Plan:</span>
+<div class="relative">
+<select class="bg-surface-container-lowest text-primary font-label-mono-sm text-label-mono-sm px-space-sm py-0.5 rounded outline-none cursor-pointer" id="schedule-version">
+<option selected="" value="v4.2">Version 4.2 [Baseline Active]</option>
+<option value="scen-b">Scenario B (Overtime Enabled)</option>
+<option value="cpsat-1042">Draft Run #1042 (OR-Tools CP-SAT)</option>
+</select>
+</div>
+</div>
+<div class="flex items-center gap-space-xs bg-surface-container-high px-space-sm py-space-xs rounded">
+<span class="material-symbols-outlined text-tertiary text-[15px]">date_range</span>
+<span class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">Rolling Horizon:</span>
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface">Nov 15 - Dec 15, 2025</span>
+<span class="px-space-xs py-0 bg-primary/20 text-primary font-label-mono-xs text-label-mono-xs rounded">4 WEEKS</span>
+</div>
+<!-- Filter Quick Toggles -->
+<div class="flex items-center gap-space-xs">
+<button class="h-6 px-space-sm rounded font-label-mono-xs text-label-mono-xs flex items-center gap-1 bg-surface-container-highest text-primary transition-colors" id="toggle-critical">
+<span class="material-symbols-outlined text-[13px]">alt_route</span>
+<span>Critical Path</span>
+</button>
+<button class="h-6 px-space-sm rounded font-label-mono-xs text-label-mono-xs flex items-center gap-1 bg-surface-container-highest text-error transition-colors" id="toggle-shortages">
+<span class="material-symbols-outlined text-[13px]">warning</span>
+<span>Shortage Blockers</span>
+</button>
+<button class="h-6 px-space-sm rounded font-label-mono-xs text-label-mono-xs flex items-center gap-1 bg-surface-container-highest text-tertiary-fixed transition-colors" id="toggle-pm">
+<span class="material-symbols-outlined text-[13px]">build_circle</span>
+<span>Maintenance PM</span>
+</button>
+</div>
+</div>
+<!-- Right: Action Dispatchers -->
+<div class="flex items-center gap-space-xs">
+<button class="h-7 px-space-md bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant font-label-mono-sm text-label-mono-sm rounded flex items-center gap-space-xs transition-colors" type="button">
+<span class="material-symbols-outlined text-[15px]">model_training</span>
+<span>Simulate Scenario</span>
+</button>
+<button class="h-7 px-space-md bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant font-label-mono-sm text-label-mono-sm rounded flex items-center gap-space-xs transition-colors" type="button">
+<span class="material-symbols-outlined text-[15px]">file_download</span>
+<span>Export Dispatch</span>
+</button>
+<button class="h-7 px-space-md bg-secondary-container text-on-secondary-container hover:bg-secondary hover:text-on-secondary font-label-mono-sm text-label-mono-sm rounded flex items-center gap-space-xs transition-all shadow-sm" id="btn-re-solver" type="button">
+<span class="material-symbols-outlined text-[15px] animate-spin-hover">sync</span>
+<span>Re-run CP-SAT</span>
+</button>
+<button class="h-7 px-space-md bg-primary text-on-primary hover:bg-primary-fixed hover:text-on-primary-fixed font-label-mono-sm text-label-mono-sm rounded font-semibold flex items-center gap-space-xs transition-all shadow" type="button">
+<span class="material-symbols-outlined text-[15px]">verified</span>
+<span>Submit for Approval</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Legend & Status Ticker Strip -->
+<div class="px-space-md py-space-xs bg-surface-container-lowest flex items-center justify-between text-on-surface-variant font-label-mono-xs text-label-mono-xs overflow-x-auto">
+<div class="flex items-center gap-space-md shrink-0">
+<span class="text-outline uppercase">Active Sales Orders:</span>
+<div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-primary"></span><span class="text-on-surface">SO-1005 (16" Trunnion Ball Valve, Class 1500)</span></div>
+<div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-tertiary"></span><span class="text-on-surface">SO-1008 (8" Cryogenic Globe)</span></div>
+<div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-secondary-fixed"></span><span class="text-on-surface">SO-1012 (24" Axial Control)</span></div>
+<div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-primary-container"></span><span class="text-on-surface">SO-1015 (4" Dual Plate Check)</span></div>
+</div>
+<div class="flex items-center gap-space-lg shrink-0 pl-space-md">
+<div class="flex items-center gap-1 text-tertiary"><span class="material-symbols-outlined text-[13px]">lock_clock</span><span>Solver Gap: 0.00%</span></div>
+<div class="flex items-center gap-1 text-on-surface-variant"><span class="material-symbols-outlined text-[13px]">speed</span><span>Runtime: 4.28s</span></div>
+<div class="flex items-center gap-1 text-error"><span class="material-symbols-outlined text-[13px]">priority_high</span><span>1 Overload at Hydro Rig 1</span></div>
+</div>
+</div>
+<!-- Main Split Canvas: Left Work Centers + Right Gantt TimeGrid -->
+<div class="relative flex flex-col md:flex-row w-full overflow-hidden bg-background">
+<!-- Work Center Machine Column (Left Fixed Pane) -->
+<div class="w-full md:w-72 shrink-0 bg-surface-container-low flex flex-col z-20 shadow-md">
+<div class="h-10 px-space-sm bg-surface-container-high flex items-center justify-between">
+<span class="font-label-mono-xs text-label-mono-xs text-on-surface-variant uppercase font-semibold">Work Center / Asset ID</span>
+<span class="font-label-mono-xs text-label-mono-xs text-outline">Cap: 80h/wk</span>
+</div>
+<!-- Work Center Hierarchy -->
+<div class="flex flex-col text-on-surface font-body-sm text-body-sm select-none">
+<!-- Category: CNC Machining -->
+<div class="px-space-sm py-1 bg-surface-container-highest/60 flex items-center justify-between">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-primary">precision_manufacturing</span>
+<span class="font-label-mono-xs text-label-mono-xs font-semibold text-primary uppercase">CNC Machining</span>
+</div>
+<span class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">2 Units</span>
+</div>
+<div class="h-12 px-space-sm flex flex-col justify-center bg-surface-container-low hover:bg-surface-container transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface font-medium truncate">Mazak Integrex e-670H</span>
+<span class="px-1 bg-surface-container-highest text-tertiary font-label-mono-xs text-label-mono-xs rounded">94%</span>
+</div>
+<span class="font-label-mono-xs text-label-mono-xs text-outline">MC-010 • Heavy Milling / 5-Axis</span>
+</div>
+<div class="h-12 px-space-sm flex flex-col justify-center bg-surface-container hover:bg-surface-container-high transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface font-medium truncate">Okuma Multus U4000</span>
+<span class="px-1 bg-surface-container-highest text-on-surface-variant font-label-mono-xs text-label-mono-xs rounded">78%</span>
+</div>
+<span class="font-label-mono-xs text-label-mono-xs text-outline">MC-014 • Seat &amp; Cavity Turning</span>
+</div>
+<!-- Category: Welding & Cladding -->
+<div class="px-space-sm py-1 bg-surface-container-highest/60 flex items-center justify-between">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-tertiary">local_fire_department</span>
+<span class="font-label-mono-xs text-label-mono-xs font-semibold text-tertiary uppercase">Welding &amp; Cladding</span>
+</div>
+<span class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">2 Units</span>
+</div>
+<div class="h-12 px-space-sm flex flex-col justify-center bg-surface-container-low hover:bg-surface-container transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface font-medium truncate">Cladding Cell 1 (Inconel)</span>
+<span class="px-1 bg-surface-container-highest text-on-surface font-label-mono-xs text-label-mono-xs rounded">88%</span>
+</div>
+<span class="font-label-mono-xs text-label-mono-xs text-outline">WL-002 • Weld Overlay Station</span>
+</div>
+<div class="h-12 px-space-sm flex flex-col justify-center bg-surface-container hover:bg-surface-container-high transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface font-medium truncate">Automated Submerged Arc</span>
+<span class="px-1 bg-surface-container-highest text-on-surface-variant font-label-mono-xs text-label-mono-xs rounded">65%</span>
+</div>
+<span class="font-label-mono-xs text-label-mono-xs text-outline">WL-005 • Flange Butt Welder</span>
+</div>
+<!-- Category: Sub-Assembly -->
+<div class="px-space-sm py-1 bg-surface-container-highest/60 flex items-center justify-between">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-secondary">handyman</span>
+<span class="font-label-mono-xs text-label-mono-xs font-semibold text-secondary uppercase">Sub-Assembly</span>
+</div>
+<span class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">2 Benches</span>
+</div>
+<div class="h-12 px-space-sm flex flex-col justify-center bg-surface-container-low hover:bg-surface-container transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface font-medium truncate">Stem &amp; Ball Lapping Bench</span>
+<span class="px-1 bg-surface-container-highest text-on-surface-variant font-label-mono-xs text-label-mono-xs rounded">72%</span>
+</div>
+<span class="font-label-mono-xs text-label-mono-xs text-outline">SA-008 • Optical Flat Tolerancing</span>
+</div>
+<div class="h-12 px-space-sm flex flex-col justify-center bg-surface-container hover:bg-surface-container-high transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface font-medium truncate">Packing Assembly Station</span>
+<span class="px-1 bg-surface-container-highest text-on-surface font-label-mono-xs text-label-mono-xs rounded">81%</span>
+</div>
+<span class="font-label-mono-xs text-label-mono-xs text-outline">SA-012 • Graphite Seal Insert</span>
+</div>
+<!-- Category: Final Assembly -->
+<div class="px-space-sm py-1 bg-surface-container-highest/60 flex items-center justify-between">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-primary-container">domain</span>
+<span class="font-label-mono-xs text-label-mono-xs font-semibold text-primary-container uppercase">Final Assembly</span>
+</div>
+<span class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">2 Bays</span>
+</div>
+<div class="h-12 px-space-sm flex flex-col justify-center bg-surface-container-low hover:bg-surface-container transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface font-medium truncate">Heavy Valve Bay A</span>
+<span class="px-1 bg-surface-container-highest text-tertiary font-label-mono-xs text-label-mono-xs rounded">96%</span>
+</div>
+<span class="font-label-mono-xs text-label-mono-xs text-outline">FA-001 • 30-Ton Crane Assist</span>
+</div>
+<div class="h-12 px-space-sm flex flex-col justify-center bg-surface-container hover:bg-surface-container-high transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface font-medium truncate">Valve Bay B (Medium Bore)</span>
+<span class="px-1 bg-surface-container-highest text-on-surface-variant font-label-mono-xs text-label-mono-xs rounded">60%</span>
+</div>
+<span class="font-label-mono-xs text-label-mono-xs text-outline">FA-002 • Standard Frame Assembly</span>
+</div>
+<!-- Category: Testing & NDE -->
+<div class="px-space-sm py-1 bg-surface-container-highest/60 flex items-center justify-between">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-error">science</span>
+<span class="font-label-mono-xs text-label-mono-xs font-semibold text-error uppercase">Testing &amp; NDE</span>
+</div>
+<span class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">3 Cells</span>
+</div>
+<div class="h-12 px-space-sm flex flex-col justify-center bg-surface-container-low hover:bg-surface-container transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-sm text-label-mono-sm text-error font-medium truncate">Hydrostatic Rig 1 (HP)</span>
+<span class="px-1 bg-error-container text-on-error font-label-mono-xs text-label-mono-xs rounded font-bold">100%!</span>
+</div>
+<span class="font-label-mono-xs text-label-mono-xs text-outline">TE-001 • 22,500 PSI Enclosure</span>
+</div>
+<div class="h-12 px-space-sm flex flex-col justify-center bg-surface-container hover:bg-surface-container-high transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface font-medium truncate">Gas Helium Cryo Cell</span>
+<span class="px-1 bg-surface-container-highest text-on-surface-variant font-label-mono-xs text-label-mono-xs rounded">50%</span>
+</div>
+<span class="font-label-mono-xs text-label-mono-xs text-outline">TE-004 • -196°C Sniffer Chamber</span>
+</div>
+<div class="h-12 px-space-sm flex flex-col justify-center bg-surface-container-low hover:bg-surface-container transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface font-medium truncate">Radiographic Bunker</span>
+<span class="px-1 bg-surface-container-highest text-on-surface-variant font-label-mono-xs text-label-mono-xs rounded">40%</span>
+</div>
+<span class="font-label-mono-xs text-label-mono-xs text-outline">ND-001 • X-Ray / Gamma RT Vault</span>
+</div>
+<!-- Category: Surface Finishing -->
+<div class="px-space-sm py-1 bg-surface-container-highest/60 flex items-center justify-between">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-secondary-fixed">format_paint</span>
+<span class="font-label-mono-xs text-label-mono-xs font-semibold text-secondary-fixed uppercase">Surface Finishing</span>
+</div>
+<span class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">2 Lines</span>
+</div>
+<div class="h-12 px-space-sm flex flex-col justify-center bg-surface-container-low hover:bg-surface-container transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface font-medium truncate">Blast Booth (Garnet)</span>
+<span class="px-1 bg-surface-container-highest text-on-surface-variant font-label-mono-xs text-label-mono-xs rounded">55%</span>
+</div>
+<span class="font-label-mono-xs text-label-mono-xs text-outline">SF-001 • Sa 2.5 Profiling</span>
+</div>
+<div class="h-12 px-space-sm flex flex-col justify-center bg-surface-container hover:bg-surface-container-high transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface font-medium truncate">Epoxy Paint Line</span>
+<span class="px-1 bg-surface-container-highest text-on-surface-variant font-label-mono-xs text-label-mono-xs rounded">70%</span>
+</div>
+<span class="font-label-mono-xs text-label-mono-xs text-outline">SF-003 • Marine C5M Curing Oven</span>
+</div>
+</div>
+</div>
+<!-- Timeline Gantt Surface (Scrollable Grid) -->
+<div class="flex-1 overflow-x-auto relative bg-surface-container-lowest">
+<!-- Grid Dimensions: 14 Days (Nov 17 - Nov 30) with Shift 1 & Shift 2 subdivisions -->
+<div class="min-w-[1280px] w-full flex flex-col relative">
+<!-- Top Timeline Date Header -->
+<div class="h-10 bg-surface-container-high flex sticky top-0 z-10 select-none shadow-sm">
+<!-- 14 Date Columns -->
+<div class="grid grid-cols-14 w-full divide-x-0">
+<div class="flex flex-col items-center justify-center bg-surface-container-high/90">
+<span class="font-label-mono-xs text-label-mono-xs text-on-surface font-semibold">MON 17</span>
+<div class="flex w-full justify-around text-[9px] font-label-mono-xs text-outline"><span>S1</span><span>S2</span></div>
+</div>
+<div class="flex flex-col items-center justify-center bg-surface-container-high/80">
+<span class="font-label-mono-xs text-label-mono-xs text-on-surface font-semibold">TUE 18</span>
+<div class="flex w-full justify-around text-[9px] font-label-mono-xs text-outline"><span>S1</span><span>S2</span></div>
+</div>
+<div class="flex flex-col items-center justify-center bg-surface-container-high/90">
+<span class="font-label-mono-xs text-label-mono-xs text-on-surface font-semibold">WED 19</span>
+<div class="flex w-full justify-around text-[9px] font-label-mono-xs text-outline"><span>S1</span><span>S2</span></div>
+</div>
+<div class="flex flex-col items-center justify-center bg-surface-container-high/80">
+<span class="font-label-mono-xs text-label-mono-xs text-on-surface font-semibold">THU 20</span>
+<div class="flex w-full justify-around text-[9px] font-label-mono-xs text-outline"><span>S1</span><span>S2</span></div>
+</div>
+<div class="flex flex-col items-center justify-center bg-surface-container-high/90">
+<span class="font-label-mono-xs text-label-mono-xs text-on-surface font-semibold">FRI 21</span>
+<div class="flex w-full justify-around text-[9px] font-label-mono-xs text-outline"><span>S1</span><span>S2</span></div>
+</div>
+<div class="flex flex-col items-center justify-center bg-surface-container-highest/40">
+<span class="font-label-mono-xs text-label-mono-xs text-outline">SAT 22</span>
+<div class="flex w-full justify-around text-[9px] font-label-mono-xs text-outline-variant"><span>OT</span><span>-</span></div>
+</div>
+<div class="flex flex-col items-center justify-center bg-surface-container-highest/40">
+<span class="font-label-mono-xs text-label-mono-xs text-outline">SUN 23</span>
+<div class="flex w-full justify-around text-[9px] font-label-mono-xs text-outline-variant"><span>-</span><span>-</span></div>
+</div>
+<div class="flex flex-col items-center justify-center bg-surface-container-high/90">
+<span class="font-label-mono-xs text-label-mono-xs text-on-surface font-semibold">MON 24</span>
+<div class="flex w-full justify-around text-[9px] font-label-mono-xs text-outline"><span>S1</span><span>S2</span></div>
+</div>
+<div class="flex flex-col items-center justify-center bg-surface-container-high/80">
+<span class="font-label-mono-xs text-label-mono-xs text-on-surface font-semibold">TUE 25</span>
+<div class="flex w-full justify-around text-[9px] font-label-mono-xs text-outline"><span>S1</span><span>S2</span></div>
+</div>
+<div class="flex flex-col items-center justify-center bg-surface-container-high/90">
+<span class="font-label-mono-xs text-label-mono-xs text-on-surface font-semibold">WED 26</span>
+<div class="flex w-full justify-around text-[9px] font-label-mono-xs text-outline"><span>S1</span><span>S2</span></div>
+</div>
+<div class="flex flex-col items-center justify-center bg-surface-container-high/80">
+<span class="font-label-mono-xs text-label-mono-xs text-on-surface font-semibold">THU 27</span>
+<div class="flex w-full justify-around text-[9px] font-label-mono-xs text-outline"><span>S1</span><span>S2</span></div>
+</div>
+<div class="flex flex-col items-center justify-center bg-surface-container-high/90">
+<span class="font-label-mono-xs text-label-mono-xs text-on-surface font-semibold">FRI 28</span>
+<div class="flex w-full justify-around text-[9px] font-label-mono-xs text-outline"><span>S1</span><span>S2</span></div>
+</div>
+<div class="flex flex-col items-center justify-center bg-surface-container-highest/40">
+<span class="font-label-mono-xs text-label-mono-xs text-outline">SAT 29</span>
+<div class="flex w-full justify-around text-[9px] font-label-mono-xs text-outline-variant"><span>OT</span><span>-</span></div>
+</div>
+<div class="flex flex-col items-center justify-center bg-surface-container-highest/40">
+<span class="font-label-mono-xs text-label-mono-xs text-outline">SUN 30</span>
+<div class="flex w-full justify-around text-[9px] font-label-mono-xs text-outline-variant"><span>-</span><span>-</span></div>
+</div>
+</div>
+</div>
+<!-- Timeline Grid Rows (Aligned perfectly with left machine list) -->
+<div class="relative w-full flex flex-col">
+<!-- Background Vertical Shift Guide Lines & Material Flags -->
+<div class="absolute inset-0 grid grid-cols-14 pointer-events-none z-0">
+<div class="bg-surface-container-lowest"></div>
+<div class="bg-surface-container-low/30"></div>
+<div class="bg-surface-container-lowest"></div>
+<div class="bg-surface-container-low/30"></div>
+<div class="bg-surface-container-lowest"></div>
+<div class="bg-surface-container-highest/20"></div>
+<div class="bg-surface-container-highest/20"></div>
+<div class="bg-surface-container-lowest"></div>
+<div class="bg-surface-container-low/30"></div>
+<div class="bg-surface-container-lowest"></div>
+<div class="bg-surface-container-low/30"></div>
+<!-- Nov 28 with Material Milestone Overlay Marker -->
+<div class="bg-surface-container-lowest relative">
+<div class="absolute top-0 bottom-0 left-1/2 w-0.5 bg-tertiary-fixed opacity-70"></div>
+<div class="absolute top-2 left-1/2 -translate-x-1/2 bg-tertiary-container text-on-tertiary-container px-1 py-0.5 rounded shadow flex items-center gap-1 font-label-mono-xs text-[9px] z-30 pointer-events-auto cursor-pointer" title="Material Arrival: PO-8821 Actuator Available Nov 28">
+<span class="material-symbols-outlined text-[11px]">flag</span>
+<span class="font-bold">PO-8821 MATL</span>
+</div>
+</div>
+<div class="bg-surface-container-highest/20"></div>
+<div class="bg-surface-container-highest/20"></div>
+</div>
+<!-- Precedence Connector Vectors (Inline SVG) -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none z-10" preserveaspectratio="none">
+<!-- Line 1: OP-020 (Mazak) -> OP-030 (Cladding Cell 1) -->
+<path class="text-primary" d="M 235 48 L 260 48 L 260 120 L 285 120" fill="none" stroke="currentColor" stroke-dasharray="2,2" stroke-width="1.5"></path>
+<polygon class="fill-primary" points="285,117 292,120 285,123"></polygon>
+<!-- Line 2: OP-030 (Cladding Cell 1) -> OP-040 (Okuma Cavity) -->
+<path class="text-primary" d="M 450 120 L 475 120 L 475 72 L 500 72" fill="none" stroke="currentColor" stroke-width="1.5"></path>
+<polygon class="fill-primary" points="500,69 507,72 500,75"></polygon>
+<!-- Line 3: OP-040 (Okuma) -> OP-070 (Stem Assembly) -->
+<path class="text-primary" d="M 660 72 L 685 72 L 685 216 L 710 216" fill="none" stroke="currentColor" stroke-width="1.5"></path>
+<polygon class="fill-primary" points="710,213 717,216 710,219"></polygon>
+<!-- Line 4: OP-070 (Stem) -> OP-080 (Bay A Final) -->
+<path class="text-primary" d="M 870 216 L 890 216 L 890 312 L 910 312" fill="none" stroke="currentColor" stroke-width="1.5"></path>
+<polygon class="fill-primary" points="910,309 917,312 910,315"></polygon>
+<!-- Line 5: OP-080 (Bay A) -> OP-090 (Hydro Rig 1 Overload) -->
+<path class="text-error" d="M 1070 312 L 1090 312 L 1090 408 L 1110 408" fill="none" stroke="currentColor" stroke-width="2"></path>
+<polygon class="fill-error" points="1110,405 1117,408 1110,411"></polygon>
+</svg>
+<!-- Category Spacer: CNC Machining -->
+<div class="h-6 bg-surface-container-highest/30"></div>
+<!-- ROW 1: Mazak Integrex e-670H -->
+<div class="h-12 relative flex items-center px-2">
+<!-- OP-020 SO-1005 (Nov 17 - Nov 19) -->
+<div class="absolute left-[2%] w-[16%] h-8 bg-primary rounded px-space-sm flex flex-col justify-center text-on-primary shadow-sm hover:scale-[1.01] transition-transform cursor-pointer z-10" title="SO-1005 | Body Rough Turning | Dur: 36 hrs | Machine: Mazak Integrex">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-xs text-label-mono-xs font-bold leading-none truncate">OP-020: Body Rough Turn</span>
+<span class="font-label-mono-xs text-[9px] opacity-80">SO-1005</span>
+</div>
+<span class="font-label-mono-xs text-[9px] opacity-90 truncate">36h • Setup Cleared</span>
+</div>
+<!-- Planned Maintenance Downtime Block on Mazak (Nov 20 Shift 1 - Shift 2, 16 hrs) -->
+<div class="absolute left-[21.5%] w-[7%] h-8 rounded px-space-xs flex flex-col justify-center text-on-surface bg-surface-container-highest overflow-hidden z-10 shadow-inner" style="background-image: repeating-linear-gradient(45deg, rgba(255, 180, 171, 0.15), rgba(255, 180, 171, 0.15) 8px, rgba(147, 0, 10, 0.3) 8px, rgba(147, 0, 10, 0.3) 16px);" title="Preventive Maintenance: Spindle Overhaul &amp; Calibration (16 hrs)">
+<div class="flex items-center gap-1 text-error">
+<span class="material-symbols-outlined text-[13px]">build</span>
+<span class="font-label-mono-xs text-[9px] font-bold uppercase truncate">Spindle PM (16h)</span>
+</div>
+</div>
+<!-- OP-015 SO-1012 (Nov 24 - Nov 27) -->
+<div class="absolute left-[50%] w-[21%] h-8 bg-secondary-fixed rounded px-space-sm flex flex-col justify-center text-on-secondary-fixed shadow-sm hover:scale-[1.01] transition-transform cursor-pointer z-10">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-xs text-label-mono-xs font-bold truncate">OP-015: Axial Body Contour</span>
+<span class="font-label-mono-xs text-[9px] opacity-80">SO-1012</span>
+</div>
+<span class="font-label-mono-xs text-[9px] opacity-90">48h • In-Spec Inconel</span>
+</div>
+</div>
+<!-- ROW 2: Okuma Multus U4000 -->
+<div class="h-12 relative flex items-center px-2 bg-surface-container-lowest/50">
+<!-- OP-040 SO-1005 (Nov 23 - Nov 25) -->
+<div class="absolute left-[39%] w-[13%] h-8 bg-primary rounded px-space-sm flex flex-col justify-center text-on-primary shadow-sm hover:scale-[1.01] transition-transform cursor-pointer z-10" title="SO-1005 | Seat Pocket Milling | Dur: 28 hrs">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-xs text-label-mono-xs font-bold truncate">OP-040: Seat Pocket Mill</span>
+<span class="font-label-mono-xs text-[9px] opacity-80">SO-1005</span>
+</div>
+<span class="font-label-mono-xs text-[9px] opacity-90">28h • Precision Finish</span>
+</div>
+<!-- OP-035 SO-1008 (Nov 17 - Nov 19) -->
+<div class="absolute left-[3%] w-[12%] h-8 bg-tertiary rounded px-space-sm flex flex-col justify-center text-on-tertiary shadow-sm hover:scale-[1.01] transition-transform cursor-pointer z-10">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-xs text-label-mono-xs font-bold truncate">OP-035: Globe Bonnet Turn</span>
+<span class="font-label-mono-xs text-[9px] opacity-80">SO-1008</span>
+</div>
+<span class="font-label-mono-xs text-[9px] opacity-90">24h • 316L SS</span>
+</div>
+</div>
+<!-- Category Spacer: Welding & Cladding -->
+<div class="h-6 bg-surface-container-highest/30"></div>
+<!-- ROW 3: Cladding Cell 1 -->
+<div class="h-12 relative flex items-center px-2">
+<!-- OP-030 SO-1005 (Nov 20 - Nov 22) -->
+<div class="absolute left-[22.5%] w-[13%] h-8 bg-primary rounded px-space-sm flex flex-col justify-center text-on-primary shadow-sm hover:scale-[1.01] transition-transform cursor-pointer z-10">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-xs text-label-mono-xs font-bold truncate">OP-030: Inconel 625 Clad</span>
+<span class="font-label-mono-xs text-[9px] opacity-80">SO-1005</span>
+</div>
+<span class="font-label-mono-xs text-[9px] opacity-90">32h • Hot Wire TIG</span>
+</div>
+<!-- OP-028 SO-1015 (Nov 26 - Nov 28) -->
+<div class="absolute left-[64%] w-[14%] h-8 bg-primary-container rounded px-space-sm flex flex-col justify-center text-on-primary shadow-sm hover:scale-[1.01] transition-transform cursor-pointer z-10">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-xs text-label-mono-xs font-bold truncate">OP-028: Check Seat Overlay</span>
+<span class="font-label-mono-xs text-[9px] opacity-80">SO-1015</span>
+</div>
+<span class="font-label-mono-xs text-[9px] opacity-90">30h • Stellite 6</span>
+</div>
+</div>
+<!-- ROW 4: Automated Submerged Arc -->
+<div class="h-12 relative flex items-center px-2 bg-surface-container-lowest/50">
+<!-- OP-050 SO-1012 (Nov 18 - Nov 21) -->
+<div class="absolute left-[7.5%] w-[18%] h-8 bg-secondary-fixed rounded px-space-sm flex flex-col justify-center text-on-secondary-fixed shadow-sm hover:scale-[1.01] transition-transform cursor-pointer z-10">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-xs text-label-mono-xs font-bold truncate">OP-050: Flange Circum-Weld</span>
+<span class="font-label-mono-xs text-[9px] opacity-80">SO-1012</span>
+</div>
+<span class="font-label-mono-xs text-[9px] opacity-90">40h • Tandem Wire</span>
+</div>
+</div>
+<!-- Category Spacer: Sub-Assembly -->
+<div class="h-6 bg-surface-container-highest/30"></div>
+<!-- ROW 5: Stem & Ball Lapping Bench -->
+<div class="h-12 relative flex items-center px-2">
+<!-- OP-070 SO-1005 (Nov 25 - Nov 27) -->
+<div class="absolute left-[55%] w-[13%] h-8 bg-primary rounded px-space-sm flex flex-col justify-center text-on-primary shadow-sm hover:scale-[1.01] transition-transform cursor-pointer z-10">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-xs text-label-mono-xs font-bold truncate">OP-070: Stem Lapping</span>
+<span class="font-label-mono-xs text-[9px] opacity-80">SO-1005</span>
+</div>
+<span class="font-label-mono-xs text-[9px] opacity-90">24h • Class VI Sealing</span>
+</div>
+<!-- OP-065 SO-1008 (Nov 20 - Nov 22) -->
+<div class="absolute left-[21.5%] w-[11%] h-8 bg-tertiary rounded px-space-sm flex flex-col justify-center text-on-tertiary shadow-sm hover:scale-[1.01] transition-transform cursor-pointer z-10">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-xs text-label-mono-xs font-bold truncate">OP-065: Needle Plug Lap</span>
+<span class="font-label-mono-xs text-[9px] opacity-80">SO-1008</span>
+</div>
+<span class="font-label-mono-xs text-[9px] opacity-90">20h • Cryo Match</span>
+</div>
+</div>
+<!-- ROW 6: Packing Assembly Station -->
+<div class="h-12 relative flex items-center px-2 bg-surface-container-lowest/50">
+<!-- OP-075 SO-1015 (Nov 18 - Nov 20) -->
+<div class="absolute left-[7%] w-[12%] h-8 bg-primary-container rounded px-space-sm flex flex-col justify-center text-on-primary shadow-sm hover:scale-[1.01] transition-transform cursor-pointer z-10">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-xs text-label-mono-xs font-bold truncate">OP-075: Spring &amp; Pin Kit</span>
+<span class="font-label-mono-xs text-[9px] opacity-80">SO-1015</span>
+</div>
+<span class="font-label-mono-xs text-[9px] opacity-90">18h • Inconel Springs</span>
+</div>
+</div>
+<!-- Category Spacer: Final Assembly -->
+<div class="h-6 bg-surface-container-highest/30"></div>
+<!-- ROW 7: Heavy Valve Assembly Bay A -->
+<div class="h-12 relative flex items-center px-2">
+<!-- OP-080 SO-1005 (Nov 27 - Nov 29) -->
+<div class="absolute left-[71%] w-[13%] h-8 bg-primary rounded px-space-sm flex flex-col justify-center text-on-primary shadow-sm hover:scale-[1.01] transition-transform cursor-pointer z-10">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-xs text-label-mono-xs font-bold truncate">OP-080: Bay A Valve Assembly</span>
+<span class="font-label-mono-xs text-[9px] opacity-80">SO-1005</span>
+</div>
+<span class="font-label-mono-xs text-[9px] opacity-90">32h • Hydraulic Torquing</span>
+</div>
+</div>
+<!-- ROW 8: Valve Bay B -->
+<div class="h-12 relative flex items-center px-2 bg-surface-container-lowest/50">
+<!-- OP-082 SO-1008 (Nov 23 - Nov 26) -->
+<div class="absolute left-[43%] w-[16%] h-8 bg-tertiary rounded px-space-sm flex flex-col justify-center text-on-tertiary shadow-sm hover:scale-[1.01] transition-transform cursor-pointer z-10">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-xs text-label-mono-xs font-bold truncate">OP-082: Cryo Globe Final Pack</span>
+<span class="font-label-mono-xs text-[9px] opacity-80">SO-1008</span>
+</div>
+<span class="font-label-mono-xs text-[9px] opacity-90">36h • Cleanroom ISO 7</span>
+</div>
+</div>
+<!-- Category Spacer: Testing & NDE -->
+<div class="h-6 bg-surface-container-highest/30"></div>
+<!-- ROW 9: Hydrostatic Rig 1 (HP) - Critical Overload Row -->
+<div class="h-12 relative flex items-center px-2 bg-error-container/10">
+<!-- OP-090 SO-1005 (Nov 29 - Dec 01) Overload & Exclamation Badge -->
+<div class="absolute left-[86%] w-[12%] h-8 bg-primary rounded px-space-sm flex flex-col justify-center text-on-primary shadow-sm hover:scale-[1.01] transition-transform cursor-pointer z-10" title="CRITICAL OVERLOAD: Conflicts with SO-1012 calibration cycle">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-xs text-label-mono-xs font-bold truncate">OP-090: API 598 Hydro Test</span>
+<!-- Warning Exclamation Badge -->
+<span class="w-4 h-4 rounded-full bg-error text-on-error flex items-center justify-center font-bold text-[10px] animate-bounce shrink-0" title="Capacity Overlap: 14 hrs buffer deficit">!</span>
+</div>
+<span class="font-label-mono-xs text-[9px] opacity-90">24h • 22.5k PSI Hold</span>
+</div>
+<!-- Pre-existing Test Load OP-088 SO-1012 (Nov 28 - Nov 30) overlapping -->
+<div class="absolute left-[78%] w-[10%] h-8 bg-secondary-fixed/80 rounded px-space-sm flex flex-col justify-center text-on-secondary-fixed shadow-sm z-5">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-xs text-label-mono-xs font-bold truncate">OP-088: Pre-Cal Hydro</span>
+<span class="font-label-mono-xs text-[9px] opacity-80">SO-1012</span>
+</div>
+<span class="font-label-mono-xs text-[9px] opacity-90">16h • Shell Hold</span>
+</div>
+</div>
+<!-- ROW 10: Gas Helium Cryo Cell -->
+<div class="h-12 relative flex items-center px-2 bg-surface-container-lowest/50">
+<!-- OP-094 SO-1008 (Nov 27 - Nov 29) -->
+<div class="absolute left-[71.5%] w-[14%] h-8 bg-tertiary rounded px-space-sm flex flex-col justify-center text-on-tertiary shadow-sm hover:scale-[1.01] transition-transform cursor-pointer z-10">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-xs text-label-mono-xs font-bold truncate">OP-094: -196°C Helium Sniffer</span>
+<span class="font-label-mono-xs text-[9px] opacity-80">SO-1008</span>
+</div>
+<span class="font-label-mono-xs text-[9px] opacity-90">28h • Zero Emission Proof</span>
+</div>
+</div>
+<!-- ROW 11: Radiographic Bunker -->
+<div class="h-12 relative flex items-center px-2">
+<!-- OP-060 SO-1012 (Nov 22 - Nov 24) -->
+<div class="absolute left-[36%] w-[12%] h-8 bg-secondary-fixed rounded px-space-sm flex flex-col justify-center text-on-secondary-fixed shadow-sm hover:scale-[1.01] transition-transform cursor-pointer z-10">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-xs text-label-mono-xs font-bold truncate">OP-060: 100% Volumetric RT</span>
+<span class="font-label-mono-xs text-[9px] opacity-80">SO-1012</span>
+</div>
+<span class="font-label-mono-xs text-[9px] opacity-90">18h • ASME Sec VIII</span>
+</div>
+</div>
+<!-- Category Spacer: Surface Finishing -->
+<div class="h-6 bg-surface-container-highest/30"></div>
+<!-- ROW 12: Blast Booth -->
+<div class="h-12 relative flex items-center px-2">
+<!-- OP-098 SO-1015 (Nov 21 - Nov 22) -->
+<div class="absolute left-[29%] w-[8%] h-8 bg-primary-container rounded px-space-sm flex flex-col justify-center text-on-primary shadow-sm hover:scale-[1.01] transition-transform cursor-pointer z-10">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-xs text-label-mono-xs font-bold truncate">OP-098: Sa 2.5 Blast</span>
+<span class="font-label-mono-xs text-[9px] opacity-80">SO-1015</span>
+</div>
+<span class="font-label-mono-xs text-[9px] opacity-90">12h • Garnet</span>
+</div>
+</div>
+<!-- ROW 13: Industrial Epoxy Paint Line -->
+<div class="h-12 relative flex items-center px-2 bg-surface-container-lowest/50">
+<!-- OP-100 SO-1015 (Nov 23 - Nov 25) -->
+<div class="absolute left-[43%] w-[11%] h-8 bg-primary-container rounded px-space-sm flex flex-col justify-center text-on-primary shadow-sm hover:scale-[1.01] transition-transform cursor-pointer z-10">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-xs text-label-mono-xs font-bold truncate">OP-100: C5M 3-Coat Paint</span>
+<span class="font-label-mono-xs text-[9px] opacity-80">SO-1015</span>
+</div>
+<span class="font-label-mono-xs text-[9px] opacity-90">20h • Force Cure 80°C</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Drawer / Multi-Tab Inspection & What-If Matrix Split Panel -->
+<div class="w-full bg-surface-container-low shadow-xl flex flex-col z-30">
+<!-- Drawer Tab Navigation -->
+<div class="px-space-md bg-surface-container flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<button class="h-9 px-space-md font-label-mono-sm text-label-mono-sm flex items-center gap-2 text-primary font-semibold transition-colors bg-surface-container-high rounded-t" id="tab-btn-matrix">
+<span class="material-symbols-outlined text-[16px]">compare_arrows</span>
+<span>What-If Comparison Matrix</span>
+<span class="px-1.5 py-0.2 bg-primary/20 text-primary text-[10px] rounded-full">Active Evaluation</span>
+</button>
+<button class="h-9 px-space-md font-label-mono-sm text-label-mono-sm flex items-center gap-2 text-on-surface-variant hover:text-on-surface transition-colors" id="tab-btn-violations">
+<span class="material-symbols-outlined text-[16px] text-tertiary">notification_important</span>
+<span>Constraint Violations</span>
+<span class="px-1.5 py-0.2 bg-surface-container-highest text-tertiary-fixed text-[10px] rounded-full">0 Hard / 2 Soft</span>
+</button>
+<button class="h-9 px-space-md font-label-mono-sm text-label-mono-sm flex items-center gap-2 text-on-surface-variant hover:text-on-surface transition-colors" id="tab-btn-shortages">
+<span class="material-symbols-outlined text-[16px] text-error">inventory_2</span>
+<span>Time-Phased Shortage Impact</span>
+<span class="px-1.5 py-0.2 bg-error-container text-on-error text-[10px] rounded-full">1 Skid Hold</span>
+</button>
+</div>
+<!-- Quick Fast Action Button -->
+<div class="py-1">
+<button class="h-7 px-space-md bg-primary hover:bg-primary-fixed text-on-primary hover:text-on-primary-fixed font-label-mono-sm text-label-mono-sm rounded flex items-center gap-space-xs shadow transition-all font-semibold" type="button">
+<span class="material-symbols-outlined text-[15px]">done_all</span>
+<span>Adopt Scenario B as Proposed Plan</span>
+</button>
+</div>
+</div>
+<!-- Tab 1: What-If Comparison Matrix Panel -->
+<div class="p-space-md flex flex-col lg:flex-row gap-space-md" id="panel-matrix">
+<!-- Comparative KPI Grid -->
+<div class="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-space-sm">
+<!-- Metric 1: Late Orders -->
+<div class="bg-surface-container-high p-space-sm rounded flex flex-col justify-between">
+<div class="flex items-center justify-between text-on-surface-variant font-label-mono-xs text-label-mono-xs">
+<span>LATE ORDERS</span>
+<span class="material-symbols-outlined text-[14px]">event_busy</span>
+</div>
+<div class="my-space-xs flex items-baseline gap-space-sm">
+<span class="font-metric-display text-metric-display text-error">1</span>
+<span class="font-label-mono-xs text-label-mono-xs text-outline">vs</span>
+<span class="font-metric-display text-metric-display text-primary">0</span>
+</div>
+<div class="flex items-center justify-between font-label-mono-xs text-[10px]">
+<span class="text-outline">Baseline (v4.2)</span>
+<span class="text-primary font-bold">Scenario B (OT)</span>
+</div>
+</div>
+<!-- Metric 2: Total Lateness Hours -->
+<div class="bg-surface-container-high p-space-sm rounded flex flex-col justify-between">
+<div class="flex items-center justify-between text-on-surface-variant font-label-mono-xs text-label-mono-xs">
+<span>TOTAL LATENESS</span>
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+</div>
+<div class="my-space-xs flex items-baseline gap-space-sm">
+<span class="font-metric-display text-metric-display text-error">72h</span>
+<span class="font-label-mono-xs text-label-mono-xs text-outline">vs</span>
+<span class="font-metric-display text-metric-display text-primary">0h</span>
+</div>
+<div class="flex items-center justify-between font-label-mono-xs text-[10px]">
+<span class="text-outline">-72 hrs delayed</span>
+<span class="text-primary font-bold">100% On-Time (Dec 02)</span>
+</div>
+</div>
+<!-- Metric 3: Overtime Cost Impact -->
+<div class="bg-surface-container-high p-space-sm rounded flex flex-col justify-between">
+<div class="flex items-center justify-between text-on-surface-variant font-label-mono-xs text-label-mono-xs">
+<span>OVERTIME COST</span>
+<span class="material-symbols-outlined text-[14px]">payments</span>
+</div>
+<div class="my-space-xs flex items-baseline gap-space-sm">
+<span class="font-metric-display text-metric-display text-on-surface">$0</span>
+<span class="font-label-mono-xs text-label-mono-xs text-outline">vs</span>
+<span class="font-metric-display text-metric-display text-tertiary">+$1,450</span>
+</div>
+<div class="flex items-center justify-between font-label-mono-xs text-[10px]">
+<span class="text-outline">Strict Std Shifts</span>
+<span class="text-tertiary font-bold">16h Sat OT @ Bay A</span>
+</div>
+</div>
+<!-- Metric 4: Solver CP-SAT Bench -->
+<div class="bg-surface-container-high p-space-sm rounded flex flex-col justify-between">
+<div class="flex items-center justify-between text-on-surface-variant font-label-mono-xs text-label-mono-xs">
+<span>CP-SAT ENGINE</span>
+<span class="material-symbols-outlined text-[14px]">bolt</span>
+</div>
+<div class="my-space-xs flex items-baseline gap-space-sm">
+<span class="font-metric-display text-metric-display text-tertiary">4.2s</span>
+<span class="font-label-mono-xs text-label-mono-xs text-outline font-medium">Optimal</span>
+</div>
+<div class="flex items-center justify-between font-label-mono-xs text-[10px]">
+<span class="text-outline">28k Variables</span>
+<span class="text-on-surface font-bold">Gap: 0.00%</span>
+</div>
+</div>
+</div>
+<!-- Recommendation Summary Card -->
+<div class="w-full lg:w-96 bg-surface-container-highest p-space-sm rounded flex flex-col justify-between">
+<div class="flex items-start gap-space-sm">
+<div class="w-7 h-7 rounded bg-primary/20 text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]">psychology</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface leading-tight">OR-Tools AI Recommendation</span>
+<span class="font-label-mono-xs text-label-mono-xs text-tertiary mt-0.5">Authorizing Saturday Shift (Nov 22) Resolves Hydro Bottleneck</span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-space-xs">
+          Enabling 1 shift of Saturday overtime on Bay A eliminates the 72-hour delay on SO-1005 (Chevron Pascagoula). LD liquidated damages avoided: <strong>$18,400</strong> at a net labor premium of <strong>$1,450</strong>.
+        </p>
+<div class="mt-space-sm pt-space-xs flex items-center justify-between">
+<span class="font-label-mono-xs text-label-mono-xs text-outline">Confidence Score: 98.7%</span>
+<span class="font-label-mono-xs text-label-mono-xs text-primary underline cursor-pointer">View Solver Log</span>
+</div>
+</div>
+</div>
+<!-- Tab 2: Constraint Violations (Collapsible / Dynamic View) -->
+<div class="p-space-md hidden flex-col gap-space-sm" id="panel-violations">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-sm">
+<div class="p-space-sm bg-surface-container-high rounded flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-error text-[20px] shrink-0 mt-0.5">error</span>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-mono-sm text-label-mono-sm font-semibold text-error">Soft Constraint #1: Work Center Buffer Deficit</span>
+<span class="px-1 bg-surface-container text-outline font-label-mono-xs text-label-mono-xs rounded">TE-001</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+              OP-090 (SO-1005) scheduled within 2.5 hours of OP-088 (SO-1012). Recommended minimum cleaning and repressurization buffer between Class 1500 valves is 6 hours.
+            </p>
+</div>
+</div>
+<div class="p-space-sm bg-surface-container-high rounded flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-tertiary text-[20px] shrink-0 mt-0.5">info</span>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-mono-sm text-label-mono-sm font-semibold text-tertiary">Soft Constraint #2: Operator Skill Cross-Allocation</span>
+<span class="px-1 bg-surface-container text-outline font-label-mono-xs text-label-mono-xs rounded">WL-002</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+              Inconel 625 overlay welding on OP-030 requires Level III ASME Section IX certified welder. Only 1 certified operator scheduled for Shift 2 Nov 21.
+            </p>
+</div>
+</div>
+</div>
+</div>
+<!-- Tab 3: Shortage Impact View (Collapsible) -->
+<div class="p-space-md hidden flex-col gap-space-sm" id="panel-shortages">
+<div class="bg-surface-container-high rounded p-space-sm flex flex-col md:flex-row items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-10 h-10 rounded bg-error/20 text-error flex items-center justify-center font-bold">
+<span class="material-symbols-outlined text-[24px]">flag</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">PO-8821: Rotork Actuator Assembly</span>
+<span class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">Associated SO: SO-1005 (Line Item 01) • Supplier: Rotork UK Ltd</span>
+</div>
+</div>
+<div class="flex items-center gap-space-lg">
+<div class="text-right">
+<div class="font-label-mono-xs text-label-mono-xs text-outline">Earliest Receiving Dock</div>
+<div class="font-label-mono-sm text-label-mono-sm text-primary font-bold">Nov 28, 2025 - 08:00 AM</div>
+</div>
+<div class="text-right">
+<div class="font-label-mono-xs text-label-mono-xs text-outline">Critical Slack</div>
+<div class="font-label-mono-sm text-label-mono-sm text-error font-bold">-4.0 Hours Slack</div>
+</div>
+<button class="h-7 px-space-sm bg-surface-container-highest hover:bg-surface-container text-on-surface font-label-mono-xs text-label-mono-xs rounded">
+            Expedite PO
+          </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+  // Interactive Drawer Tab Switcher
+  const btnMatrix = document.getElementById('tab-btn-matrix');
+  const btnViolations = document.getElementById('tab-btn-violations');
+  const btnShortages = document.getElementById('tab-btn-shortages');
+
+  const panelMatrix = document.getElementById('panel-matrix');
+  const panelViolations = document.getElementById('panel-violations');
+  const panelShortages = document.getElementById('panel-shortages');
+
+  function clearTabs() {
+    [btnMatrix, btnViolations, btnShortages].forEach(btn => {
+      btn.className = "h-9 px-space-md font-label-mono-sm text-label-mono-sm flex items-center gap-2 text-on-surface-variant hover:text-on-surface transition-colors";
+    });
+    panelMatrix.classList.add('hidden');
+    panelViolations.classList.add('hidden');
+    panelShortages.classList.add('hidden');
+    panelMatrix.classList.remove('flex');
+    panelViolations.classList.remove('flex');
+    panelShortages.classList.remove('flex');
+  }
+
+  btnMatrix.addEventListener('click', () => {
+    clearTabs();
+    btnMatrix.className = "h-9 px-space-md font-label-mono-sm text-label-mono-sm flex items-center gap-2 text-primary font-semibold transition-colors bg-surface-container-high rounded-t";
+    panelMatrix.classList.remove('hidden');
+    panelMatrix.classList.add('flex');
+  });
+
+  btnViolations.addEventListener('click', () => {
+    clearTabs();
+    btnViolations.className = "h-9 px-space-md font-label-mono-sm text-label-mono-sm flex items-center gap-2 text-tertiary font-semibold transition-colors bg-surface-container-high rounded-t";
+    panelViolations.classList.remove('hidden');
+    panelViolations.classList.add('flex');
+  });
+
+  btnShortages.addEventListener('click', () => {
+    clearTabs();
+    btnShortages.className = "h-9 px-space-md font-label-mono-sm text-label-mono-sm flex items-center gap-2 text-error font-semibold transition-colors bg-surface-container-high rounded-t";
+    panelShortages.classList.remove('hidden');
+    panelShortages.classList.add('flex');
+  });
+
+  // Re-run solver quick micro-interaction
+  const solverBtn = document.getElementById('btn-re-solver');
+  if (solverBtn) {
+    solverBtn.addEventListener('click', () => {
+      const originalText = solverBtn.innerHTML;
+      solverBtn.innerHTML = '<span class="material-symbols-outlined text-[15px] animate-spin">refresh</span><span>Solving CP-SAT...</span>';
+      setTimeout(() => {
+        solverBtn.innerHTML = '<span class="material-symbols-outlined text-[15px]">check</span><span>Optimal Found (3.8s)</span>';
+        setTimeout(() => {
+          solverBtn.innerHTML = originalText;
+        }, 2200);
+      }, 1200);
+    });
+  }
+</script></main></div></body></html>

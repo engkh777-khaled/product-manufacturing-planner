@@ -1,0 +1,93 @@
+{% from "components/ui.html" import icon, badge %}
+{% set parents = v.rows|selectattr("has_children")|map(attribute="item.id")|list %}
+<section id="bom-section" class="bg-surface-container-low rounded overflow-hidden flex flex-col"
+         x-data='{ collapsed: [], shortOnly: false, all: {{ parents|tojson }} }'>
+  <div class="p-space-lg bg-surface-container flex flex-wrap items-center justify-between gap-space-md">
+    <div class="flex items-center gap-space-md">
+      {{ icon("account_tree", 20, "text-primary") }}
+      <div>
+        <h2 class="font-headline-sm text-headline-sm text-on-surface">Multi-Level BOM Explosion</h2>
+        <p class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">
+          Requirement for {{ v.build_qty }} unit{{ "s" if v.build_qty > 1 }}{% if v.linked_order %} ({{ v.linked_order.order_number }}){% endif %} · Req = Qty × Qty/Parent ÷ Yield
+          {% if v.scrap_delta %}<span class="text-warn">· Simulating scrap +{{ (v.scrap_delta * 100)|round|int }}%</span>{% endif %}
+        </p>
+      </div>
+    </div>
+    <div class="flex flex-wrap items-center gap-space-xs font-label-mono-xs text-label-mono-xs">
+      <span class="px-space-sm h-7 inline-flex items-center bg-surface-container-lowest rounded text-on-surface-variant">Tree: Level 0 to {{ v.depth - 1 }}</span>
+      <button type="button" @click="collapsed = []" class="h-7 px-space-sm inline-flex items-center gap-space-xs rounded bg-surface-container-high text-on-surface hover:bg-surface-container-highest">{{ icon("unfold_more", 14) }}Expand All</button>
+      <button type="button" @click="collapsed = [...all]" class="h-7 px-space-sm inline-flex items-center gap-space-xs rounded bg-surface-container-high text-on-surface hover:bg-surface-container-highest">{{ icon("unfold_less", 14) }}Collapse</button>
+      <button type="button" @click="shortOnly = !shortOnly" :aria-pressed="shortOnly"
+              :class="shortOnly ? 'bg-crit/15 text-crit border-crit/40' : 'bg-surface-container-high text-on-surface border-transparent'"
+              class="h-7 px-space-sm inline-flex items-center gap-space-xs rounded border">{{ icon("filter_list", 14) }}Shortages Only</button>
+    </div>
+  </div>
+  <div class="overflow-x-auto scroll-thin">
+    <table class="w-full min-w-[760px] text-left border-collapse">
+      <thead>
+        <tr class="bg-surface-container-lowest text-outline font-label-mono-xs text-label-mono-xs uppercase border-b border-hairline">
+          <th class="py-space-md px-space-md">Hierarchy / Component Node</th>
+          <th class="py-space-md px-space-sm">Part #</th>
+          <th class="py-space-md px-space-sm text-right">Qty / Parent</th>
+          <th class="py-space-md px-space-sm text-right">Scrap</th>
+          <th class="py-space-md px-space-sm text-right">Yield</th>
+          <th class="py-space-md px-space-sm text-right">Net Req</th>
+          <th class="py-space-md px-space-sm text-right">Available</th>
+          <th class="py-space-md px-space-md">Inventory Status</th>
+        </tr>
+      </thead>
+      <tbody class="font-label-mono-sm text-label-mono-sm">
+        {% for r in v.rows %}
+        {% set it = r.item %}
+        {% set short = r.shortage > 0 %}
+        <tr class="border-b border-surface-container {{ 'bg-crit/5' if short else ('bg-surface-container' if r.has_children else '') }}"
+            x-show='!{{ r.ancestors|tojson }}.some(a => collapsed.includes(a)) && (!shortOnly || {{ r.on_shortage_path|tojson }})'>
+          <td class="py-space-sm px-space-md">
+            <div class="flex items-center gap-space-xs" style="padding-left: {{ r.depth * 18 }}px">
+              {% if r.depth > 0 %}<span class="text-outline-variant">{{ "└" if r.is_last else "├" }}─</span>{% endif %}
+              {% if r.has_children %}
+              <button type="button" class="text-primary" @click="collapsed.includes('{{ it.id }}') ? collapsed = collapsed.filter(c => c !== '{{ it.id }}') : collapsed.push('{{ it.id }}')"
+                      :aria-expanded="!collapsed.includes('{{ it.id }}')" aria-label="Toggle {{ it.name }}">
+                <span class="material-symbols-outlined" style="font-size:16px" x-text="collapsed.includes('{{ it.id }}') ? 'folder' : 'folder_open'">folder_open</span>
+              </button>
+              {% endif %}
+              {% set tone = "crit" if short else ("info" if it.item_type.value in ("ASSY", "SUB-ASSY") else ("ai" if it.item_type.value == "PUR" else "muted")) %}
+              {{ badge(it.item_type.value, tone) }}
+              <span class="font-body-lg text-body-lg {{ 'text-on-surface font-semibold' if r.has_children else 'text-on-surface' }}">{{ it.name }}</span>
+              {% if it.material %}<span class="font-body-sm text-body-sm text-outline">({{ it.material }})</span>{% endif %}
+            </div>
+          </td>
+          <td class="py-space-sm px-space-sm text-on-surface-variant whitespace-nowrap">{{ it.component_code }}</td>
+          <td class="py-space-sm px-space-sm text-right text-on-surface">{{ it.quantity_per_parent|num(2) if it.quantity_per_parent % 1 else it.quantity_per_parent|int }} <span class="text-outline">{{ it.unit_of_measure }}</span></td>
+          <td class="py-space-sm px-space-sm text-right text-on-surface-variant">{{ (r.scrap * 100)|num(1) }}%</td>
+          <td class="py-space-sm px-space-sm text-right text-tertiary">{{ (r.yield * 100)|num(1) }}%</td>
+          <td class="py-space-sm px-space-sm text-right text-on-surface">{{ r.net_req|num(2) }}</td>
+          <td class="py-space-sm px-space-sm text-right {{ 'text-crit font-bold' if short else 'text-on-surface' }}">{{ r.available|num if r.available is not none else "—" }}</td>
+          <td class="py-space-sm px-space-md">
+            {% if short %}
+              {{ badge("Short " ~ r.shortage|int, "crit") }}
+              <div class="font-label-mono-xs text-label-mono-xs text-crit mt-space-xs">{{ it.inventory_note }}</div>
+            {% elif r.available is none %}
+              <span class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">{{ it.inventory_note or "Built from children" }}</span>
+            {% else %}
+              <span class="font-label-mono-xs text-label-mono-xs text-ok">{{ r.available|num }} on hand{% if it.inventory_note %} · {{ it.inventory_note }}{% endif %}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        {% if not v.shortages %}
+        <tr x-show="shortOnly" x-cloak>
+          <td colspan="8" class="py-space-lg text-center text-on-surface-variant font-label-mono-sm text-label-mono-sm">No shortages in this BOM.</td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+  <div class="p-space-md bg-surface-container flex flex-wrap items-center justify-between gap-space-sm font-label-mono-xs text-label-mono-xs text-on-surface-variant">
+    <span>{{ v.shortages|length }} component shortage{{ "s" if v.shortages|length != 1 }} for this build quantity</span>
+    {% if v.scrap_delta %}
+    <button type="button" hx-get="/engineering/{{ v.product.product_code }}/bom?scrap_delta=0" hx-target="#bom-section" hx-swap="outerHTML"
+            class="text-primary hover:underline">Reset scrap simulation</button>
+    {% endif %}
+  </div>
+</section>

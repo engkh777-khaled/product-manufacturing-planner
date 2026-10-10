@@ -1,0 +1,17 @@
+{% from "components/ui.html" import icon %}
+{% set passed = checks|selectattr("ok")|list|length %}
+<div class="p-space-md rounded border {{ 'border-ok/30 bg-ok/5' if passed == checks|length else 'border-warn/30 bg-warn/5' }}" role="status"
+     x-data="{ open: true }" x-show="open">
+  <div class="flex items-center justify-between gap-space-sm mb-space-sm">
+    <span class="font-label-mono-sm text-label-mono-sm {{ 'text-ok' if passed == checks|length else 'text-warn' }}">BOM Explosion Validation: {{ passed }} / {{ checks|length }} checks passed</span>
+    <button type="button" @click="open = false" class="text-outline hover:text-on-surface" aria-label="Dismiss">{{ icon("close", 16) }}</button>
+  </div>
+  <ul class="grid grid-cols-1 md:grid-cols-2 gap-space-xs font-label-mono-xs text-label-mono-xs">
+    {% for c in checks %}
+    <li class="flex items-start gap-space-xs">
+      {{ icon("check_circle" if c.ok else "cancel", 14, "text-ok" if c.ok else "text-crit") }}
+      <span><span class="text-on-surface">{{ c.name }}</span> — <span class="text-on-surface-variant">{{ c.detail }}</span></span>
+    </li>
+    {% endfor %}
+  </ul>
+</div>

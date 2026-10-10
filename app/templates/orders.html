@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% from "components/ui.html" import icon, button, badge, kpi_card %}
+{% block title %}Sales Orders & Demand{% endblock %}
+{% block content %}
+<div class="p-space-xl flex flex-col gap-space-xl" x-data="{ sel: '{{ selected or '' }}' }">
+  <div class="flex flex-col gap-space-sm">
+    <nav class="font-label-mono-xs text-label-mono-xs text-outline uppercase" aria-label="Breadcrumb">Sec 12.2 / Demand Management / <span class="text-primary">Discrete Sales Pipeline</span></nav>
+    <div class="flex flex-wrap items-center gap-space-md">
+      <h1 class="font-headline-lg text-headline-lg text-on-surface">Sales Orders &amp; Demand Allocation</h1>
+      <span class="font-label-mono-xs text-label-mono-xs text-primary uppercase">MTO / ETO Active</span>
+    </div>
+    <div class="flex flex-wrap gap-space-sm">
+      {{ button("Export ERP Sync", "download", "secondary") }}
+      {{ button("Lead-Time Modeler", "tune", "secondary", href="/workbench") }}
+      <button type="button" disabled title="Order entry form is not part of this demo build"
+              class="h-7 px-space-md inline-flex items-center gap-space-xs bg-cobalt text-white font-label-mono-sm text-label-mono-sm rounded disabled:opacity-50 disabled:cursor-not-allowed">{{ icon("add_circle", 15) }}Create Customer Sales Order</button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-4 gap-space-md">
+    {% call kpi_card("Total Active Demand", "inventory", "text-primary") %}
+      <div class="flex items-baseline gap-space-xs"><span class="font-metric-display text-metric-display text-on-surface">{{ kpis.valves }}</span><span class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">Valves</span></div>
+      <div class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">{{ kpis.active_count }} orders across {{ counts.planning }} in planning</div>
+    {% endcall %}
+    {% call kpi_card("Committed Value", "payments", "text-primary") %}
+      <div class="flex items-baseline gap-space-xs"><span class="font-metric-display text-metric-display text-on-surface">{{ kpis.value|money }}</span><span class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">USD</span></div>
+      <div class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">Fictional demo values</div>
+    {% endcall %}
+    {% call kpi_card("Delivery Confidence", "verified", "text-tertiary") %}
+      <div class="flex items-baseline gap-space-xs"><span class="font-metric-display text-metric-display text-tertiary">{{ kpis.otd_pct }}%</span><span class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">On-time in plan</span></div>
+      <div class="w-full h-1 bg-surface-container-lowest rounded-sm overflow-hidden"><div class="h-full bg-tertiary" style="width: {{ kpis.otd_pct }}%"></div></div>
+    {% endcall %}
+    {% call kpi_card("Critical Blocked Orders", "block", "text-crit", "border border-crit/30") %}
+      <div class="flex items-baseline gap-space-xs"><span class="font-metric-display text-metric-display text-crit">{{ "%02d"|format(kpis.blocked|length) }}</span><span class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">Orders stalled</span></div>
+      <div class="flex flex-wrap gap-space-xs">{% for v in kpis.blocked %}{{ badge(v.o.order_number ~ " " ~ v.o.readiness, "crit") }}{% endfor %}</div>
+    {% endcall %}
+  </div>
+
+  <form id="order-filters" class="flex flex-wrap items-center gap-space-sm p-space-sm bg-surface-container-low rounded"
+        hx-get="/orders/table" hx-target="#orders-table" hx-trigger="change, input changed delay:300ms from:find input[name=q], submit"
+        onsubmit="return false">
+    <label class="relative flex items-center">
+      <span class="sr-only">Filter orders</span>
+      {{ icon("search", 16, "text-outline absolute left-space-sm pointer-events-none") }}
+      <input type="search" name="q" value="{{ q }}" placeholder="Filter order, customer, tag"
+             class="h-8 w-56 pl-8 pr-space-sm bg-surface-container-lowest text-on-surface placeholder:text-outline font-label-mono-sm text-label-mono-sm rounded border border-transparent focus:border-cobalt outline-none">
+    </label>
+    <div class="flex flex-wrap gap-space-xs" role="radiogroup" aria-label="Order status">
+      {% for key, label in tabs %}
+      <label class="cursor-pointer">
+        <input type="radio" name="tab" value="{{ key }}" class="sr-only peer" {% if key == tab %}checked{% endif %}>
+        <span class="h-8 px-space-md inline-flex items-center gap-space-xs rounded font-label-mono-sm text-label-mono-sm text-on-surface-variant hover:bg-surface-container-high peer-checked:bg-primary-container peer-checked:text-on-primary-container peer-focus-visible:ring-1 peer-focus-visible:ring-cobalt">
+          {% if key == "at_risk" %}<span class="w-1.5 h-1.5 rounded-full bg-crit"></span>{% endif %}{{ label }}
+          <span class="px-1 rounded-sm bg-surface-container-highest text-on-surface font-label-mono-xs text-label-mono-xs">{{ counts[key] }}</span>
+        </span>
+      </label>
+      {% endfor %}
+    </div>
+    <label class="ml-auto flex items-center gap-space-xs font-label-mono-xs text-label-mono-xs text-outline uppercase">Priority:
+      <select name="priority" class="h-8 bg-surface-container-lowest text-on-surface rounded border border-hairline focus:border-cobalt outline-none px-space-sm font-label-mono-sm text-label-mono-sm normal-case">
+        <option value="">All Tiers</option>
+        {% for p in priorities %}<option value="{{ p }}" {% if p == priority %}selected{% endif %}>{{ p }}</option>{% endfor %}
+      </select>
+    </label>
+  </form>
+
+  <div class="grid grid-cols-1 2xl:grid-cols-12 gap-space-xl items-start">
+    <div id="orders-table" class="2xl:col-span-8 min-w-0">
+      {% include "partials/orders_table.html" %}
+    </div>
+    <aside id="inspector" class="2xl:col-span-4 min-w-0" aria-live="polite">
+      {% if detail %}{% include "partials/order_inspector.html" %}{% endif %}
+    </aside>
+  </div>
+</div>
+{% endblock %}

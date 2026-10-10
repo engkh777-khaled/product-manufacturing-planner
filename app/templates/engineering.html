@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% from "components/ui.html" import icon, button, badge, util_bar, band_text %}
+{% block title %}Engineering & BOM{% endblock %}
+{% block content %}
+{% set p, bom, routing = v.product, v.bom, v.routing %}
+<div class="p-space-xl flex flex-col gap-space-xl">
+  <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-space-lg">
+    <div class="flex flex-col gap-space-sm min-w-0">
+      <div class="flex flex-wrap items-center gap-space-sm font-label-mono-xs text-label-mono-xs uppercase">
+        <span class="text-outline">Catalog &amp; Engineering Release</span>{{ badge("M-BOM Master", "info") }}
+        <span class="flex items-center gap-space-xs text-tertiary normal-case"><span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>Sync: {{ bom.plm_source }}</span>
+      </div>
+      <label class="flex items-center gap-space-sm px-space-md py-space-sm bg-surface-container-lowest rounded w-full max-w-4xl">
+        {{ icon("valve", 22, "text-primary") }}
+        <span class="sr-only">Product</span>
+        <select onchange="location.href='/engineering?product=' + encodeURIComponent(this.value)"
+                class="flex-1 min-w-0 bg-transparent text-on-surface font-headline-lg text-headline-lg outline-none cursor-pointer truncate">
+          {% for prod in products %}<option class="bg-surface-container text-body-lg" value="{{ prod.product_code }}" {% if prod.product_code == p.product_code %}selected{% endif %}>{{ prod.product_code }} : {{ prod.name }}</option>{% endfor %}
+        </select>
+      </label>
+      <div class="flex flex-wrap items-center gap-space-sm font-label-mono-sm text-label-mono-sm">
+        <span class="px-space-sm py-space-xs bg-surface-container rounded text-on-surface-variant">Active Revision: <b class="{{ 'text-ok' if bom.status == 'Approved' else 'text-warn' }}">{{ bom.revision }} - {{ bom.status }}</b></span>
+        <span class="flex items-center gap-space-xs px-space-sm py-space-xs bg-surface-container rounded text-on-surface-variant">{{ icon("verified_user" if bom.status == "Approved" else "pending", 15, "text-ok" if bom.status == "Approved" else "text-warn") }}{{ "Approved for production by" if bom.status == "Approved" else "Approver:" }} {{ bom.approved_by }}</span>
+        <span class="px-space-sm py-space-xs bg-surface-container rounded text-on-surface-variant">Effective {{ bom.effective_from|d("%b %d, %Y") }}</span>
+        {{ badge(bom.eco_number, "info") }}
+      </div>
+    </div>
+    <div class="flex flex-wrap gap-space-sm">
+      <button type="button" hx-post="/engineering/{{ p.product_code }}/validate" hx-target="#bom-validation"
+              class="h-7 px-space-md inline-flex items-center gap-space-xs bg-surface-container-high text-on-surface hover:bg-surface-container-highest font-label-mono-sm text-label-mono-sm rounded">{{ icon("rule", 15) }}Run BOM Explosion Validation</button>
+      <button type="button" hx-get="/engineering/{{ p.product_code }}/bom?scrap_delta=0.05" hx-target="#bom-section" hx-swap="outerHTML"
+              class="h-7 px-space-md inline-flex items-center gap-space-xs bg-surface-container-high text-on-surface hover:bg-surface-container-highest font-label-mono-sm text-label-mono-sm rounded">{{ icon("calculate", 15) }}Simulate Scrap Impact (+5%)</button>
+      {{ button("Export Engineering Package", "download", "primary") }}
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-space-md">
+    {% for label, value in [("Unique Components", v.unique_parts ~ " Parts"), ("Depth Levels", v.depth ~ " BOM Levels"),
+                            ("Operations", (routing.operations|length if routing else 0) ~ " Routing Ops"),
+                            ("Std Lead Time", (p.std_lead_time_days ~ " Days") if p.std_lead_time_days else "—")] %}
+    <div class="p-space-md bg-surface-container-low rounded">
+      <div class="font-label-mono-xs text-label-mono-xs text-outline uppercase">{{ label }}</div>
+      <div class="font-label-mono-lg text-[18px] leading-6 {{ 'text-tertiary' if loop.last else 'text-on-surface' }}">{{ value }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div id="bom-validation" aria-live="polite"></div>
+
+  <div class="grid grid-cols-1 2xl:grid-cols-12 gap-space-xl items-start">
+    <div class="2xl:col-span-7 flex flex-col gap-space-md min-w-0">
+      {% include "partials/bom_table.html" %}
+      <section class="bg-surface-container-low rounded p-space-md flex flex-col gap-space-sm">
+        <div class="flex flex-wrap items-center justify-between gap-space-sm font-label-mono-sm text-label-mono-sm">
+          <span class="flex items-center gap-space-xs text-on-surface">{{ icon("fingerprint", 16, "text-primary") }}Traceability &amp; Material Quality Hold Status</span>
+          <span class="text-on-surface-variant">MTR Certified: EN 10204 3.1</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-space-sm">
+          <div class="p-space-sm bg-surface-container rounded"><div class="font-label-mono-xs text-label-mono-xs text-outline">Heat Lot # VB-99214-LF2</div><div class="font-body-sm text-body-sm text-on-surface">Forging release: Cleared · Charpy V-Notch (-50°F)</div></div>
+          <div class="p-space-sm bg-surface-container rounded"><div class="font-label-mono-xs text-label-mono-xs text-outline">Stellite Seat Rings (PO-8840)</div><div class="font-body-sm text-body-sm text-warn">Lot HT-9921-A — QC hold, PMI audit pending</div></div>
+          <div class="p-space-sm bg-surface-container rounded"><div class="font-label-mono-xs text-label-mono-xs text-outline">Quality Hold Flags</div><div class="font-body-sm text-body-sm text-on-surface">1 lot on hold across critical components</div></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="2xl:col-span-5 flex flex-col gap-space-md min-w-0">
+      <section class="bg-surface-container-low rounded overflow-hidden">
+        <div class="p-space-lg bg-surface-container flex flex-wrap items-center justify-between gap-space-md">
+          <div class="flex items-center gap-space-md">{{ icon("alt_route", 20, "text-primary") }}<h2 class="font-headline-sm text-headline-sm text-on-surface">Manufacturing Operations Routing</h2></div>
+          {% if routing %}{{ badge("Routing Ver: " ~ routing.revision, "info") }}{% else %}{{ badge("No routing", "crit") }}{% endif %}
+        </div>
+        {% if routing %}
+        <ol class="p-space-sm flex flex-col gap-space-sm">
+          {% for op in routing.operations %}
+          <li class="p-space-md rounded flex flex-col gap-space-xs {{ 'bg-crit/10 border border-crit/40' if op.is_mandatory_gate else 'bg-surface-container' }}">
+            <div class="flex items-start justify-between gap-space-sm">
+              <div class="flex items-center gap-space-sm min-w-0">
+                <span class="px-space-xs rounded-sm font-label-mono-sm text-label-mono-sm {{ 'bg-crit text-white' if op.is_mandatory_gate else 'bg-surface-container-highest text-primary' }}">{{ op.operation_number }}</span>
+                <span class="font-body-lg text-body-lg text-on-surface font-semibold">{{ op.name }}</span>
+              </div>
+              {% if op.is_mandatory_gate %}{{ badge("Mandatory Gate", "crit") }}{% else %}<span class="font-label-mono-xs text-label-mono-xs text-outline whitespace-nowrap">Seq {{ loop.index }}/{{ loop.length }}</span>{% endif %}
+            </div>
+            <div class="flex flex-wrap justify-between gap-x-space-md font-label-mono-xs text-label-mono-xs text-on-surface-variant">
+              <span>Work Center: <b class="text-on-surface">{{ op.work_center }}</b></span>
+              <span>Duration: <b class="text-primary">{{ op.duration_label }}</b></span>
+            </div>
+            <div class="flex flex-wrap justify-between gap-x-space-md font-label-mono-xs text-label-mono-xs text-outline">
+              <span>Precedence: {{ op.predecessor }}</span>
+              {% if op.note %}<span class="text-primary">{{ op.note }}</span>{% endif %}
+              {% if op.min_batch %}<span>Min batch: {{ op.min_batch }}</span>{% endif %}
+            </div>
+            {% if op.gate_detail %}
+            <div class="mt-space-xs p-space-sm bg-surface-container-lowest rounded font-label-mono-xs text-label-mono-xs text-on-surface"><span class="text-primary">Strict precedence vector:</span> {{ op.gate_detail }}</div>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ol>
+        {% else %}
+        <div class="p-space-lg flex items-start gap-space-sm text-warn font-label-mono-sm text-label-mono-sm">
+          {{ icon("report", 18) }}
+          <span>No approved routing exists for {{ p.product_code }}. Orders for this product are marked <b>Needs Data</b> and are excluded from executable planning (spec acceptance test 8).</span>
+        </div>
+        {% endif %}
+      </section>
+      {% set wc = work_centers|selectattr("band", "equalto", "bottleneck")|first %}
+      {% if wc %}
+      <section class="p-space-md bg-surface-container-low rounded flex items-center justify-between gap-space-md">
+        <div class="flex items-center gap-space-sm min-w-0">{{ icon("speed", 18, "text-crit") }}
+          <div class="min-w-0"><div class="font-label-mono-xs text-label-mono-xs text-outline">Cell Bottleneck Watch</div>
+          <div class="font-body-sm text-body-sm text-on-surface truncate">{{ wc.wc.code }} {{ wc.wc.name }}: {{ wc.pct|round|int }}% utilized</div></div>
+        </div>
+        <div class="w-28 shrink-0">{{ util_bar(wc.pct, wc.band, None, "h-2") }}</div>
+      </section>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
