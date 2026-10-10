@@ -210,7 +210,11 @@ def record_schedule_run(payload: dict, token: str | None = None) -> WriteResult:
     result = _rest("POST", "rpc/record_schedule_run", json={"p": payload}, token=token, timeout=60)
     if result.ok:
         d = result.data or {}
-        if d.get("version_number"):
+        if d.get("version_number") and payload.get("run_type") == "simulation":
+            what_if = (payload.get("assumptions") or {}).get("what_if_only")
+            result.message = (f"Scenario run #{d['run_number']}: {payload['status']} — saved as v{d['version_number']}"
+                              + (" (what-if only, not for approval)." if what_if else "."))
+        elif d.get("version_number"):
             result.message = (f"Run #{d['run_number']}: {payload['status']} — saved as Draft v{d['version_number']}, "
                               f"validation {'passed' if d.get('validation_passed') else 'FAILED'}.")
         else:

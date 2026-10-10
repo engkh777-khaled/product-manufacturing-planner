@@ -13,6 +13,7 @@ templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 NAV = [
     ("/dashboard", "dashboard", "Executive Dashboard"),
     ("/workbench", "view_timeline", "Planning Workbench"),
+    ("/scenarios", "science", "What-If Scenarios"),
     ("/orders", "receipt_long", "Sales Orders & Demand"),
     ("/inventory", "inventory_2", "Inventory & Purchasing"),
     ("/resources", "precision_manufacturing", "Resources & Calendars"),

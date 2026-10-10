@@ -1,0 +1,32 @@
+{% from "components/ui.html" import icon, badge %}
+{% if error %}
+<div class="flex items-start gap-space-sm p-space-md rounded border border-warn/40 bg-warn/10 text-warn font-label-mono-xs text-label-mono-xs" role="alert">{{ icon("info", 15) }}<span>{{ error }}</span></div>
+{% elif job.status == "running" %}
+<div class="flex items-center gap-space-sm p-space-md rounded border border-cobalt/40 bg-cobalt/10 text-on-surface font-label-mono-xs text-label-mono-xs" role="status"
+     hx-get="/scenarios/runs/{{ job.id }}" hx-trigger="every 1s" hx-swap="outerHTML">
+  <span class="animate-spin">{{ icon("autorenew", 15, "text-cobalt") }}</span>
+  <span>Scenario run in progress — {{ job.stage }}… {{ "%.0f"|format(job.elapsed) }}s
+    <span class="text-outline">(two solves of up to {{ job.options.time_limit_s|num(0) }}s each)</span></span>
+</div>
+{% elif job.status == "failed" %}
+<div class="flex items-start gap-space-sm p-space-md rounded border border-crit/40 bg-crit/10 text-crit font-label-mono-xs text-label-mono-xs" role="alert">{{ icon("error", 15) }}<span>{{ job.message }}</span></div>
+{% else %}
+{% set c = job.comparison %}
+<div class="flex flex-col gap-space-sm p-space-md rounded border border-ok/40 bg-ok/10 font-label-mono-xs text-label-mono-xs" role="status">
+  <div class="flex flex-wrap items-center gap-space-sm text-on-surface">
+    {{ icon("task_alt", 15, "text-ok") }}<span>{{ job.message }}</span>
+    {% if c.what_if_only %}{{ badge("what-if only", "ai") }}{% endif %}
+    {% if job.version_number %}<a class="text-primary underline" href="/scenarios/v{{ job.version_number }}">Open comparison</a>
+    <a class="text-primary underline" href="/workbench?version=v{{ job.version_number }}&compare=v{{ job.version_number }}">Gantt</a>{% endif %}
+  </div>
+  {% if c %}
+  <div class="text-on-surface-variant">Late lines {{ c.reference.late_lines }} → <b class="text-on-surface">{{ c.scenario.late_lines }}</b> ·
+    blocked {{ c.reference.blocked_lines }} → <b class="text-on-surface">{{ c.scenario.blocked_lines }}</b> ·
+    lateness {{ c.reference.total_lateness_hours|num(1) }} h → <b class="text-on-surface">{{ c.scenario.total_lateness_hours|num(1) }} h</b> ·
+    {{ c.delivery_changes|length }} delivery change{{ "s" if c.delivery_changes|length != 1 }}{% if c.new_shortages %} · <span class="text-crit">{{ c.new_shortages|length }} new shortages</span>{% endif %}</div>
+  {% for l in c.delivery_changes[:6] %}
+  <div class="text-on-surface-variant"><b class="text-on-surface">{{ l.key }}</b> {{ l.reference_status|replace("_", " ") }} → {{ l.scenario_status|replace("_", " ") }}{% if l.delta_hours %} ({{ "%+.1f"|format(l.delta_hours) }} h){% endif %} — {{ l.reasons|join("; ") }}</div>
+  {% endfor %}
+  {% endif %}
+</div>
+{% endif %}

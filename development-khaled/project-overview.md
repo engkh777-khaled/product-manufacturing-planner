@@ -1,6 +1,6 @@
 # Project Overview
 
-_Last updated: 2026-10-10 (after M09)_
+_Last updated: 2026-10-10 (after M10)_
 
 ## Goal
 
@@ -28,7 +28,8 @@ The AI must never invent quantities or dates, approve plans, place POs, or relea
 | Editing | Draft sales orders, inventory, PO lines, BOM revision workflow, approval decisions (Supabase mode) |
 | Approvals & audit | Workflow functions + guard (approve ⇒ new baseline), append-only trigger audit on 12 tables (M07) |
 | Planning engine | `planning/` package: MRP (multilevel netting, priority allocation, time-phased availability, alerts) + CLI (M08) |
-| Tests | 223 passing: 139 app/engine + 84 DB (`tests/db`, need `DATABASE_URL`; skipped in CI) |
+| What-if scenarios | Seven change types, planned next to today's data, compared and saved as separate versions; receipt changes flag the baseline (M10) |
+| Tests | 247 passing: 156 app/engine + 91 DB (`tests/db`, need `DATABASE_URL`; skipped in CI) |
 
 ## Architecture today
 
@@ -87,7 +88,7 @@ tests/                  test_planning.py, test_routes.py, test_health.py; db/ = 
 pytest.ini              Short tracebacks (never print secrets)
 supabase/               config.toml, migrations/ (schema + RLS), seed.sql (fictional data)
 scripts/                seed_demo_users.py — fictional role users (password only in .env)
-planning/               Pure planning engine: mrp/ (M08), scheduling/ (CP-SAT, M09), validation/, cli.py, tests/
+planning/               Pure planning engine: mrp/ (M08), scheduling/ (CP-SAT, M09), validation/, scenarios.py (M10), cli.py, tests/
 .github/workflows/      tests.yml — CI
 .env.example           Config template (.env itself is git-ignored)
 development-khaled/     This engineering log
@@ -98,7 +99,8 @@ development-khaled/     This engineering log
 | Route | Screen | Key behaviour |
 |---|---|---|
 | `/dashboard` | Executive Dashboard | KPIs computed from data; approval gate refuses planner sign-off (server-side) |
-| `/workbench` | Planning Workbench | Custom Gantt per version; real CP-SAT runs (M09) with delivery + validation panels |
+| `/workbench` | Planning Workbench | Custom Gantt per version; real CP-SAT runs (M09) with delivery + validation panels; data-driven comparison (M10) |
+| `/scenarios` | What-If Scenarios | Builder, background runs, saved scenarios, comparison pages (M10) |
 | `/orders` | Sales Orders & Demand | Search, status tabs, priority, pagination, order inspector |
 | `/inventory` | Inventory & Purchasing | Balances, QC holds, PO lines; stores/purchasing edit inline (M06); MRP (M08) |
 | `/resources` | Resources & Calendars | Machines, capabilities, shifts, holidays/overtime, downtime; supervisors edit (M09) |

@@ -42,13 +42,15 @@ Open http://127.0.0.1:8000 and sign in, e.g. as `planner@example.com` or `approv
 .\.venv\Scripts\python -m planning.cli mrp --item SR-ST6-10  # time-phased availability
 .\.venv\Scripts\python -m planning.cli schedule              # CP-SAT schedule + independent validation
 .\.venv\Scripts\python -m planning.cli schedule --machine MC-014 --freeze-days 3 --save
+.\.venv\Scripts\python -m planning.cli scenario --delay PO-8821:5      # what-if vs today's data
 ```
 
 ## Screens
 | Route | Screen | Interactions |
 |---|---|---|
 | `/dashboard` | Executive Dashboard | Approval gate enforces server-side authorization (planner cannot commit) |
-| `/workbench` | Planning Workbench (finite-capacity Gantt) | Version switch, critical-path / shortage / PM filters, real CP-SAT re-run with delivery + validation panels (Supabase mode, planner) |
+| `/workbench` | Planning Workbench (finite-capacity Gantt) | Version switch, critical-path / shortage / PM filters, real CP-SAT re-run with delivery + validation panels (Supabase mode, planner), baseline-vs-version comparison from data |
+| `/scenarios` | What-If Scenarios | Supplier delay, outage, urgent order, quantity, overtime, second machine, priority; compared with today's data, saved as separate versions |
 | `/inventory` | Inventory & Purchasing | Stock and PO edits (stores / purchasing), MRP with time-phased availability and Run MRP (planner) |
 | `/resources` | Resources & Calendars | Machines, capabilities, shifts, holidays, overtime, downtime; supervisors record downtime and calendar changes |
 | `/orders` | Sales Orders & Demand | Search, status tabs, priority filter, pagination, order inspector |

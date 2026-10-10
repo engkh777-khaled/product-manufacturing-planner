@@ -265,6 +265,8 @@ class ScheduleVersion(BaseModel):
     created_by_id: str | None = None
     order_finish: dict[str, date] = {}  # planned completion per sales order in this version
     report: dict = {}  # solver output stored with the version (M09): lines, validation, conflicts, loads
+    run_type: str = "schedule"  # schedule | simulation (what-if scenario, M10)
+    assumptions: dict = {}  # scenario changes and the what-if-only flag (M10)
 
 
 # --- Alerts / approvals / audit -------------------------------------------------

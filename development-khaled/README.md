@@ -28,9 +28,9 @@ Every milestone adds a file here. Nothing is deleted: if a decision is reversed,
 | M06 | 2026-10-10 | [Supabase repository & master-data editing](milestones/M06-supabase-repository-and-editing.md) | Done | `f2ab6c4` |
 | M07 | 2026-10-10 | [Approvals & audit trail](milestones/M07-approvals-and-audit.md) | Done | `038c51f` |
 | M08 | 2026-10-10 | [Material requirements planning engine](milestones/M08-mrp-engine.md) | Done | `d40a04e` |
-| M09 | 2026-10-10 | [Finite-capacity scheduler & validator](milestones/M09-finite-capacity-scheduler.md) | Done | see git log |
-| M10 | — | [Live workbench & what-if scenarios](backend-roadmap.md#m10--planning-workbench-on-live-schedules--what-if-scenarios-spec-10-126-phase-4) | Next | — |
-| M11 | — | [AI assistant with tool calling](backend-roadmap.md#m11--ai-assistant-with-tool-calling-spec-11-phase-5) | Planned | — |
+| M09 | 2026-10-10 | [Finite-capacity scheduler & validator](milestones/M09-finite-capacity-scheduler.md) | Done | `fb15595` |
+| M10 | 2026-10-10 | [Live workbench & what-if scenarios](milestones/M10-scenarios-and-live-workbench.md) | Done | see git log |
+| M11 | — | [AI assistant with tool calling](backend-roadmap.md#m11--ai-assistant-with-tool-calling-spec-11-phase-5) | Next | — |
 | M12 | — | [Hardening & deployment](backend-roadmap.md#m12--hardening--deployment-spec-phase-6) | Planned | — |
 
 ## How to add a milestone

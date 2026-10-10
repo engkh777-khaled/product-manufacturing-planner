@@ -356,3 +356,36 @@ in-process (tests); `SCHEDULER_TIME_LIMIT_SECONDS` sets the limit (default 10).
 
 **Consequences.** Simple and RLS-correct for one app instance; jobs are lost on restart (the DB stays consistent —
 nothing is written until the end). A multi-instance deployment needs a queue (M12).
+
+## D-031 — What-if-only scenarios can never be approved; decision scenarios can
+_2026-10-10 · M10_
+
+**Context.** Spec §10: scenarios are separate versions and never overwrite the baseline. A scenario that assumes a
+supplier delay or an urgent order that does not exist must not become the approved plan.
+
+**Decision.** Scenarios containing a hypothetical fact (supplier receipt moved, urgent order, quantity change,
+extra machine) are stored with `what_if_only = true` on the run; the approval guard refuses Proposed/Approved for
+them in the database. Decision scenarios (approved overtime, a planned machine outage, a priority change) can be
+submitted. To adopt a what-if, the planner changes the real data (orders, PO dates, calendar) and re-runs.
+
+**Consequences.** No hypothetical demand or supply can reach the baseline, whatever the client does.
+
+## D-032 — Scenarios are compared with today's data planned in the same run, anchored to it
+_2026-10-10 · M10_
+
+**Decision.** A scenario job plans the unchanged snapshot and the changed copy with the same solver settings, and
+the scenario solve is pulled towards the reference plan (moving an operation costs 3 per slot, more than the 1 per
+slot gained by finishing earlier). The approved baseline's dates are shown alongside, not used as the reference.
+
+**Consequences.** Differences are caused by the scenario, not by solver noise or a stale seeded baseline; a
+scenario takes two solves (≈ 2 × time limit).
+
+## D-033 — Receipt changes flag the baseline in the database, through the BOM
+_2026-10-10 · M10_
+
+**Decision.** A trigger on `purchase_order_items.expected_delivery_date` raises a critical alert when a receipt
+moves later than (or loses) the date at which an approved-baseline operation needs it — walking the BOM upwards
+through sub-assemblies and subtracting their lead times. The baseline is never changed (acceptance test 9).
+
+**Consequences.** Works for any client (app, API, SQL). The flag is a planned-start comparison; MRP and the solver
+give the full re-plan.

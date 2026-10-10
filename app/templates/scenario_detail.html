@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% from "components/ui.html" import icon, badge, kpi_card, panel_header %}
+{% block title %}Scenario v{{ v.version_number }}{% endblock %}
+{% block content %}
+{% set status_tone = {"on_time": "ok", "late": "warn", "blocked": "crit", "needs_data": "warn", "new": "info", "removed": "info"} %}
+<div class="p-space-xl flex flex-col gap-space-xl">
+  <div class="flex flex-col gap-space-sm">
+    <nav class="font-label-mono-xs text-label-mono-xs text-outline uppercase" aria-label="Breadcrumb"><a href="/scenarios" class="hover:text-primary">What-If Scenarios</a> / <span class="text-primary">v{{ v.version_number }}</span></nav>
+    <div class="flex flex-wrap items-center gap-space-sm">
+      <h1 class="font-headline-lg text-headline-lg text-on-surface">{{ v.assumptions.name or v.label }}</h1>
+      {% if r.what_if_only %}{{ badge("what-if only — not for approval", "ai") }}{% else %}{{ badge("decision scenario — can be submitted", "ok") }}{% endif %}
+    </div>
+    <ul class="flex flex-col gap-px font-label-mono-sm text-label-mono-sm text-on-surface-variant">
+      {% for ch in r.changes %}<li>{{ icon("change_circle", 14, "text-primary") }} {{ ch.description }}</li>{% endfor %}
+    </ul>
+    <p class="font-label-mono-xs text-label-mono-xs text-outline">Compared with today's data planned by the same solver in the same run (so only the scenario explains the differences). Approved baseline v{{ baseline.version_number }} is unchanged.
+      <a class="text-primary underline" href="/workbench?version={{ v.key }}&compare={{ v.key }}">Open the scenario Gantt</a></p>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-5 gap-space-md">
+    {% for label, ic, key, unit in [("Late lines", "event_busy", "late_lines", ""), ("Blocked lines", "block", "blocked_lines", ""),
+                                    ("Total lateness", "schedule", "total_lateness_hours", " h"), ("Overtime used", "more_time", "overtime_hours", " h")] %}
+    {% call kpi_card(label, ic, "text-primary") %}
+      <span class="font-metric-display text-metric-display text-on-surface">{{ r.reference[key]|num(1 if unit else 0) }}{{ unit }} → <span class="{{ 'text-crit' if r.scenario[key] > r.reference[key] else ('text-ok' if r.scenario[key] < r.reference[key] else 'text-on-surface') }}">{{ r.scenario[key]|num(1 if unit else 0) }}{{ unit }}</span></span>
+      <span class="font-label-mono-xs text-label-mono-xs text-outline">today's data → scenario</span>
+    {% endcall %}
+    {% endfor %}
+    {% call kpi_card("Bottleneck", "speed", "text-warn") %}
+      <span class="font-metric-display text-metric-display text-on-surface">{{ r.bottleneck.reference or "—" }} → {{ r.bottleneck.scenario or "—" }}</span>
+      <span class="font-label-mono-xs text-label-mono-xs text-outline">highest loaded work center</span>
+    {% endcall %}
+  </div>
+
+  <section class="bg-surface-container-low rounded overflow-hidden">
+    {% call panel_header("Orders Whose Delivery Changes", "local_shipping", "Planned completion today vs in the scenario, the approved baseline date, and why it changed") %}
+      {{ badge(r.delivery_changes|length ~ " changed", "warn" if r.delivery_changes else "ok") }}
+    {% endcall %}
+    <div class="overflow-x-auto scroll-thin">
+      <table class="w-full min-w-[1000px] text-left border-collapse font-label-mono-sm text-label-mono-sm">
+        <thead><tr class="bg-surface-container-lowest text-outline font-label-mono-xs text-label-mono-xs uppercase border-b border-hairline">
+          <th class="py-space-sm px-space-md">Order / Line</th><th class="py-space-sm px-space-md">Requested</th><th class="py-space-sm px-space-md">Baseline v{{ baseline.version_number }}</th>
+          <th class="py-space-sm px-space-md">Today's data</th><th class="py-space-sm px-space-md">Scenario</th><th class="py-space-sm px-space-md text-right">Change</th>
+          <th class="py-space-sm px-space-md">Reasons</th></tr></thead>
+        <tbody>
+          {% for l in r.delivery_changes %}
+          <tr class="border-b border-surface-container align-top">
+            <td class="py-space-sm px-space-md"><span class="text-on-surface">{{ l.key }}</span> <span class="text-outline">{{ l.priority }}</span></td>
+            <td class="py-space-sm px-space-md text-on-surface-variant">{{ l.due|d if l.due else "—" }}</td>
+            <td class="py-space-sm px-space-md text-outline">{{ l.approved_baseline_finish|d if l.approved_baseline_finish else "—" }}</td>
+            <td class="py-space-sm px-space-md">{{ badge(l.reference_status|replace("_", " "), status_tone.get(l.reference_status, "info")) }} <span class="text-on-surface-variant">{{ l.reference_completion|d("%b %d %H:%M") if l.reference_completion else "" }}</span></td>
+            <td class="py-space-sm px-space-md">{{ badge(l.scenario_status|replace("_", " "), status_tone.get(l.scenario_status, "info")) }} <span class="text-on-surface">{{ l.scenario_completion|d("%b %d %H:%M") if l.scenario_completion else "" }}</span></td>
+            <td class="py-space-sm px-space-md text-right {{ 'text-crit' if l.delta_hours and l.delta_hours > 0 else 'text-ok' }}">{{ ("%+.1f h"|format(l.delta_hours)) if l.delta_hours is not none else "—" }}</td>
+            <td class="py-space-sm px-space-md text-on-surface-variant font-label-mono-xs text-label-mono-xs">{{ l.reasons|join("; ") }}{% if l.limiting %}<div class="text-outline">{{ l.limiting|join("; ") }}</div>{% endif %}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="7" class="py-space-lg text-center text-ok">No delivery date changes.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-space-md">
+    <section class="bg-surface-container-low rounded overflow-hidden">
+      {% call panel_header("Material Shortages", "inventory_2", "Shortages that appear or disappear in the scenario (MRP on the changed data)") %}{% endcall %}
+      <ul class="p-space-md flex flex-col gap-space-xs font-label-mono-xs text-label-mono-xs">
+        {% for s in r.new_shortages %}<li class="text-crit">{{ icon("add", 13) }} {{ s.order_number }}/{{ s.line_number }}: {{ s.item }} short {{ s.shortage }}</li>{% endfor %}
+        {% for s in r.resolved_shortages %}<li class="text-ok">{{ icon("remove", 13) }} {{ s.order_number }}/{{ s.line_number }}: {{ s.item }} no longer short</li>{% endfor %}
+        {% if not r.new_shortages and not r.resolved_shortages %}<li class="text-outline">No change in material shortages.</li>{% endif %}
+      </ul>
+    </section>
+    <section class="bg-surface-container-low rounded overflow-hidden">
+      {% call panel_header("Utilisation by Work Center", "precision_manufacturing", "Scheduled vs available hours in the horizon; additional overtime " ~ ("%+.1f"|format(r.additional_overtime_hours)) ~ " h") %}{% endcall %}
+      <table class="w-full font-label-mono-xs text-label-mono-xs">
+        <thead><tr class="text-outline uppercase border-b border-hairline"><th class="py-space-xs px-space-md text-left">Work center</th><th class="py-space-xs px-space-md text-right">Today</th><th class="py-space-xs px-space-md text-right">Scenario</th><th class="py-space-xs px-space-md text-right">Hours</th></tr></thead>
+        <tbody>
+          {% for u in r.utilisation %}
+          <tr class="border-b border-surface-container {{ 'text-on-surface' if u.reference_pct != u.scenario_pct else 'text-on-surface-variant' }}">
+            <td class="py-space-xs px-space-md">{{ u.work_center }}</td>
+            <td class="py-space-xs px-space-md text-right">{{ u.reference_pct|num(1) }}%</td>
+            <td class="py-space-xs px-space-md text-right">{{ u.scenario_pct|num(1) }}%</td>
+            <td class="py-space-xs px-space-md text-right text-outline">{{ u.reference_hours|num(1) }} → {{ u.scenario_hours|num(1) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </div>
+</div>
+{% endblock %}

@@ -15,6 +15,8 @@ from app.data.dataset import current as ds
 from app.models import (
     AuditEntry,
     CurrentUser,
+    Machine,
+    WorkCenter,
     OrderStatus,
     RiskLevel,
     SalesOrder,
@@ -284,6 +286,20 @@ def gantt_view(version_key: str) -> dict:
             rows.append({"kind": "machine", "wc": wc, "m": m, "y": y, "h": MACHINE_ROW_PX})
             machine_y[m.machine_code] = y
             y += MACHINE_ROW_PX
+    # Hypothetical machines of a what-if scenario get their own lanes (M10)
+    extra = sorted({op.machine_code for op in version.operations if op.machine_code not in machine_y})
+    if extra:
+        wc = WorkCenter(code="SCN", name="Scenario resources", detail="Hypothetical machines of this what-if scenario",
+                        group="Scenario", group_icon="science", unit_label=f"{len(extra)} Unit{'s' if len(extra) != 1 else ''}",
+                        scheduled_hours=0, capacity_hours=1, queue_note="",
+                        machines=[Machine(machine_code=c, name=f"{c} (scenario)", description="Hypothetical second unit",
+                                          utilization=0, down=False) for c in extra])
+        rows.append({"kind": "group", "wc": wc, "y": y, "h": GROUP_ROW_PX})
+        y += GROUP_ROW_PX
+        for m in wc.machines:
+            rows.append({"kind": "machine", "wc": wc, "m": m, "y": y, "h": MACHINE_ROW_PX})
+            machine_y[m.machine_code] = y
+            y += MACHINE_ROW_PX
     # Final operation of each order; flagged late when it finishes after the requested date
     last_op: dict[str, ScheduledOperation] = {}
     for op in version.operations:
@@ -349,12 +365,67 @@ def active_order_legend() -> list[dict]:
     return seen
 
 
-def scenario_comparison() -> dict:
-    """Baseline vs the most recent scenario (the baseline itself only if it is the only version)."""
+def scenario_comparison(cand_key: str | None = None) -> dict:
+    """Baseline vs a candidate version (default: the most recent one), computed from both versions' data: planned
+    completion per order, late orders, lateness, overtime and validation (M10)."""
     base = baseline()
     others = [v for v in ds().SCHEDULE_VERSIONS.values() if not v.is_baseline]
-    cand = max(others, key=lambda v: v.run_number) if others else base
-    return {"base": base, "cand": cand}
+    cand = ds().SCHEDULE_VERSIONS.get(cand_key or "") if cand_key else None
+    if cand is None or cand.is_baseline:
+        cand = max(others, key=lambda v: v.run_number) if others else base
+    changes = []
+    for order in sorted(set(base.order_finish) | set(cand.order_finish)):
+        b, c = base.order_finish.get(order), cand.order_finish.get(order)
+        if b != c:
+            changes.append({"order": order, "base": b, "cand": c, "days": (c - b).days if b and c else None})
+    return {"base": base, "cand": cand, "changes": changes,
+            "earlier": [x for x in changes if x["days"] is not None and x["days"] < 0],
+            "later": [x for x in changes if x["days"] is not None and x["days"] > 0],
+            "options": [v for v in others]}
+
+
+def scenario_versions() -> list[ScheduleVersion]:
+    """What-if scenario versions (run type 'simulation'), newest first (M10)."""
+    return sorted((v for v in ds().SCHEDULE_VERSIONS.values() if v.run_type == "simulation"),
+                  key=lambda v: v.run_number, reverse=True)
+
+
+def scenario_options() -> dict:
+    """Choices for the scenario builder, from the current dataset."""
+    res = resources_view()
+    po_lines = getattr(ds(), "PO_LINES", [])
+    return {
+        "po_numbers": sorted({l["po_number"] for l in po_lines if l.get("expected")}),
+        "po_lines": [l for l in po_lines if l.get("expected")],
+        "machines": [m["code"] for wc in res["work_centers"] for m in wc["machines"] if m["active"]],
+        "work_centers": [(wc["code"], wc["name"]) for wc in res["work_centers"]],
+        "orders": [o for o in ds().SALES_ORDERS
+                   if o.status not in (OrderStatus.DRAFT, OrderStatus.COMPLETED, OrderStatus.CANCELLED)],
+        "products": [p for p in orderable_products() if p["ready"]],
+        "priorities": ["Critical", "High", "Normal", "Low"],
+    }
+
+
+def scenario_report(version: ScheduleVersion) -> dict | None:
+    """The stored comparison of a scenario version, with plant-local times for display."""
+    comp = (version.report or {}).get("comparison")
+    if not comp:
+        return None
+    from app.data.supabase_dataset import ts
+
+    rows = []
+    for l in comp.get("delivery_changes", []):
+        due = ts(l.get("due"))
+        rows.append({**l, "due": due - timedelta(minutes=1) if due else None,
+                     "reference_completion": ts(l.get("reference_completion")),
+                     "scenario_completion": ts(l.get("scenario_completion")),
+                     "approved_baseline_finish": ts(l.get("approved_baseline_finish"))})
+    return {**comp, "delivery_changes": rows}
+
+
+def baseline_impact() -> list[dict]:
+    """Open flags raised when a supplier receipt moved after the baseline was approved (acceptance test 9)."""
+    return list(getattr(ds(), "BASELINE_IMPACT", []))
 
 
 def resources_view() -> dict:

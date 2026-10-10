@@ -30,7 +30,7 @@
                 class="h-7 px-space-md inline-flex items-center gap-space-xs rounded border font-label-mono-sm text-label-mono-sm">{{ icon("build", 15) }}Maintenance PM</button>
       </div>
       <div class="flex flex-wrap items-center gap-space-xs">
-        {{ button("Simulate Scenario", "science", "secondary", href="/assistant") }}
+        {{ button("Simulate Scenario", "science", "secondary", href="/scenarios") }}
         {{ button("Export Dispatch", "download", "secondary") }}
         <button type="button" hx-post="/workbench/run" hx-include="[name=version]" hx-target="#solver-toast"
                 class="h-7 px-space-md inline-flex items-center gap-space-xs bg-cobalt hover:bg-cobalt-dark text-white font-label-mono-sm text-label-mono-sm rounded">
@@ -43,6 +43,13 @@
       </div>
     </div>
     <div id="solver-toast" aria-live="polite"></div>
+    {% if impact %}
+    <div class="p-space-md rounded border border-crit/40 bg-crit/10 flex flex-col gap-space-xs font-label-mono-xs text-label-mono-xs" role="alert">
+      <span class="flex flex-wrap items-center gap-space-xs text-crit font-semibold">{{ icon("warning", 15) }}Approved baseline affected by {{ impact|length }} supplier receipt change{{ "s" if impact|length != 1 }} — it stays in force until a new version is approved.
+        <a href="/scenarios" class="text-primary underline font-normal">Build a scenario</a></span>
+      {% for a in impact %}<span class="text-on-surface-variant">{{ a.description }}</span>{% endfor %}
+    </div>
+    {% endif %}
     <div class="flex items-center gap-space-md overflow-x-auto scroll-thin font-label-mono-xs text-label-mono-xs text-on-surface-variant whitespace-nowrap pb-space-xs">
       <span class="uppercase text-outline">Active Sales Orders:</span>
       {% for l in legend %}
@@ -211,26 +218,36 @@
   </section>
   {% endif %}
 
-  {# What-if comparison strip #}
+  {# Baseline vs candidate comparison strip — computed from both versions' data (M10) #}
   {% set b, c = cmp.base, cmp.cand %}
   <section class="p-space-xl grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-12 gap-space-md">
     <div class="sm:col-span-2 2xl:col-span-12 flex flex-wrap items-center justify-between gap-space-sm p-space-md bg-surface-container rounded">
-      <span class="flex items-center gap-space-sm font-label-mono-sm text-label-mono-sm text-on-surface">{{ icon("compare_arrows", 16, "text-primary") }}What-If Comparison: Baseline v{{ b.version_number }} vs Scenario v{{ c.version_number }}</span>
+      <span class="flex flex-wrap items-center gap-space-sm font-label-mono-sm text-label-mono-sm text-on-surface">{{ icon("compare_arrows", 16, "text-primary") }}Comparison: Baseline v{{ b.version_number }} vs
+        <select name="compare" aria-label="Compare with" class="h-7 bg-surface-container-lowest text-on-surface rounded border border-hairline px-space-sm font-label-mono-sm text-label-mono-sm"
+                onchange="location.href='/workbench?version={{ version.key }}&compare=' + encodeURIComponent(this.value)">
+          {% for o in cmp.options|sort(attribute="run_number", reverse=true) %}<option value="{{ o.key }}" {% if o.key == c.key %}selected{% endif %}>v{{ o.version_number }} — {{ o.label|truncate(48) }}</option>{% endfor %}
+        </select>
+        {% if c.run_type == "simulation" and c.assumptions.what_if_only %}{{ badge("what-if only", "ai") }}{% endif %}
+      </span>
       <span class="flex items-center gap-space-sm font-label-mono-xs text-label-mono-xs text-on-surface-variant">{{ icon("rule", 14) }}Constraint violations: {{ c.hard_violations }} hard / {{ c.soft_violations }} soft</span>
-      {{ button("Review Scenario v" ~ c.version_number ~ " in Approvals", "done_all", "primary", href="/approvals") }}
+      {% if c.run_type == "simulation" and c.report.comparison %}
+        {{ button("Open scenario comparison", "science", "primary", href="/scenarios/" ~ c.key) }}
+      {% else %}
+        {{ button("Review v" ~ c.version_number ~ " in Approvals", "done_all", "primary", href="/approvals") }}
+      {% endif %}
     </div>
     {% set metrics = [
-      ("Late Orders", "event_busy", b.late_orders, c.late_orders, "", ""),
-      ("Total Lateness", "schedule", b.total_lateness_h ~ "h", c.total_lateness_h ~ "h", "", ""),
-      ("Overtime + Expedite", "payments", "$" ~ b.overtime_cost|num, "+$" ~ c.overtime_cost|num, "", ""),
+      ("Late Orders", "event_busy", b.late_orders, c.late_orders),
+      ("Total Lateness", "schedule", b.total_lateness_h ~ "h", c.total_lateness_h ~ "h"),
+      ("Overtime + Expedite", "payments", "$" ~ b.overtime_cost|num, "$" ~ c.overtime_cost|num),
     ] %}
-    {% for label, ic, bv, cv, _a, _b in metrics %}
+    {% for label, ic, bv, cv in metrics %}
     <div class="2xl:col-span-2 p-space-lg bg-surface-container-low rounded flex flex-col gap-space-sm">
       <div class="flex items-center justify-between text-outline font-label-mono-xs text-label-mono-xs uppercase">{{ label }}{{ icon(ic, 16) }}</div>
       <div class="flex items-baseline gap-space-xs font-metric-display text-metric-display">
-        <span class="text-crit">{{ bv }}</span><span class="font-label-mono-xs text-label-mono-xs text-outline">vs</span><span class="text-primary">{{ cv }}</span>
+        <span class="text-on-surface">{{ bv }}</span><span class="font-label-mono-xs text-label-mono-xs text-outline">vs</span><span class="text-primary">{{ cv }}</span>
       </div>
-      <div class="flex justify-between font-label-mono-xs text-label-mono-xs text-on-surface-variant"><span>Baseline v{{ b.version_number }}</span><span class="text-primary">Scenario v{{ c.version_number }}</span></div>
+      <div class="flex justify-between font-label-mono-xs text-label-mono-xs text-on-surface-variant"><span>Baseline v{{ b.version_number }}</span><span class="text-primary">v{{ c.version_number }}</span></div>
     </div>
     {% endfor %}
     <div class="2xl:col-span-2 p-space-lg bg-surface-container-low rounded flex flex-col gap-space-sm">
@@ -239,17 +256,18 @@
       <div class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">Independent validation: {{ "passed" if c.validation_passed and c.hard_violations == 0 else "failed" }}</div>
     </div>
     <div class="sm:col-span-2 2xl:col-span-4 p-space-lg bg-surface-container-high rounded flex gap-space-md border-l-2 border-ai/60">
-      {{ icon("psychology", 22, "text-ai") }}
+      {{ icon("difference", 22, "text-ai") }}
       <div class="flex flex-col gap-space-xs min-w-0">
-        <h3 class="font-headline-sm text-headline-sm text-on-surface">OR-Tools AI Recommendation</h3>
+        <h3 class="font-headline-sm text-headline-sm text-on-surface">What changes vs the baseline</h3>
         <span class="font-label-mono-xs text-label-mono-xs text-primary">{{ c.change_summary }}</span>
-        {% if c.report %}
-        {% set problems = c.report.lines|selectattr("status", "in", ["late", "blocked", "needs_data"])|list %}
-        <p class="font-body-sm text-body-sm text-on-surface-variant">Solver draft v{{ c.version_number }}: {{ c.report.lines|length - problems|length }} of {{ c.report.lines|length }} order lines on time{% if problems %}; {% for l in problems %}{{ l.order_number }}/{{ l.line_number }} {{ l.status|replace("_", " ") }}{{ ", " if not loop.last }}{% endfor %}{% endif %}. Independent validation {{ "passed" if c.validation_passed else "failed" }}. Human approval required before adoption.</p>
-        {% else %}
-        <p class="font-body-sm text-body-sm text-on-surface-variant">Scenario v{{ c.version_number }} recovers SO-1005 (Shell Offshore GOM) from Dec 03 to Nov 29 at a cost of ${{ c.overtime_cost|num }}. SO-1012 remains late (VTL capacity) — no change in this scenario. Human approval required before adoption.</p>
-        {% endif %}
-        <a href="/assistant" class="font-label-mono-xs text-label-mono-xs text-primary underline self-end">View solver trace</a>
+        <p class="font-body-sm text-body-sm text-on-surface-variant">
+          {% if not cmp.changes %}No planned completion date differs from baseline v{{ b.version_number }}.
+          {% else %}
+            {% if cmp.earlier %}Earlier: {% for x in cmp.earlier %}{{ x.order }} {{ x.base|d }} → {{ x.cand|d }}{{ ", " if not loop.last }}{% endfor %}. {% endif %}
+            {% if cmp.later %}Later: {% for x in cmp.later %}{{ x.order }} {{ x.base|d }} → {{ x.cand|d }}{{ ", " if not loop.last }}{% endfor %}. {% endif %}
+            {% set other = cmp.changes|selectattr("days", "none")|list %}{% if other %}Only in one version: {% for x in other %}{{ x.order }}{{ ", " if not loop.last }}{% endfor %}.{% endif %}
+          {% endif %}
+          Human approval required before adoption.</p>
       </div>
     </div>
   </section>

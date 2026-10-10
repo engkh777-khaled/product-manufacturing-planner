@@ -5,7 +5,7 @@
 | **Date** | 2026-10-10 |
 | **Author** | Khaled (implemented with Claude Code) |
 | **Status** | Done |
-| **Commits** | _see git log — "M09" commit_ |
+| **Commits** | `fb15595` |
 | **Spec sections** | §8.1–8.8 (inputs, durations, hard constraints, objective, CP-SAT, horizon, outcomes, validation), §6.12–6.19, §12.5 (Resources & Calendars), acceptance tests 1, 4, 5, 6, 7, 8 (+ 2, 3 on the plant data) |
 
 ## Goal

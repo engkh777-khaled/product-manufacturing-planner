@@ -7,13 +7,13 @@ from fastapi.staticfiles import StaticFiles
 
 from app import auth
 from app.data import dataset, supabase_dataset
-from app.routes import approvals, assistant, dashboard, engineering, health, inventory, orders, resources, workbench
+from app.routes import approvals, assistant, dashboard, engineering, health, inventory, orders, resources, scenarios, workbench
 from app.routes import auth as auth_routes
 
 app = FastAPI(title="Product Manufacturing Planner", version="0.3.0")
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
 
-for module in (health, auth_routes, dashboard, workbench, orders, inventory, resources, engineering, approvals, assistant):
+for module in (health, auth_routes, dashboard, workbench, scenarios, orders, inventory, resources, engineering, approvals, assistant):
     app.include_router(module.router)
 
 

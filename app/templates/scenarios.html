@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% from "components/ui.html" import icon, badge, panel_header %}
+{% block title %}What-If Scenarios{% endblock %}
+{% block content %}
+{% set input_cls = "h-8 px-space-sm bg-surface-container-lowest text-on-surface rounded border border-hairline focus:border-cobalt outline-none font-label-mono-sm text-label-mono-sm" %}
+{% set label_cls = "flex flex-col gap-px font-label-mono-xs text-label-mono-xs text-outline" %}
+<div class="p-space-xl flex flex-col gap-space-xl">
+  <div class="flex flex-col gap-space-sm">
+    <nav class="font-label-mono-xs text-label-mono-xs text-outline uppercase" aria-label="Breadcrumb">Sec 10 / Planning / <span class="text-primary">What-If Scenarios</span></nav>
+    <h1 class="font-headline-lg text-headline-lg text-on-surface">What-If Scenarios</h1>
+    <p class="font-body-sm text-body-sm text-on-surface-variant max-w-3xl">A scenario changes a <b>copy</b> of today's plant data, plans it next to the unchanged data with the same solver, and saves the result as a separate version. The approved baseline v{{ baseline.version_number }} is never touched. Scenarios built on hypothetical facts (delay, urgent order, quantity, extra machine) are for comparison only and cannot be submitted for approval.</p>
+    {% if not editable_backend %}
+    <p class="font-label-mono-xs text-label-mono-xs text-warn">Demo data: run with DATA_BACKEND=supabase and sign in as a planner to run scenarios.</p>
+    {% endif %}
+  </div>
+
+  {% if impact %}
+  <div class="p-space-md rounded border border-crit/40 bg-crit/10 flex flex-col gap-space-xs font-label-mono-xs text-label-mono-xs" role="alert">
+    <span class="flex items-center gap-space-xs text-crit font-semibold">{{ icon("warning", 15) }}Baseline v{{ baseline.version_number }} is affected by {{ impact|length }} supplier receipt change{{ "s" if impact|length != 1 }} since approval — it stays in force until a new version is approved</span>
+    {% for a in impact %}<span class="text-on-surface-variant">{{ a.description }}</span>{% endfor %}
+  </div>
+  {% endif %}
+
+  <section class="bg-surface-container-low rounded overflow-hidden">
+    {% call panel_header("Build a Scenario", "science", "Fill in the sections you need; empty sections are ignored. Times are plant time.") %}{% endcall %}
+    <form hx-post="/scenarios/run" hx-target="#scenario-run" hx-swap="innerHTML" class="p-space-lg flex flex-col gap-space-lg">
+      <div class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-space-md">
+        <fieldset class="p-space-md bg-surface-container rounded flex flex-wrap items-end gap-space-sm">
+          <legend class="px-1 font-label-mono-sm text-label-mono-sm text-on-surface">{{ icon("local_shipping", 14) }} Supplier receipt moves <span class="text-outline">(what-if)</span></legend>
+          <label class="{{ label_cls }}">Purchase order<select name="delay_po" class="{{ input_cls }}"><option value="">—</option>{% for po in opts.po_numbers %}<option>{{ po }}</option>{% endfor %}</select></label>
+          <label class="{{ label_cls }}">Days (+ later, − earlier)<input name="delay_days" type="number" value="5" class="{{ input_cls }} w-24"></label>
+        </fieldset>
+        <fieldset class="p-space-md bg-surface-container rounded flex flex-wrap items-end gap-space-sm">
+          <legend class="px-1 font-label-mono-sm text-label-mono-sm text-on-surface">{{ icon("block", 14) }} Machine unavailable</legend>
+          <label class="{{ label_cls }}">Machine<select name="down_machine" class="{{ input_cls }}"><option value="">—</option>{% for m in opts.machines %}<option>{{ m }}</option>{% endfor %}</select></label>
+          <label class="{{ label_cls }}">From<input type="datetime-local" name="down_start" value="2025-11-24T06:00" class="{{ input_cls }}"></label>
+          <label class="{{ label_cls }}">To<input type="datetime-local" name="down_end" value="2025-11-24T22:00" class="{{ input_cls }}"></label>
+        </fieldset>
+        <fieldset class="p-space-md bg-surface-container rounded flex flex-wrap items-end gap-space-sm">
+          <legend class="px-1 font-label-mono-sm text-label-mono-sm text-on-surface">{{ icon("bolt", 14) }} Urgent order <span class="text-outline">(what-if)</span></legend>
+          <label class="{{ label_cls }}">Product<select name="urgent_product" class="{{ input_cls }}"><option value="">—</option>{% for p in opts.products %}<option value="{{ p.code }}">{{ p.code }}</option>{% endfor %}</select></label>
+          <label class="{{ label_cls }}">Qty<input name="urgent_qty" type="number" min="1" value="2" class="{{ input_cls }} w-20"></label>
+          <label class="{{ label_cls }}">Needed by<input name="urgent_date" type="date" value="2025-11-28" class="{{ input_cls }}"></label>
+          <label class="{{ label_cls }}">Priority<select name="urgent_priority" class="{{ input_cls }}">{% for p in priorities %}<option>{{ p }}</option>{% endfor %}</select></label>
+        </fieldset>
+        <fieldset class="p-space-md bg-surface-container rounded flex flex-wrap items-end gap-space-sm">
+          <legend class="px-1 font-label-mono-sm text-label-mono-sm text-on-surface">{{ icon("exposure", 14) }} Order quantity change <span class="text-outline">(what-if)</span></legend>
+          <label class="{{ label_cls }}">Order<select name="qty_order" class="{{ input_cls }}"><option value="">—</option>{% for o in opts.orders %}<option>{{ o.order_number }}</option>{% endfor %}</select></label>
+          <label class="{{ label_cls }}">Change %<input name="qty_percent" type="number" value="20" class="{{ input_cls }} w-24"></label>
+        </fieldset>
+        <fieldset class="p-space-md bg-surface-container rounded flex flex-wrap items-end gap-space-sm">
+          <legend class="px-1 font-label-mono-sm text-label-mono-sm text-on-surface">{{ icon("more_time", 14) }} Overtime for a work center</legend>
+          <label class="{{ label_cls }}">Work center<select name="ot_wc" class="{{ input_cls }}"><option value="">—</option>{% for code, name in opts.work_centers %}<option value="{{ code }}">{{ code }} {{ name }}</option>{% endfor %}</select></label>
+          <label class="{{ label_cls }}">From<input type="datetime-local" name="ot_start" value="2025-11-22T06:00" class="{{ input_cls }}"></label>
+          <label class="{{ label_cls }}">To<input type="datetime-local" name="ot_end" value="2025-11-22T14:00" class="{{ input_cls }}"></label>
+        </fieldset>
+        <fieldset class="p-space-md bg-surface-container rounded flex flex-wrap items-end gap-space-sm">
+          <legend class="px-1 font-label-mono-sm text-label-mono-sm text-on-surface">{{ icon("add_circle", 14) }} Second machine available <span class="text-outline">(what-if)</span></legend>
+          <label class="{{ label_cls }}">Same as<select name="extra_machine" class="{{ input_cls }}"><option value="">—</option>{% for m in opts.machines %}<option>{{ m }}</option>{% endfor %}</select></label>
+        </fieldset>
+        <fieldset class="p-space-md bg-surface-container rounded flex flex-wrap items-end gap-space-sm">
+          <legend class="px-1 font-label-mono-sm text-label-mono-sm text-on-surface">{{ icon("priority_high", 14) }} Customer order priority</legend>
+          <label class="{{ label_cls }}">Order<select name="prio_order" class="{{ input_cls }}"><option value="">—</option>{% for o in opts.orders %}<option>{{ o.order_number }}</option>{% endfor %}</select></label>
+          <label class="{{ label_cls }}">New priority<select name="prio_value" class="{{ input_cls }}">{% for p in priorities %}<option>{{ p }}</option>{% endfor %}</select></label>
+        </fieldset>
+      </div>
+      <div class="flex flex-wrap items-end gap-space-sm">
+        <label class="{{ label_cls }} grow max-w-md">Scenario name (optional)<input name="name" maxlength="120" placeholder="e.g. PO-8821 slips a week" class="{{ input_cls }}"></label>
+        <button {% if not can_run %}disabled title="Planner or admin, Supabase mode"{% endif %} class="h-8 px-space-md inline-flex items-center gap-space-xs rounded bg-primary text-on-primary hover:bg-primary-fixed disabled:opacity-50 font-label-mono-sm text-label-mono-sm font-semibold">{{ icon("play_arrow", 15) }}Run scenario</button>
+      </div>
+      <div id="scenario-run" aria-live="polite"></div>
+    </form>
+  </section>
+
+  <section class="bg-surface-container-low rounded overflow-hidden">
+    {% call panel_header("Saved Scenarios", "history", "Each scenario is its own version; the comparison is against today's data planned the same way") %}{% endcall %}
+    <div class="overflow-x-auto scroll-thin">
+      <table class="w-full min-w-[860px] text-left border-collapse font-label-mono-sm text-label-mono-sm">
+        <thead><tr class="bg-surface-container-lowest text-outline font-label-mono-xs text-label-mono-xs uppercase border-b border-hairline">
+          <th class="py-space-sm px-space-md">Version</th><th class="py-space-sm px-space-md">Scenario</th><th class="py-space-sm px-space-md">Outcome</th>
+          <th class="py-space-sm px-space-md">Summary</th><th class="py-space-sm px-space-md">By</th><th class="py-space-sm px-space-md"></th></tr></thead>
+        <tbody>
+          {% for s in scenarios %}
+          <tr class="border-b border-surface-container align-top">
+            <td class="py-space-sm px-space-md text-on-surface">v{{ s.version_number }}</td>
+            <td class="py-space-sm px-space-md text-on-surface-variant">{{ s.assumptions.name or s.label }}{% if s.assumptions.what_if_only %} {{ badge("what-if only", "ai") }}{% endif %}</td>
+            <td class="py-space-sm px-space-md">{{ badge(s.solver_status|replace("_", " ")|title, "ok" if s.solver_status == "FEASIBLE" else "warn") }}</td>
+            <td class="py-space-sm px-space-md text-on-surface-variant font-label-mono-xs text-label-mono-xs">{{ s.change_summary }}</td>
+            <td class="py-space-sm px-space-md text-outline">{{ s.created_by }}</td>
+            <td class="py-space-sm px-space-md whitespace-nowrap">
+              {% if s.report.comparison %}<a class="text-primary hover:underline" href="/scenarios/{{ s.key }}">Compare</a> · {% endif %}
+              <a class="text-primary hover:underline" href="/workbench?version={{ s.key }}&compare={{ s.key }}">Gantt</a>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="py-space-lg text-center text-outline">No scenarios yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}

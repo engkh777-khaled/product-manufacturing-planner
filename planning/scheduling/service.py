@@ -132,14 +132,19 @@ def payload(sched: Schedule, report: ValidationReport, started_at: datetime) -> 
     }
 
 
-def plan_payload(snap: dict, horizon: tuple[str, str] | None = None, options: dict | None = None) -> dict:
-    """Worker-process entry point: plain JSON in, plain JSON out."""
-    started = datetime.now(timezone.utc)
+def _options_from_dict(options: dict | None) -> Options:
     opts = Options(**{k: v for k, v in (options or {}).items() if k not in ("weights", "orders")})
     if options and options.get("weights"):
         opts.weights = Weights(**options["weights"])
     if options and options.get("orders"):
         opts.orders = frozenset(options["orders"])
+    return opts
+
+
+def plan_payload(snap: dict, horizon: tuple[str, str] | None = None, options: dict | None = None) -> dict:
+    """Worker-process entry point: plain JSON in, plain JSON out."""
+    started = datetime.now(timezone.utc)
+    opts = _options_from_dict(options)
     hz = (date.fromisoformat(horizon[0]), date.fromisoformat(horizon[1])) if horizon else None
     sched, report = plan(snap, hz, opts)
     return payload(sched, report, started)

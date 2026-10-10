@@ -264,3 +264,22 @@ _Seen 2026-10-10 (M09)_
 
 App runs add alerts, versions and operations to the dev DB. The seed tests now count only seeded runs (< #1100) and
 versions 4.2/4.3. `supabase db reset --linked` restores the pure seed.
+
+## Scenario comparison shows lines that "moved" for no reason
+_Seen 2026-10-10 (M10)_
+
+**Cause.** Two independent time-limited CP-SAT solves can place untouched operations differently.
+
+**Fix (in place).** The scenario solve is anchored to the reference plan (D-032); changes under 1 h are ignored.
+
+## "Version … is a what-if scenario … cannot be submitted or approved"
+_Reference (M10)_
+
+By design (D-031). Apply the change to real data (e.g. move the PO date, add the order) and re-run the solver;
+submit that version instead.
+
+## A PO date moved but no baseline alert appeared
+_Reference (M10)_
+
+Only moves to a *later* date (or removing the date) are flagged, and only when an approved-baseline operation that
+consumes the item — directly or through a sub-assembly — starts before the new date minus sub-assembly lead time.

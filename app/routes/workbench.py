@@ -16,14 +16,16 @@ def _can_schedule(user: CurrentUser) -> bool:
 
 
 @router.get("/workbench")
-def workbench(request: Request, version: str | None = None, user: CurrentUser = Depends(require_user)):
+def workbench(request: Request, version: str | None = None, compare: str | None = None,
+              user: CurrentUser = Depends(require_user)):
     gantt = repo.gantt_view(version)
     return templates.TemplateResponse(request, "workbench.html", {
         "gantt": gantt,
         "version": gantt["version"],
         "versions": repo.schedule_versions(),
         "legend": repo.active_order_legend(),
-        "cmp": repo.scenario_comparison(),
+        "cmp": repo.scenario_comparison(compare),
+        "impact": repo.baseline_impact(),
         "horizon": ds().PLANNING_HORIZON,
         "report": repo.schedule_report(gantt["version"]),
         "can_schedule": _can_schedule(user),

@@ -1,6 +1,6 @@
 # Backend Roadmap — Supabase + Python
 
-_Written 2026-10-10 · Updated 2026-10-10: **cloud-first** (D-014), M03–M09 done_
+_Written 2026-10-10 · Updated 2026-10-10: **cloud-first** (D-014), M03–M10 done_
 
 Each milestone ends with a **test gate**: commands any developer can run on their own machine to prove the
 milestone works. A milestone is not done until its gate passes and its file exists in [milestones/](milestones/).
@@ -184,7 +184,7 @@ Details: [milestones/M08-mrp-engine.md](milestones/M08-mrp-engine.md).
 ```
 Details: [milestones/M09-finite-capacity-scheduler.md](milestones/M09-finite-capacity-scheduler.md). "Re-run CP-SAT" already starts a real run (done in M09).
 
-### M10 — Planning workbench on live schedules & what-if scenarios (spec §10, §12.6, Phase 4)
+### M10 — Planning workbench on live schedules & what-if scenarios (spec §10, §12.6, Phase 4) ✅ Done 2026-10-10
 **Goal:** The Gantt and dashboards show solver output, and planners run scenarios without touching the baseline.
 - Gantt reads `schedule_versions` and `production_operations` (done since M06/M09; "Re-run CP-SAT" is real since M09).
 - Scenario builder covering supplier delay, machine unavailable, urgent order, quantity change, overtime and priority. Each
@@ -196,6 +196,7 @@ Details: [milestones/M09-finite-capacity-scheduler.md](milestones/M09-finite-cap
 .\.venv\Scripts\python -m pytest tests/test_scenarios.py   # acceptance test 9: baseline preserved, new run flagged
 ```
 Manual: delay PO-8821 by 5 days, run, and compare. The approved baseline is unchanged.
+Details: [milestones/M10-scenarios-and-live-workbench.md](milestones/M10-scenarios-and-live-workbench.md).
 
 ### M11 — AI assistant with tool calling (spec §11, Phase 5)
 **Goal:** Replace the scripted assistant with an LLM that only uses authorised tools.

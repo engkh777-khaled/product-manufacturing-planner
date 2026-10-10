@@ -10,6 +10,9 @@
     python -m planning.cli schedule --machine MC-014                 # one machine's sequence
     python -m planning.cli schedule --freeze-days 3 --time-limit 30 --save --as planner@example.com
 
+    python -m planning.cli scenario --delay PO-8821:5                 # what-if vs today's data (read-only)
+    python -m planning.cli scenario --down MC-014:2025-11-24T06:00/2025-11-25T22:00 --priority SO-1012:Critical --save
+
 Reads one consistent snapshot through DATABASE_URL (.env). Fictional demo data.
 """
 
@@ -137,6 +140,74 @@ def cmd_schedule(args) -> int:
     return 0 if report.passed else 1
 
 
+def _scenario_changes(args) -> list[dict]:
+    changes = []
+    for spec in args.delay or []:
+        po, _, days = spec.partition(":")
+        changes.append({"kind": "supplier_delay", "params": {"po_number": po, "days": int(days or 5)}})
+    for spec in args.down or []:
+        machine, _, span = spec.partition(":")
+        start, _, end = span.partition("/")
+        changes.append({"kind": "machine_unavailable", "params": {"machine_code": machine, "start": start, "end": end}})
+    for spec in args.urgent or []:
+        product, qty, requested, *prio = spec.split(":")
+        changes.append({"kind": "urgent_order", "params": {"product_code": product, "quantity": float(qty),
+                                                           "requested_date": requested, "priority": (prio or ["Critical"])[0]}})
+    for spec in args.qty or []:
+        order, _, pct = spec.partition(":")
+        changes.append({"kind": "quantity_change", "params": {"order_number": order, "percent": float(pct)}})
+    for spec in args.overtime or []:
+        wc, _, span = spec.partition(":")
+        start, _, end = span.partition("/")
+        changes.append({"kind": "overtime", "params": {"work_center_code": wc, "start": start, "end": end}})
+    for machine in args.extra_machine or []:
+        changes.append({"kind": "extra_machine", "params": {"machine_code": machine}})
+    for spec in args.priority or []:
+        order, _, prio = spec.partition(":")
+        changes.append({"kind": "priority", "params": {"order_number": order, "priority": prio}})
+    return changes
+
+
+def cmd_scenario(args) -> int:
+    from planning.scenarios import ScenarioError, run_scenario
+    from planning.scheduling import Options
+    changes = _scenario_changes(args)
+    with _connect() as conn:
+        snap = conn.execute("select public.planning_snapshot()").fetchone()[0]
+        try:
+            body, scen, applied = run_scenario(snap, changes, args.name or "", None, Options(time_limit_s=args.time_limit))
+        except ScenarioError as exc:
+            sys.exit(f"Scenario error: {exc}")
+        c = body["version"]["metrics"]["comparison"]
+        tz = scen.input.tz
+        print(f"Scenario: {body['assumptions']['name']}  ({'what-if only' if c['what_if_only'] else 'decision scenario'})")
+        for ch in c["changes"]:
+            print(f"  · {ch['description']}")
+        r, s = c["reference"], c["scenario"]
+        print(f"\nToday's data → scenario: late lines {r['late_lines']} → {s['late_lines']}, blocked {r['blocked_lines']} → "
+              f"{s['blocked_lines']}, lateness {r['total_lateness_hours']} → {s['total_lateness_hours']} h, overtime "
+              f"{r['overtime_hours']} → {s['overtime_hours']} h, bottleneck {c['bottleneck']['reference']} → "
+              f"{c['bottleneck']['scenario']}")
+        print(f"\nDelivery changes ({len(c['delivery_changes'])}):")
+        for l in c["delivery_changes"]:
+            when = lambda iso: datetime.fromisoformat(iso).astimezone(tz).strftime("%b %d %H:%M") if iso else "-"  # noqa: E731
+            delta = f"{l['delta_hours']:+.1f} h" if l["delta_hours"] is not None else ""
+            print(f"  {l['key']:<11}{l['reference_status']:>9} {when(l['reference_completion']):<13}→ {l['scenario_status']:<9}"
+                  f"{when(l['scenario_completion']):<13}{delta:>9}  {'; '.join(l['reasons'])}")
+        for sh in c["new_shortages"]:
+            print(f"  new shortage: {sh['order_number']}/{sh['line_number']} {sh['item']} short {sh['shortage']}")
+        for sh in c["resolved_shortages"]:
+            print(f"  resolved:     {sh['order_number']}/{sh['line_number']} {sh['item']}")
+        print(f"\nScenario validation: {'PASSED' if body['version']['validation_passed'] else 'FAILED'}")
+        if args.save:
+            with conn.transaction():
+                _act_as(conn, args.as_user)
+                result = conn.execute("select public.record_schedule_run(%s::jsonb)", (json.dumps(body),)).fetchone()[0]
+            print(f"Saved as simulation run #{result['run_number']}: version {result['version_number']} "
+                  f"(the approved baseline is unchanged).")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
@@ -158,8 +229,20 @@ def main(argv: list[str] | None = None) -> int:
     sch.add_argument("--include-drafts", action="store_true", help="also schedule draft sales orders")
     sch.add_argument("--save", action="store_true", help="record the run and a Draft schedule version")
     sch.add_argument("--as", dest="as_user", default="planner@example.com", help="user recorded as running the solver")
+    scn = sub.add_parser("scenario", help="what-if scenario compared with today's data (never changes the database)")
+    scn.add_argument("--delay", action="append", metavar="PO:DAYS", help="supplier receipt moves, e.g. PO-8821:5 (or :-3)")
+    scn.add_argument("--down", action="append", metavar="MACHINE:FROM/TO", help="machine unavailable, plant time")
+    scn.add_argument("--urgent", action="append", metavar="PRODUCT:QTY:DATE[:PRIORITY]", help="add an urgent order")
+    scn.add_argument("--qty", action="append", metavar="ORDER:PERCENT", help="order quantity change, e.g. SO-1008:20")
+    scn.add_argument("--overtime", action="append", metavar="WC:FROM/TO", help="approved overtime for a work center")
+    scn.add_argument("--extra-machine", action="append", metavar="MACHINE", help="a second machine like this one")
+    scn.add_argument("--priority", action="append", metavar="ORDER:PRIORITY", help="change an order's priority")
+    scn.add_argument("--name", help="scenario name")
+    scn.add_argument("--time-limit", type=float, default=10.0, help="solver time limit per plan (two plans)")
+    scn.add_argument("--save", action="store_true", help="save the scenario as a separate version")
+    scn.add_argument("--as", dest="as_user", default="planner@example.com", help="user recorded as running it")
     args = parser.parse_args(argv)
-    return cmd_mrp(args) if args.command == "mrp" else cmd_schedule(args)
+    return {"mrp": cmd_mrp, "schedule": cmd_schedule, "scenario": cmd_scenario}[args.command](args)
 
 
 if __name__ == "__main__":

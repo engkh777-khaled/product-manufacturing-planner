@@ -295,16 +295,24 @@ def build_dataset(snap: dict) -> SimpleNamespace:
         ops, deps = [], []
         for pop in snap["production_operations"]:
             pord = prod_orders.get(pop["production_order_id"])
-            if not pord or pord["schedule_version_id"] != v["id"] or not pop.get("assigned_machine_id"):
+            if not pord or pord["schedule_version_id"] != v["id"]:
                 continue
-            so_number = order_number_for_item(pord.get("sales_order_item_id"))
+            notes = pop.get("notes") or ""
+            if pop.get("assigned_machine_id"):
+                machine_code = machines[pop["assigned_machine_id"]]["machine_code"]
+            elif notes.startswith("Scenario machine "):      # hypothetical second unit of a what-if scenario (M10)
+                machine_code = notes.removeprefix("Scenario machine ").split(":")[0]
+            else:
+                continue
+            # scenario orders (urgent order) have no sales order line: PRD-SIM-1-1 -> SIM-1
+            so_number = order_number_for_item(pord.get("sales_order_item_id")) or                 pord["production_order_number"].removeprefix("PRD-").rsplit("-", 1)[0]
             if not so_number or not pop.get("planned_start"):
                 continue
             rop = op_by_id.get(pop["routing_operation_id"], {})
             consumed = consumed_at.get((pord["product_id"], pop["operation_number"]), set())
             ops.append(ScheduledOperation(
                 op_code=pop["operation_number"], name=rop.get("operation_name", pop["operation_number"]),
-                order_number=so_number, machine_code=machines[pop["assigned_machine_id"]]["machine_code"],
+                order_number=so_number, machine_code=machine_code,
                 start=ts(pop["planned_start"]), end=ts(pop["planned_finish"]), note=pop.get("notes") or "",
                 critical_path=so_number in at_risk_orders, shortage_blocked=bool(consumed & late_components)))
         # precedence arrows between operations of the same production order
@@ -320,6 +328,17 @@ def build_dataset(snap: dict) -> SimpleNamespace:
                           end=ts(d["end_datetime"]), label=d["reason"],
                           kind="downtime" if d["downtime_type"] == "breakdown" else "pm")
                   for d in snap["machine_downtime"] if d["status"] != "Cancelled"]
+        for change in assumptions.get("changes") or []:       # what-if scenarios (M10)
+            prm = change.get("params") or {}
+            if change.get("kind") == "machine_unavailable":
+                blocks.append(PmBlock(machine_code=prm["machine_code"], start=datetime.fromisoformat(prm["start"]),
+                                      end=datetime.fromisoformat(prm["end"]), label="Scenario: unavailable", kind="downtime"))
+            elif change.get("kind") == "overtime":
+                wc_id = next((w["id"] for w in snap["work_centers"] if w["work_center_code"] == prm["work_center_code"]), None)
+                for mc in snap["machines"]:
+                    if mc["work_center_id"] == wc_id:
+                        blocks.append(PmBlock(machine_code=mc["machine_code"], start=datetime.fromisoformat(prm["start"]),
+                                              end=datetime.fromisoformat(prm["end"]), label="Scenario OT", kind="ot"))
         ot = assumptions.get("overtime")
         if ot:
             blocks.append(PmBlock(machine_code=ot["machine_code"], start=ts(ot["starts_at"]), end=ts(ot["ends_at"]),
@@ -353,7 +372,7 @@ def build_dataset(snap: dict) -> SimpleNamespace:
             overtime_cost=num(m.get("overtime_cost")), hard_violations=int(m.get("hard_violations", 0)),
             soft_violations=int(m.get("soft_violations", 0)), validation_passed=v.get("validation_passed"),
             created_by_id=v.get("created_by"), order_finish=finish_by_version[v["id"]],
-            report=m if "lines" in m else {})
+            report=m if "lines" in m else {}, run_type=run.get("run_type") or "schedule", assumptions=assumptions)
 
     # ---- capacity (loads are planning-run outputs stored on the baseline version)
     wc_load = base_metrics.get("work_center_load", {})
@@ -592,6 +611,9 @@ def build_dataset(snap: dict) -> SimpleNamespace:
             for o in snap["sales_orders"]},
         SNAPSHOT_AT=snap.get("generated_at"),
         RESOURCES=RESOURCES,
+        BASELINE_IMPACT=[{"description": a["description"], "details": a.get("details") or {}, "created_at": ts(a["created_at"])}
+                         for a in snap["planning_alerts"]
+                         if a["status"] == "Open" and (a.get("details") or {}).get("source") == "receipt_change"],
     )
 
 
