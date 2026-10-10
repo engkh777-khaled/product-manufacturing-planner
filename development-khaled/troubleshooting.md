@@ -287,8 +287,16 @@ consumes the item — directly or through a sub-assembly — starts before the n
 ## Assistant says "The AI service rejected the API key"
 _Reference (M11)_
 
-Set `ANTHROPIC_API_KEY=` in `.env` (no quotes), restart the app. The page header shows "AI assistant · <model>"
-when the key is loaded; without it the scripted demo is shown.
+Set `ANTHROPIC_API_KEY=` in `.env` (no quotes), then run `python -m scripts.check_assistant` — it sends one tiny
+request and explains the problem (key rejected, no credit, unknown model, no connection) without printing the key.
+Restart the app. The page header shows "AI assistant · <model>" when the key is loaded; `/healthz` shows
+`"assistant": {"enabled": true}`. Without a key the scripted demo is shown.
+
+## Assistant failed (BadRequestError … thinking.thinking: Field required)
+_Seen 2026-10-10 (M11 live check)_
+
+**Cause.** Newer Claude models return *thinking* blocks; in a tool-use loop they must be sent back unchanged.
+**Fix (in place).** `app/agent/loop.py::_block` preserves thinking / redacted-thinking blocks.
 
 ## Assistant answer takes 10–20 s
 _Reference (M11)_

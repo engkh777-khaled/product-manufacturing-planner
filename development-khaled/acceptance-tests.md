@@ -23,4 +23,4 @@ environment; the run against a deployed production environment is pending (no pr
 ## Still to run
 - The same 10 checks by a planner and an approver against the **deployed production** environment (user
   acceptance), once the production project and host exist — record the run here with date and versions.
-- The live assistant conversation check of M11 (needs `ANTHROPIC_API_KEY`).
+- ~~The live assistant conversation check of M11~~ — done 2026-10-10 (see M11 milestone).

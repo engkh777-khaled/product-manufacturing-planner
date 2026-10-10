@@ -30,7 +30,7 @@ Every milestone adds a file here. Nothing is deleted: if a decision is reversed,
 | M08 | 2026-10-10 | [Material requirements planning engine](milestones/M08-mrp-engine.md) | Done | `d40a04e` |
 | M09 | 2026-10-10 | [Finite-capacity scheduler & validator](milestones/M09-finite-capacity-scheduler.md) | Done | `fb15595` |
 | M10 | 2026-10-10 | [Live workbench & what-if scenarios](milestones/M10-scenarios-and-live-workbench.md) | Done | `54354b2` |
-| M11 | 2026-10-10 | [AI assistant with tool calling](milestones/M11-ai-assistant-tools.md) | Done (live LLM check pending API key) | `ce12a90` |
+| M11 | 2026-10-10 | [AI assistant with tool calling](milestones/M11-ai-assistant-tools.md) | Done (live check passed) | `ce12a90` |
 | M12 | 2026-10-10 | [Hardening](milestones/M12-hardening.md) (deployment pending decisions) | Hardening done | `3db83fd` |
 
 ## How to add a milestone

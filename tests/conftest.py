@@ -8,6 +8,7 @@ import os
 
 os.environ["APP_ENV"] = "test"
 os.environ["AUTH_MODE"] = "disabled"
+os.environ["DATA_BACKEND"] = "mock"  # tests use demo data or recorded snapshots, whatever .env says (tests/db connect directly)
 os.environ["SCHEDULER_WORKER"] = "thread"  # solver jobs run in-process in tests (no worker pool)
 os.environ["SCHEDULER_TIME_LIMIT_SECONDS"] = "3"
 os.environ["ASSISTANT_PLAN_SECONDS"] = "3"

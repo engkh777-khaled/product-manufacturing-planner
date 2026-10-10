@@ -44,6 +44,7 @@ class Settings(BaseSettings):
     anthropic_api_key: SecretStr | None = None   # server-side only — never sent to templates or browsers
     assistant_model: str = "claude-opus-5-5"
     assistant_max_tool_rounds: int = 8
+    assistant_max_tokens: int = 8000             # per model call; thinking counts towards it (cost = tokens used)
     assistant_plan_seconds: float = 8.0          # CP-SAT time limit when a tool needs a fresh plan
 
     @property

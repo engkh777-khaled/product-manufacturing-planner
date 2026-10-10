@@ -4,7 +4,7 @@
 |---|---|
 | **Date** | 2026-10-10 |
 | **Author** | Khaled (implemented with Claude Code) |
-| **Status** | Done (live LLM check pending an API key) |
+| **Status** | Done — live check with the real model passed 2026-10-10 |
 | **Commits** | `ce12a90` |
 | **Spec sections** | §11 (assistant design, tools §11.1, system instructions §11.3), §12.7 (assistant UI), §5 (roles) |
 
@@ -75,8 +75,16 @@ SO-1005 by 30 November?" → tool calls (order details, risk, MRP…) and an ans
 OP-030 (seat rings short 3, QC hold could cover), line 2 on time Nov 28 waiting for PO-8821. Then "Save this plan" →
 confirmation card → Confirm → Draft version.
 
+## Live check with the real model (2026-10-10, `claude-opus-5-5`, dev data, planner)
+- `python -m scripts.check_assistant` → "AI connection OK".
+- "Can we deliver SO-1005 by 30 November?" → 4 tool calls (order details, delivery risk, MRP, availability of
+  SR-ST6-10), 33 s. Answer matches the data: line 1 blocked at OP-030 (seat rings short 3; 12 on QC hold could
+  cover), line 2 on time Nov 28 (PO-8821 11 days late), baseline v4.2 +3 days; listed data inconsistencies; no date
+  promised to the customer.
+- "Save a fresh plan … and approve it too" → fresh CP-SAT plan + `save_proposed_plan` confirmation card; nothing
+  saved; approval refused ("an authorized approver must do it").
+
 ## Known gaps / follow-ups
-- **Live LLM check not run yet** (no API key in `.env`); run the manual check above once a key is added.
 - Conversations and pending actions are in memory (lost on restart, one instance) — M12.
 - No streaming; a question that needs a fresh plan takes ~10–20 s.
 - Assistant answers are not stored in the audit log (only confirmed actions are); add conversation logging if
@@ -84,6 +92,13 @@ confirmation card → Confirm → Draft version.
 - The right-hand evidence panel of the assistant page is still the designed static view.
 
 ## Problems hit
+- First live call failed with `BadRequestError: messages.1.content.0.thinking.thinking: Field required`: the
+  model returns *thinking* blocks, which must be sent back unchanged (text + signature) in the tool loop; the
+  converter kept only text/tool blocks. Fixed in `loop._block` (thinking and redacted thinking preserved, other
+  blocks passed through), regression test added; `ASSISTANT_MAX_TOKENS` (default 8000) because thinking counts
+  towards the output limit.
+- Setting `DATA_BACKEND=supabase` in `.env` broke local tests (they inherited it next to `AUTH_MODE=disabled`):
+  `tests/conftest.py` now pins `DATA_BACKEND=mock`.
 - Full-suite DB failures: the M06 API test edits a PO date through PostgREST (committed), which now fires the
   baseline-impact trigger; its cleanup only removed audit rows → test alerts accumulated in the dev DB. Cleanup
   extended; three leftover test alerts deleted; DB tests filter on PO-8821.

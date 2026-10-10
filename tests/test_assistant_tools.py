@@ -307,3 +307,53 @@ def test_agent_page_and_confirmation_flow(agent_mode, monkeypatch):
     done = client.post(f"/assistant/actions/{action_id}/confirm").text
     assert "Action done" in done and "saved as Draft v4.7" in done
     assert "No such pending action" in client.post("/assistant/actions/nope/confirm").text
+
+
+# ------------------------------------------------------------------ setup check (scripts/check_assistant.py)
+
+def test_setup_check_explains_problems_without_showing_the_key():
+    from pydantic import SecretStr
+
+    from scripts.check_assistant import check
+    no_key = Settings_for_test(anthropic_api_key=None)
+    assert check(no_key)[0] is False and "not set" in check(no_key)[1]
+
+    class Rejecting:
+        def __init__(self, exc):
+            self.messages, self.exc = self, exc
+
+        def create(self, **kw):
+            raise self.exc
+    keyed = Settings_for_test(anthropic_api_key=SecretStr("sk-ant-test-SECRET"))
+    auth = type("AuthenticationError", (Exception,), {})("invalid x-api-key")
+    ok, msg = check(keyed, client=Rejecting(auth))
+    assert not ok and "API key was rejected" in msg and "SECRET" not in msg
+    credit = type("BadRequestError", (Exception,), {})("Your credit balance is too low to access the API")
+    assert "no credit" in check(keyed, client=Rejecting(credit))[1]
+    fine = FakeClient([resp(text("OK"))])
+    ok, msg = check(keyed, client=fine)
+    assert ok and "model claude-" in msg and fine.calls[0]["max_tokens"] == 10
+
+
+def Settings_for_test(**overrides):
+    from app.config import Settings
+    return Settings(_env_file=None, app_env="test", auth_mode="disabled", **overrides)
+
+
+def test_healthz_reports_assistant_configuration_only():
+    body = TestClient(app).get("/healthz").json()
+    assert body["assistant"] == {"enabled": False, "model": None}
+
+
+def test_thinking_blocks_go_back_to_the_api_unchanged(db_dataset):
+    """Seen live (M11): the model answers with a thinking block; the next request must carry it unchanged."""
+    thinking = {"type": "thinking", "thinking": "Check the order first.", "signature": "sig-123"}
+    redacted = {"type": "redacted_thinking", "data": "opaque"}
+    client = FakeClient([resp(thinking, redacted, use("t1", "get_order_details", {"order_number": "SO-1005"}), stop="tool_use"),
+                         resp(text("Done."))])
+    conv = agent.conversation(PLANNER.id, None)
+    turn = agent.run_turn(conv, "SO-1005?", T.ToolContext(user=PLANNER, token="t", conversation_id=conv.id), client=client)
+    assert turn.error is None and turn.answer == "Done."
+    sent = client.calls[1]["messages"][1]["content"]
+    assert sent[0] == thinking and sent[1] == redacted and sent[2]["type"] == "tool_use"
+    assert client.calls[0]["max_tokens"] == get_settings().assistant_max_tokens

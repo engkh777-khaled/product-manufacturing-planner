@@ -44,6 +44,9 @@ def healthz(request: Request, settings: Settings = Depends(get_settings)):
         "environment": settings.app_env,
         "data_backend": settings.data_backend,
         "supabase": supabase,
+        # configuration only — no AI call here (use `python -m scripts.check_assistant` to test the key)
+        "assistant": {"enabled": settings.assistant_enabled,
+                      "model": settings.assistant_model if settings.assistant_enabled else None},
     }
     return JSONResponse(body, status_code=503 if degraded else 200)
 

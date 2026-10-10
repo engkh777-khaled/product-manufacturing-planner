@@ -133,14 +133,27 @@ def _client():
 
 
 def _block(b) -> dict:
-    """SDK content block (or a plain dict in tests) → the dict sent back to the API."""
-    get = (lambda k: b.get(k)) if isinstance(b, dict) else (lambda k: getattr(b, k, None))
-    kind = get("type")
+    """SDK content block (or a plain dict in tests) → the dict sent back to the API.
+
+    Thinking blocks must go back unchanged (text and signature) or the next request is rejected; any other block
+    type is passed back exactly as received."""
+    if isinstance(b, dict):
+        d = dict(b)
+    elif hasattr(b, "model_dump"):
+        d = b.model_dump(exclude_none=True)
+    else:
+        d = {k: getattr(b, k) for k in ("type", "text", "id", "name", "input", "thinking", "signature", "data")
+             if getattr(b, k, None) is not None}
+    kind = d.get("type")
     if kind == "text":
-        return {"type": "text", "text": get("text") or ""}
+        return {"type": "text", "text": d.get("text") or ""}
     if kind == "tool_use":
-        return {"type": "tool_use", "id": get("id"), "name": get("name"), "input": get("input") or {}}
-    return {"type": kind}
+        return {"type": "tool_use", "id": d.get("id"), "name": d.get("name"), "input": d.get("input") or {}}
+    if kind == "thinking":
+        return {"type": "thinking", "thinking": d.get("thinking", ""), "signature": d.get("signature", "")}
+    if kind == "redacted_thinking":
+        return {"type": "redacted_thinking", "data": d.get("data", "")}
+    return d
 
 
 def _summary(result: dict, is_error: bool) -> str:
@@ -170,7 +183,7 @@ def run_turn(conv: Conversation, prompt: str, ctx: ToolContext, client=None) -> 
         try:
             client = client or _client()
             for turn.rounds in range(1, settings.assistant_max_tool_rounds + 1):
-                resp = client.messages.create(model=settings.assistant_model, max_tokens=2048,
+                resp = client.messages.create(model=settings.assistant_model, max_tokens=settings.assistant_max_tokens,
                                               system=system_prompt(ctx), tools=tools, messages=messages)
                 content = [_block(b) for b in resp.content]
                 messages.append({"role": "assistant", "content": content})
