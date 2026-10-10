@@ -120,3 +120,52 @@ _2026-10-10 · M02_
 **Decision.** Code lives in `engkh777-khaled/product-manufacturing-planner` (private), added as remote
 `planner`. The pre-existing `origin` (`AI-AGENT`) is left untouched. The design zip is not committed
 (its contents are in `design/stitch/`).
+
+## D-011 — Backend stays Python; database is Supabase
+_2026-10-10 · roadmap_
+
+**Context.** The project owner chose Supabase for the database and Python for the backend, and asked whether
+another backend language would suit the project better.
+
+**Decision.** Keep Python. OR-Tools CP-SAT (spec §8.5) has its most complete API in Python, and the rest of
+the stack is already Python (FastAPI, pandas, `supabase-py`, AI SDKs). Performance is not a reason to switch,
+because the solver runs in native C++ under every language binding.
+
+**Consequences.** Solver runs are CPU-bound, so they run in a worker process, never inside a web request (M09).
+Rich browser interactions (Gantt drag) will be added as small JS components, not a language change.
+Full plan: [backend-roadmap.md](backend-roadmap.md).
+
+## D-012 — Every milestone must be testable locally (Supabase CLI + Docker)
+_2026-10-10 · roadmap_
+
+**Decision.** Local Supabase stack via `npx supabase start` (needs Docker Desktop). Schema changes go only
+through migrations in `supabase/migrations/`. `supabase db reset` must rebuild everything from scratch.
+DB tests use pgTAP (`supabase test db`). Each milestone in the roadmap defines a local test gate.
+
+**Consequences.** Docker Desktop must be installed (not present on the dev machine as of 2026-10-10).
+Fallback: a separate free Supabase cloud project for development.
+
+## D-013 — App calls Supabase as the logged-in user; repository keeps one interface
+_2026-10-10 · roadmap (Proposed — confirm in M05/M06)_
+
+**Decision.** The FastAPI app passes the user's Supabase JWT on every data call so RLS is enforced. The
+service-role key is used only for trusted server jobs (planning snapshots), with explicit authorization checks.
+`DATA_BACKEND=mock|supabase` selects the repository implementation so the existing route tests run against both.
+
+**Consequences.** Planning runs read a consistent snapshot in a single transaction (direct Postgres
+connection), separate from user-scoped CRUD calls.
+
+## D-014 — Supabase cloud dev project instead of local Docker (for now)
+_2026-10-10 · M03 · Supersedes: the local-stack part of D-012_
+
+**Context.** Docker Desktop is not installed on the dev machine, and the project owner chose Supabase cloud for now.
+
+**Decision.** Use a dedicated free cloud project `product-manufacturing-planner-dev` (ref `qemoliyeblfmrccniczr`,
+eu-west-3) as the shared development database. Migrations still live in `supabase/migrations/` and are applied
+with the Supabase CLI (`npx supabase link` + `db push` / `db reset --linked`). Database tests are pytest tests
+using `DATABASE_URL` instead of pgTAP, so they run against cloud or local unchanged. The owner's existing project
+is not reused (it hosts another app with a conflicting `products` table).
+
+**Consequences.** The dev database is shared and disposable; never store real data in it. Production will be a
+separate project (M12). A local Docker stack can be added later without changing migrations or tests. The D-012
+rule "every milestone has a test gate runnable from a developer machine" still applies.

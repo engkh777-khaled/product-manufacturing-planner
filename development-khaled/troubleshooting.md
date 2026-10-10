@@ -63,3 +63,22 @@ _Seen 2026-10-10 (M02)_
 git config user.name "Your Name"
 git config user.email "you@example.com"
 ```
+
+## `GET /rest/v1/` returns 401 "Secret API key required"
+_Seen 2026-10-10 (M03)_
+
+**Cause.** With the new Supabase API keys, the PostgREST root (OpenAPI schema) only accepts a **secret** key.
+Normal table queries with the publishable key still work once tables and RLS policies exist.
+
+**Fix.** For connectivity checks use the Auth health endpoint, which accepts the publishable key:
+```bash
+curl -H "apikey: $SUPABASE_PUBLISHABLE_KEY" "$SUPABASE_URL/auth/v1/health"
+```
+
+## Don't know the Supabase database password
+_Seen 2026-10-10 (M03)_
+
+**Cause.** The dev project was created through the Supabase API, which does not return the password.
+
+**Fix.** Dashboard → Project Settings → Database → *Reset database password*. Store it only in `.env`
+(`DATABASE_URL`) and enter it when `npx supabase link` asks.

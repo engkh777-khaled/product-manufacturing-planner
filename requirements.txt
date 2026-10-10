@@ -6,3 +6,4 @@ python-multipart>=0.0.9
 pytailwindcss>=0.2
 pytest>=8
 httpx>=0.27
+pydantic-settings>=2.4

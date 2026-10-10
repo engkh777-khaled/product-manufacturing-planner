@@ -1,6 +1,6 @@
 # Project Overview
 
-_Last updated: 2026-10-10 (after M02)_
+_Last updated: 2026-10-10 (after M03)_
 
 ## Goal
 
@@ -19,10 +19,12 @@ The AI must never invent quantities or dates, approve plans, place POs, or relea
 |---|---|
 | Frontend (5 screens) | Built — FastAPI + Jinja2 + HTMX/Alpine, matches the Stitch designs |
 | Data | Fictional in-memory dataset behind a repository layer |
-| Database / auth (Supabase) | Not started |
+| Supabase | Cloud dev project connected (`/healthz`); schema, auth, RLS planned M04–M07 in [backend-roadmap.md](backend-roadmap.md) |
+| Configuration | `app/config.py` + `.env` (template `.env.example`) |
+| CI | GitHub Actions runs `pytest` on push |
 | Planning engine (OR-Tools CP-SAT) | Not started — "Re-run CP-SAT" returns the cached run |
 | AI assistant | Scripted replies grounded in repository data; no LLM connected |
-| Tests | 30 passing (`pytest`) |
+| Tests | 35 passing (`pytest`) |
 
 ## Architecture today
 
@@ -41,8 +43,9 @@ Browser ──HTTP──> FastAPI routes (app/routes/*)
   app/assistant.py — scripted assistant; reads only via repository + planning
 ```
 
-Target architecture (spec §3): the repository layer will call Supabase (Postgres + RLS) and a separate
-Python planning API (FastAPI + OR-Tools). Templates and routes should not need to change.
+Target architecture: Supabase (Postgres + Auth + RLS) behind the repository layer, plus a Python planning package
+(MRP + OR-Tools CP-SAT) run by a worker. Templates and routes should not need to change.
+The milestone plan is in [backend-roadmap.md](backend-roadmap.md).
 
 ## Stack
 
@@ -61,17 +64,20 @@ Python planning API (FastAPI + OR-Tools). Templates and routes should not need t
 ```
 app/
   main.py               FastAPI app, static mount, routers, "/" → /dashboard
+  config.py             Settings from env/.env (Supabase URL/keys, DATA_BACKEND)
   templating.py         Jinja env, filters (d, money, num), header/sidebar context
   models.py             Pydantic models mirroring spec §6
   planning.py           Deterministic planning helpers (unit-tested)
   assistant.py          Scripted assistant (spec §11.1 tool names)
   data/repository.py    Data-access layer
   data/mock_data.py     Fictional dataset
-  routes/               dashboard, workbench, orders, engineering, assistant
+  routes/               health (/healthz), dashboard, workbench, orders, engineering, assistant
   templates/            base.html, pages, components/ (macros), partials/ (HTMX fragments)
   static/css/           input.css (source) → app.css (built, committed)
 design/stitch/          Original Stitch designs: code.html + screen.png per screen, DESIGN.md
-tests/                  test_planning.py, test_routes.py
+tests/                  test_planning.py, test_routes.py, test_health.py
+.github/workflows/      tests.yml — CI
+.env.example           Config template (.env itself is git-ignored)
 development-khaled/     This engineering log
 ```
 
@@ -90,6 +96,7 @@ development-khaled/     This engineering log
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\pip install -r requirements.txt
+copy .env.example .env                               # fill in Supabase URL + publishable key
 .\.venv\Scripts\uvicorn app.main:app --reload        # http://127.0.0.1:8000
 .\.venv\Scripts\python -m pytest                     # tests
 ```
@@ -107,3 +114,11 @@ $env:TAILWINDCSS_VERSION = "v3.4.17"
 |---|---|---|
 | `planner` | https://github.com/engkh777-khaled/product-manufacturing-planner (private) | **This project.** Local `main` tracks `planner/main` |
 | `origin` | https://github.com/engkh777-khaled/AI-AGENT | Older repo; untouched since `b7e2f07` |
+
+## Supabase
+
+| Project | Ref | Region | Use |
+|---|---|---|---|
+| `product-manufacturing-planner-dev` | `qemoliyeblfmrccniczr` | eu-west-3 | Shared, disposable dev database |
+| _(engkh777-khaled's Project)_ | `nydvjpygmamsejpkxfts` | eu-west-3 | **Another app — do not use** |
+

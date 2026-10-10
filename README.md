@@ -7,7 +7,8 @@ built from the Google Stitch designs in [design/stitch/](design/stitch/) (design
 > **New to the project?** Start with the engineering log in [development-khaled/](development-khaled/) —
 > milestones, decisions, and troubleshooting.
 
-> **All data is fictional demo data** (spec §13). Nothing connects to an ERP, Supabase, a solver, or an LLM yet.
+> **All data is fictional demo data** (spec §13). Supabase is connected for health checks only; pages still use
+> in-memory data until M06. No solver or LLM is connected yet.
 
 ## Stack
 - FastAPI + Jinja2 server-rendered pages, HTMX for partial updates, Alpine.js for small client toggles
@@ -17,6 +18,7 @@ built from the Google Stitch designs in [design/stitch/](design/stitch/) (design
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\pip install -r requirements.txt
+copy .env.example .env    # then fill in SUPABASE_URL + SUPABASE_PUBLISHABLE_KEY
 
 # Rebuild CSS after changing templates or classes (app.css is committed, so this is optional to just run)
 $env:TAILWINDCSS_VERSION = "v3.4.17"
@@ -24,7 +26,7 @@ $env:TAILWINDCSS_VERSION = "v3.4.17"
 
 .\.venv\Scripts\uvicorn app.main:app --reload
 ```
-Open http://127.0.0.1:8000.
+Open http://127.0.0.1:8000. Check configuration and Supabase connectivity at http://127.0.0.1:8000/healthz.
 
 ## Tests
 ```powershell
