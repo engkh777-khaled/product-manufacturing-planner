@@ -8,7 +8,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import SecretStr
+from pydantic import SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -25,8 +25,18 @@ class Settings(BaseSettings):
     supabase_publishable_key: str | None = None  # safe for browsers; RLS applies
     supabase_secret_key: SecretStr | None = None  # server-only; bypasses RLS — never send to templates
     database_url: SecretStr | None = None  # direct Postgres connection for planning snapshots (M08)
+    demo_user_password: SecretStr | None = None  # dev only: shared password of the fictional demo users
+
+    # supabase = real sign-in (M05). disabled = fictional demo planner, allowed only in development/test.
+    auth_mode: Literal["supabase", "disabled"] = "supabase"
 
     health_timeout_seconds: float = 5.0
+
+    @model_validator(mode="after")
+    def _auth_mode_is_safe(self) -> "Settings":
+        if self.auth_mode == "disabled" and self.app_env not in ("development", "test"):
+            raise ValueError("AUTH_MODE=disabled is only allowed when APP_ENV is development or test")
+        return self
 
     @property
     def supabase_configured(self) -> bool:

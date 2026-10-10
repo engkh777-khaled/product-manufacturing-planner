@@ -298,6 +298,16 @@ class AuditEntry(BaseModel):
 
 
 class CurrentUser(BaseModel):
+    id: str
+    email: str = ""
     name: str
-    role: str
-    can_approve: bool
+    role: str  # job title shown in the header
+    roles: list[str] = []  # spec §5 roles from public.user_roles
+
+    @property
+    def can_approve(self) -> bool:
+        return "approver" in self.roles
+
+    @property
+    def can_submit_plans(self) -> bool:
+        return bool({"planner", "admin"} & set(self.roles))

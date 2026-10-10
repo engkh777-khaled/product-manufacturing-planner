@@ -198,3 +198,30 @@ From now on either path works: `npx supabase migration new` → `npx supabase db
 but **always keep file names equal to the remote versions**.
 
 **Consequences.** `npx supabase db reset --linked` rebuilds the dev DB entirely from the repo files.
+
+## D-017 — Session design: HTTP-only cookies, local token verification, identity via RLS
+_2026-10-10 · M05_
+
+**Decision.** The browser never holds Supabase tokens in JavaScript: the FastAPI app signs in with the password grant
+and stores access + refresh tokens in HTTP-only, SameSite=Lax cookies (Secure outside dev/test). Each request verifies
+the access token locally with the project's JWKS (ES256, cached 10 min, re-fetched on unknown `kid`) and refreshes it
+when expired. Identity and roles come from `public.me()` called with the user's token, so they pass through RLS.
+
+**Consequences.** No extra Auth round trip per request; data calls in M06 will forward the same user token to
+PostgREST so RLS applies. Auth outages keep the session (user is asked again next request) instead of logging everyone out.
+
+## D-018 — SECURITY DEFINER helpers live in a private, non-exposed schema
+_2026-10-10 · M05_
+
+**Context.** RLS policies need `has_role()`-style helpers that read `user_roles` without recursion (SECURITY DEFINER).
+In `public` they were also callable via `/rest/v1/rpc/…` (advisor lint 0029).
+
+**Decision.** Helpers live in schema `private` (not exposed by PostgREST); `authenticated` keeps EXECUTE because
+policies run as the caller. The only API function, `public.me()`, is SECURITY INVOKER.
+
+## D-019 — Demo users via script; no credentials in the repository
+_2026-10-10 · M05_
+
+**Decision.** `scripts/seed_demo_users.py` creates the 7 fictional role users through `DATABASE_URL`. Their shared
+password is generated into the developer's `.env` (`DEMO_USER_PASSWORD`) and only a bcrypt hash is stored in Postgres.
+`seed.sql` contains no users. Re-run the script after `supabase db reset --linked`.

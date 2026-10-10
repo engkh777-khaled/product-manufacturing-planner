@@ -5,7 +5,7 @@
 | **Date** | 2026-10-10 |
 | **Author** | Khaled (implemented with Claude Code) |
 | **Status** | Done |
-| **Commits** | _see git log — "M04" commit_ |
+| **Commits** | `a25b75f` |
 | **Spec sections** | §6 (all 22 tables), §6.3 cycle detection, §6.7 frozen engineering config, §6.9 net available, §6.19 baseline, §13 demo data |
 
 ## Goal

@@ -7,7 +7,7 @@ built from the Google Stitch designs in [design/stitch/](design/stitch/) (design
 > **New to the project?** Start with the engineering log in [development-khaled/](development-khaled/) —
 > milestones, decisions, and troubleshooting.
 
-> **All data is fictional demo data** (spec §13). Supabase is connected for health checks only; pages still use
+> **All data is fictional demo data** (spec §13). Sign-in and roles use Supabase Auth (M05); pages still render
 > in-memory data until M06. No solver or LLM is connected yet.
 
 ## Stack
@@ -24,9 +24,11 @@ copy .env.example .env    # then fill in SUPABASE_URL + SUPABASE_PUBLISHABLE_KEY
 $env:TAILWINDCSS_VERSION = "v3.4.17"
 .\.venv\Scripts\tailwindcss -i app/static/css/input.css -o app/static/css/app.css --minify   # add --watch while developing
 
+.\.venv\Scripts\python -m scripts.seed_demo_users   # once: creates the fictional demo users (needs DATABASE_URL)
 .\.venv\Scripts\uvicorn app.main:app --reload
 ```
-Open http://127.0.0.1:8000. Check configuration and Supabase connectivity at http://127.0.0.1:8000/healthz.
+Open http://127.0.0.1:8000 and sign in, e.g. as `planner@example.com` or `approver@example.com`; the password is
+`DEMO_USER_PASSWORD` in your `.env`. Check configuration and Supabase connectivity at http://127.0.0.1:8000/healthz.
 
 ## Tests
 ```powershell

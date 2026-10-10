@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Form, Request
+from fastapi import APIRouter, Depends, Form, Request
 
+from app.auth import require_user
 from app.data import mock_data as db
 from app.data import repository as repo
-from app.models import RiskLevel
+from app.models import CurrentUser, RiskLevel
 from app.templating import templates
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_user)])
 
 
 @router.get("/dashboard")
@@ -28,6 +29,6 @@ def dashboard(request: Request):
 
 
 @router.post("/approvals/{request_id}/decision")
-def decide(request: Request, request_id: str, decision: str = Form(...)):
-    result = repo.request_decision(request_id, decision)
+def decide(request: Request, request_id: str, decision: str = Form(...), user: CurrentUser = Depends(require_user)):
+    result = repo.request_decision(request_id, decision, user)
     return templates.TemplateResponse(request, "partials/approval_result.html", {"result": result})

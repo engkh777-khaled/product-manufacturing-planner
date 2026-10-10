@@ -1,6 +1,6 @@
 # Project Overview
 
-_Last updated: 2026-10-10 (after M04)_
+_Last updated: 2026-10-10 (after M05)_
 
 ## Goal
 
@@ -24,7 +24,8 @@ The AI must never invent quantities or dates, approve plans, place POs, or relea
 | CI | GitHub Actions runs `pytest` on push |
 | Planning engine (OR-Tools CP-SAT) | Not started — "Re-run CP-SAT" returns the cached run |
 | AI assistant | Scripted replies grounded in repository data; no LLM connected |
-| Tests | 72 passing: 35 app + 37 DB (`tests/db`, need `DATABASE_URL`; skipped in CI) |
+| Auth | Supabase Auth sign-in, 7 spec roles, RLS policies on all tables, HTTP-only cookie sessions (M05) |
+| Tests | 103 passing: 49 app + 54 DB (`tests/db`, need `DATABASE_URL`; skipped in CI) |
 
 ## Architecture today
 
@@ -64,20 +65,22 @@ The milestone plan is in [backend-roadmap.md](backend-roadmap.md).
 ```
 app/
   main.py               FastAPI app, static mount, routers, "/" → /dashboard
-  config.py             Settings from env/.env (Supabase URL/keys, DATA_BACKEND)
+  config.py             Settings from env/.env (Supabase URL/keys, DATA_BACKEND, AUTH_MODE)
+  auth.py               Sign-in, token refresh, JWKS verification, session cookies, require_user
   templating.py         Jinja env, filters (d, money, num), header/sidebar context
   models.py             Pydantic models mirroring spec §6
   planning.py           Deterministic planning helpers (unit-tested)
   assistant.py          Scripted assistant (spec §11.1 tool names)
   data/repository.py    Data-access layer
   data/mock_data.py     Fictional dataset
-  routes/               health (/healthz), dashboard, workbench, orders, engineering, assistant
+  routes/               health (/healthz), auth (/login, /logout), dashboard, workbench, orders, engineering, assistant
   templates/            base.html, pages, components/ (macros), partials/ (HTMX fragments)
   static/css/           input.css (source) → app.css (built, committed)
 design/stitch/          Original Stitch designs: code.html + screen.png per screen, DESIGN.md
 tests/                  test_planning.py, test_routes.py, test_health.py; db/ = database tests
 pytest.ini              Short tracebacks (never print secrets)
-supabase/               config.toml, migrations/ (schema), seed.sql (fictional data)
+supabase/               config.toml, migrations/ (schema + RLS), seed.sql (fictional data)
+scripts/                seed_demo_users.py — fictional role users (password only in .env)
 .github/workflows/      tests.yml — CI
 .env.example           Config template (.env itself is git-ignored)
 development-khaled/     This engineering log
@@ -98,7 +101,8 @@ development-khaled/     This engineering log
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\pip install -r requirements.txt
-copy .env.example .env                               # fill in Supabase URL + publishable key
+copy .env.example .env                               # fill in Supabase URL + publishable key + DATABASE_URL
+.\.venv\Scripts\python -m scripts.seed_demo_users     # demo users; password saved to .env
 .\.venv\Scripts\uvicorn app.main:app --reload        # http://127.0.0.1:8000
 .\.venv\Scripts\python -m pytest                     # tests
 ```

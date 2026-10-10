@@ -1,5 +1,5 @@
 {% from "components/ui.html" import icon, button %}
-{% set s = shell() %}
+{% set s = shell(request) %}
 <!DOCTYPE html>
 <html class="dark" lang="en">
 <head>
@@ -60,13 +60,28 @@
         {{ icon("notifications", 20) }}
         <span class="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-crit text-white font-label-mono-xs text-label-mono-xs rounded-full flex items-center justify-center">{{ s.alert_count }}</span>
       </a>
-      <div class="flex items-center gap-space-sm pl-space-xs">
-        <div class="text-right hidden sm:block">
-          <div class="font-body-sm text-body-sm text-on-surface font-medium leading-none">{{ s.user.name }}</div>
-          <div class="font-label-mono-xs text-label-mono-xs text-outline leading-tight mt-0.5">{{ s.user.role }}</div>
+      {% if s.user %}
+      <div class="flex items-center gap-space-sm pl-space-xs" x-data="{ open: false }" @click.outside="open = false">
+        <button type="button" class="flex items-center gap-space-sm" @click="open = !open" :aria-expanded="open" aria-haspopup="menu">
+          <span class="text-right hidden sm:block">
+            <span class="block font-body-sm text-body-sm text-on-surface font-medium leading-none">{{ s.user.name }}</span>
+            <span class="block font-label-mono-xs text-label-mono-xs text-outline leading-tight mt-0.5">{{ s.user.role }}</span>
+          </span>
+          <span class="w-8 h-8 rounded-full bg-primary flex items-center justify-center">{{ icon("person", 18, "text-on-primary") }}</span>
+        </button>
+        <div x-cloak x-show="open" role="menu"
+             class="absolute right-space-lg top-12 w-64 p-space-md bg-surface-container-highest rounded shadow-overlay flex flex-col gap-space-sm">
+          <div class="font-label-mono-xs text-label-mono-xs text-outline">Signed in as</div>
+          <div class="font-label-mono-sm text-label-mono-sm text-on-surface break-all">{{ s.user.email }}</div>
+          <div class="flex flex-wrap gap-space-xs">
+            {% for r in s.user.roles %}<span class="px-[6px] h-[18px] inline-flex items-center rounded border border-primary/30 bg-primary/10 text-primary font-label-mono-xs text-label-mono-xs uppercase">{{ r }}</span>{% else %}<span class="font-label-mono-xs text-label-mono-xs text-warn">No role assigned</span>{% endfor %}
+          </div>
+          <form method="post" action="/logout">
+            <button class="w-full h-7 inline-flex items-center justify-center gap-space-xs rounded bg-surface-container-high hover:bg-surface-container text-on-surface font-label-mono-sm text-label-mono-sm" role="menuitem">{{ icon("logout", 15) }}Sign out</button>
+          </form>
         </div>
-        <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center">{{ icon("person", 18, "text-on-primary") }}</div>
       </div>
+      {% endif %}
     </div>
   </div>
 </header>

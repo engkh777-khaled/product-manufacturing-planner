@@ -38,7 +38,9 @@ PLANNING_HORIZON = (date(2025, 11, 15), date(2025, 12, 15))
 GANTT_START = datetime(2025, 11, 17, 0, 0)
 GANTT_DAYS = 19  # Nov 17 → Dec 5
 
-CURRENT_USER = CurrentUser(name="Sarah Chen", role="Sr. Production Planner", can_approve=False)
+# Used only when AUTH_MODE=disabled (development/test). Real users come from Supabase Auth (M05).
+CURRENT_USER = CurrentUser(id="demo-planner", email="planner@example.com", name="Sarah Chen",
+                           role="Sr. Production Planner", roles=["planner"])
 APPROVER = "Marcus Vance"
 APPROVER_ROLE = "Plant Operations Director"
 

@@ -13,6 +13,7 @@ from app import planning
 from app.data import mock_data as db
 from app.models import (
     AuditEntry,
+    CurrentUser,
     OrderStatus,
     RiskLevel,
     SalesOrder,
@@ -311,30 +312,34 @@ def approval_requests():
     return db.APPROVAL_REQUESTS
 
 
-def record_audit(action: str, entity: str, reason: str = "") -> AuditEntry:
-    entry = AuditEntry(at=datetime.now(), user=db.CURRENT_USER.name, action=action, entity=entity, reason=reason)
+def record_audit(action: str, entity: str, user: CurrentUser, reason: str = "") -> AuditEntry:
+    entry = AuditEntry(at=datetime.now(), user=user.name, action=action, entity=entity, reason=reason)
     AUDIT_LOG.append(entry)
     return entry
 
 
-def request_decision(request_id: str, decision: str) -> dict:
-    """Planner attempted to approve/reject. Server-side authorization (spec §5): only the approver may decide."""
+def request_decision(request_id: str, decision: str, user: CurrentUser) -> dict:
+    """Approve/reject a plan. Server-side authorization (spec §5): only an approver, never the requester."""
     req = next((r for r in db.APPROVAL_REQUESTS if r.id == request_id), None)
     if req is None:
         return {"ok": False, "message": f"Approval request {request_id} not found."}
-    user = db.CURRENT_USER
     if not user.can_approve:
-        record_audit(f"{decision} attempt blocked", request_id, f"{user.role} lacks approval authority")
+        record_audit(f"{decision} attempt blocked", request_id, user, f"{user.role} lacks approval authority")
         return {"ok": False, "message": f"{user.name} ({user.role}) cannot {decision.lower()} {req.schedule_version}. "
-                                        f"Sign-off is reserved for {req.approver}. Attempt logged to audit trail."}
+                                        f"Sign-off is reserved for an approver. Attempt logged to audit trail."}
+    if req.requested_by == user.name:
+        record_audit(f"{decision} attempt blocked", request_id, user, "self-approval")
+        return {"ok": False, "message": "You cannot decide on a plan you submitted yourself."}
+    if req.status != "Pending":
+        return {"ok": False, "message": f"{req.id} is already {req.status.lower()}."}
     req.status = "Approved" if decision == "Commit" else "Rejected"
-    record_audit(decision, request_id)
+    record_audit(decision, request_id, user)
     return {"ok": True, "message": f"{req.schedule_version} {req.status.lower()}."}
 
 
-def submit_for_approval(version_key: str, notes: str) -> dict:
+def submit_for_approval(version_key: str, notes: str, user: CurrentUser) -> dict:
     """Records a submission. The plan is never auto-approved (spec §2 / §11.3 rule 10)."""
     version = get_version(version_key)
     req = next((r for r in db.APPROVAL_REQUESTS if r.schedule_version == version.key), None)
-    entry = record_audit("Submitted for approval", f"schedule {version.key}", notes)
+    entry = record_audit("Submitted for approval", f"schedule {version.key}", user, notes)
     return {"version": version, "request": req, "entry": entry, "approver": db.APPROVER}

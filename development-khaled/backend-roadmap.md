@@ -1,6 +1,6 @@
 # Backend Roadmap — Supabase + Python
 
-_Written 2026-10-10 · Updated 2026-10-10: **cloud-first** (D-014), M03 + M04 done_
+_Written 2026-10-10 · Updated 2026-10-10: **cloud-first** (D-014), M03–M05 done_
 
 Each milestone ends with a **test gate**: commands any developer can run on their own machine to prove the
 milestone works. A milestone is not done until its gate passes and its file exists in [milestones/](milestones/).
@@ -107,7 +107,7 @@ npx supabase db reset --linked   # wipes the DEV project, re-applies all migrati
 .\.venv\Scripts\python -m pytest tests/db   # unique product_code, qty > 0, status enums, FK integrity
 ```
 
-### M05 — Authentication, roles & Row Level Security (spec §5)
+### M05 — Authentication, roles & Row Level Security (spec §5) ✅ Done 2026-10-10
 **Goal:** Real users with spec roles, enforced in the database.
 - Supabase Auth (email + password). `profiles` and `user_roles` tables for Planner, Supervisor, Stores,
   Purchasing, Engineering, Approver, Admin.
@@ -121,7 +121,8 @@ npx supabase db reset --linked   # wipes the DEV project, re-applies all migrati
 .\.venv\Scripts\python -m pytest tests/db/test_rls.py   # planner cannot approve; stores can edit inventory only; …
 .\.venv\Scripts\python -m pytest tests/test_auth.py   # login, logout, role-based page access
 ```
-Manual: log in as `planner@demo.local`, then as `approver@demo.local`. The approval buttons behave differently.
+Manual: log in as `planner@example.com`, then as `approver@example.com`. The approval buttons behave differently.
+Details: [milestones/M05-auth-roles-rls.md](milestones/M05-auth-roles-rls.md).
 
 ### M06 — Supabase repository & master-data editing
 **Goal:** The app runs on the database instead of mock data, and users can edit master data.

@@ -1,12 +1,13 @@
 import math
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 
+from app.auth import require_user
 from app.data import repository as repo
 from app.models import Priority
 from app.templating import templates
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_user)])
 
 PAGE_SIZE = 6
 

@@ -1,0 +1,67 @@
+{% from "components/ui.html" import icon %}
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign in · Product Manufacturing Planner</title>
+  <link rel="icon" href="/static/img/logo.svg" type="image/svg+xml">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
+  <link href="/static/css/app.css" rel="stylesheet">
+</head>
+<body class="bg-background font-body-lg text-body-lg text-on-surface antialiased min-h-screen flex items-center justify-center p-margin">
+  <main class="w-full max-w-md flex flex-col gap-space-xl">
+    <div class="flex items-center gap-space-md">
+      <img src="/static/img/logo.svg" alt="" class="h-10 w-10">
+      <div>
+        <h1 class="font-headline-lg text-headline-lg text-on-surface">Product Manufacturing Planner</h1>
+        <p class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">Precision Valve Operations &amp; Scheduling</p>
+      </div>
+    </div>
+
+    <section class="bg-surface-container-low rounded p-space-xl flex flex-col gap-space-lg">
+      <div>
+        <h2 class="font-headline-sm text-headline-sm text-on-surface">Sign in</h2>
+        <p class="font-body-sm text-body-sm text-on-surface-variant">Use your plant account. Access depends on your role.</p>
+      </div>
+
+      {% if error %}
+      <div class="p-space-md rounded border border-crit/40 bg-crit/10 text-crit flex items-start gap-space-sm font-label-mono-sm text-label-mono-sm" role="alert">
+        {{ icon("error", 16) }}<span>{{ error }}</span>
+      </div>
+      {% endif %}
+      {% if auth_disabled %}
+      <div class="p-space-md rounded border border-warn/40 bg-warn/10 text-warn font-label-mono-xs text-label-mono-xs" role="status">
+        AUTH_MODE=disabled: you are using the fictional demo planner without signing in.
+      </div>
+      {% endif %}
+
+      <form method="post" action="/login" class="flex flex-col gap-space-md">
+        <input type="hidden" name="next" value="{{ next }}">
+        <label class="flex flex-col gap-space-xs font-label-mono-xs text-label-mono-xs text-outline uppercase">Email
+          <input name="email" type="email" required autocomplete="username" value="{{ email }}" autofocus
+                 class="h-9 px-space-md bg-surface-container-lowest text-on-surface font-body-lg text-body-lg normal-case rounded border border-hairline focus:border-cobalt outline-none">
+        </label>
+        <label class="flex flex-col gap-space-xs font-label-mono-xs text-label-mono-xs text-outline uppercase">Password
+          <input name="password" type="password" required autocomplete="current-password"
+                 class="h-9 px-space-md bg-surface-container-lowest text-on-surface font-body-lg text-body-lg normal-case rounded border border-hairline focus:border-cobalt outline-none">
+        </label>
+        <button class="h-9 inline-flex items-center justify-center gap-space-xs bg-primary text-on-primary hover:bg-primary-fixed hover:text-on-primary-fixed font-label-mono-sm text-label-mono-sm rounded font-semibold">
+          {{ icon("login", 16) }}Sign in
+        </button>
+      </form>
+    </section>
+
+    {% if demo_accounts %}
+    <section class="p-space-md rounded border border-hairline flex flex-col gap-space-sm font-label-mono-xs text-label-mono-xs text-on-surface-variant">
+      <span class="text-outline uppercase">Development · fictional demo accounts</span>
+      <div class="flex flex-wrap gap-space-xs">
+        {% for a in demo_accounts %}<span class="px-space-sm py-space-xs bg-surface-container rounded text-on-surface">{{ a }}@example.com</span>{% endfor %}
+      </div>
+      <span>Password: <code class="text-primary">DEMO_USER_PASSWORD</code> in your <code>.env</code> (created by <code>python -m scripts.seed_demo_users</code>).</span>
+    </section>
+    {% endif %}
+  </main>
+</body>
+</html>

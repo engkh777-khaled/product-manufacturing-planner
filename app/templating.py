@@ -38,8 +38,8 @@ def _num(value: float, digits: int = 0) -> str:
 templates.env.filters.update(d=_d, money=_money, num=_num)
 
 
-def shell_context() -> dict:
-    """Globals for the header / sidebar."""
+def shell_context(request) -> dict:
+    """Globals for the header / sidebar. The user comes from the session (app.auth)."""
     b = repo.bottleneck()
     kpis = repo.order_kpis()
     active_machines = sum(1 for wc in db.WORK_CENTERS for m in wc.machines if not m.down)
@@ -48,7 +48,7 @@ def shell_context() -> dict:
     return {
         "nav": NAV,
         "plant": db.PLANT,
-        "user": db.CURRENT_USER,
+        "user": getattr(request.state, "user", None),
         "solver_label": f"CP-SAT Solver: {baseline.solver_status.replace('_', ' ').title()} (Run #{baseline.run_number})",
         "alert_count": len(repo.alerts()),
         "telemetry": [

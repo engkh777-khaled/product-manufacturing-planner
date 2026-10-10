@@ -140,3 +140,22 @@ _Seen 2026-10-10 (M04)_
 **Cause.** In Postgres, `AT TIME ZONE '-06'` is a POSIX-style offset whose sign is **inverted** (it means UTC+6).
 
 **Fix.** Use a named zone: `planned_finish AT TIME ZONE 'America/Chicago'` (the demo plant's zone).
+
+## Advisor: "Signed-In Users Can Execute SECURITY DEFINER Function" (lint 0029)
+_Seen 2026-10-10 (M05)_
+
+**Fix.** Move the function to a schema PostgREST does not expose (`private`) with `ALTER FUNCTION … SET SCHEMA private`.
+Policies keep working (they reference functions by OID). Keep `GRANT EXECUTE … TO authenticated` if policies call it.
+
+## psycopg: "cannot insert multiple commands into a prepared statement" / "could not determine data type of parameter"
+_Seen 2026-10-10 (M05)_
+
+- Run one statement per `execute()` when passing parameters.
+- Inside functions like `jsonb_build_object`, cast parameters explicitly: `%(email)s::text`.
+
+## Sign-in works in the app but a page keeps redirecting to /login
+_Reference (M05)_
+
+Check, in order: cookies `pmp_access` / `pmp_refresh` exist (browser dev tools); `/healthz` shows Supabase reachable;
+the user has at least one row in `public.user_roles` (users without a role are treated as signed out because
+`me()` returns no roles and RLS hides all data); re-run `python -m scripts.seed_demo_users` after a DB reset.
