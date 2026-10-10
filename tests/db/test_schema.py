@@ -133,6 +133,9 @@ PRODUCT = "(select id from products where product_code = '{}')"
      errors.CheckViolation),
 ])
 def test_constraint_rejects_invalid_data(db, name, sql, error):
+    if "schedule_versions" in sql or "approval_requests" in sql:
+        # Since M07 the workflow guard blocks these updates first; open it to test the constraint underneath.
+        db.execute("select set_config('app.approval_workflow', 'on', true)")
     with pytest.raises(error):
         db.execute(sql)
 

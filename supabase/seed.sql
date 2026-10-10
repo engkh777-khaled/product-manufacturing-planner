@@ -10,6 +10,9 @@
 -- Runs after migrations on `supabase db reset`. Rows are looked up by business code, never by UUID.
 -- =====================================================================================================
 
+-- Seeding is maintenance: no audit rows, and the approval workflow guard is open (M07; owner role only).
+select set_config('app.audit_maintenance', 'on', false);
+
 -- ------------------------------------------------------------------ Capacity
 insert into public.work_centers (work_center_code, name, description, department) values
   ('WC-10', 'CNC Horizontal Machining Center', 'Mazak / Okuma 5-axis turning & milling', 'Machining'),

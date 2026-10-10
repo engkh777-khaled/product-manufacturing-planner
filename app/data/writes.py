@@ -8,7 +8,6 @@ WriteResult messages that are safe to show in the UI.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from typing import Any
 
 import httpx
@@ -49,8 +48,13 @@ def _rest(method: str, path: str, *, json=None, params=None, prefer: str = "retu
         code = body.get("code", "")
         if code == "23514" or code == "P0001":  # CHECK / raised by our functions: the message explains the rule
             return WriteResult(False, f"Rejected: {body.get('message', 'a data rule was violated')}.")
+        message = body.get("message") or ""
+        if code in ("42501", "P0002") and message and not any(
+                generic in message for generic in ("permission denied", "row-level security")):
+            return WriteResult(False, f"{message}.")  # our workflow functions explain why (e.g. self-approval)
         return WriteResult(False, ERROR_MESSAGES.get(code, f"Save failed ({r.status_code}: {body.get('message', 'error')})."))
-    supabase_dataset.invalidate()  # every user's next page load sees the change
+    if method != "GET":
+        supabase_dataset.invalidate()  # every user's next page load sees the change
     data = r.json() if r.content and r.headers.get("content-type", "").startswith("application/json") else None
     return WriteResult(True, "Saved.", data)
 
@@ -127,10 +131,42 @@ def approve_bom(bom_id: str) -> WriteResult:
 
 # ------------------------------------------------------------------ approvals & audit
 
-def decide_approval(request_number: str, status: str) -> WriteResult:
-    return _patch_one("approval_requests", {"request_number": f"eq.{request_number}", "status": "eq.Pending"},
-                      {"status": status, "decided_at": datetime.now(timezone.utc).isoformat(), "approver_id": _user_id()},
-                      "This request is not pending, or you may not decide it (approvers cannot decide their own requests).")
+def submit_plan(version_number: str, comments: str = "") -> WriteResult:
+    """Planner: Draft/Proposed + validated version → Proposed, new Pending approval request (M07)."""
+    result = _rest("POST", "rpc/submit_plan_for_approval",
+                   json={"p_version_number": version_number, "p_comments": comments or None})
+    if result.ok:
+        result.message = f"Submitted as {result.data} — awaiting an authorized approver."
+    return result
+
+
+def decide_plan(request_number: str, decision: str, comments: str = "") -> WriteResult:
+    """Approver: approve (version becomes the baseline, old baseline Superseded) or reject (M07)."""
+    result = _rest("POST", "rpc/decide_plan_approval", prefer="return=minimal",
+                   json={"p_request_number": request_number, "p_decision": decision, "p_comments": comments or None})
+    if result.ok:
+        result.message = (f"{request_number} approved — the plan is now the baseline; the previous baseline is Superseded."
+                          if decision == "Approved" else f"{request_number} rejected — the baseline is unchanged.")
+    return result
+
+
+def withdraw_plan(request_number: str) -> WriteResult:
+    result = _rest("POST", "rpc/withdraw_plan_approval", prefer="return=minimal",
+                   json={"p_request_number": request_number})
+    if result.ok:
+        result.message = f"{request_number} withdrawn; the version is back to Draft."
+    return result
+
+
+def fetch_audit(limit: int = 100, entity_type: str | None = None) -> WriteResult:
+    """Audit history as the user: RLS returns rows only to approvers and admins."""
+    params = {"select": "*", "order": "created_at.desc", "limit": str(limit)}
+    if entity_type:
+        params["entity_type"] = f"eq.{entity_type}"
+    result = _rest("GET", "audit_logs", params=params, prefer="count=none")
+    if result.ok and result.data is None:
+        result.data = []
+    return result
 
 
 def insert_audit(action: str, entity: str, reason: str = "") -> None:

@@ -36,3 +36,27 @@ def db(db_conn):
         finally:
             db_conn.rollback()
 
+
+@pytest.fixture
+def user_id(db):
+    """Look up a demo user's id (skips when the demo users have not been created)."""
+    def _uid(email: str) -> str:
+        db.execute("select id from auth.users where email = %s", (email,))
+        row = db.fetchone()
+        if row is None:
+            pytest.skip("demo users missing — run: python -m scripts.seed_demo_users")
+        return str(row[0])
+    return _uid
+
+
+@pytest.fixture
+def act_as(db, user_id):
+    """Switch the test transaction to the `authenticated` role with a demo user's JWT claims."""
+    import json
+
+    def _act(email: str | None = None, sub: str | None = None) -> None:
+        db.execute("reset role")
+        claims = json.dumps({"sub": sub or user_id(email), "role": "authenticated", "email": email or "nobody@example.com"})
+        db.execute("select set_config('request.jwt.claims', %s, true)", (claims,))
+        db.execute("set local role authenticated")
+    return _act

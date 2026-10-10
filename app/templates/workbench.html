@@ -36,7 +36,10 @@
                 class="h-7 px-space-md inline-flex items-center gap-space-xs bg-cobalt hover:bg-cobalt-dark text-white font-label-mono-sm text-label-mono-sm rounded">
           {{ icon("autorenew", 15) }}Re-run CP-SAT
         </button>
-        {{ button("Submit for Approval", "verified", "primary", href="/assistant#approval") }}
+        <form method="post" action="/approvals/submit" class="inline-flex">
+          <input type="hidden" name="version" value="{{ version.key }}">
+          <button class="h-7 px-space-md inline-flex items-center gap-space-xs bg-primary text-on-primary hover:bg-primary-fixed hover:text-on-primary-fixed font-label-mono-sm text-label-mono-sm rounded font-semibold">{{ icon("verified", 15) }}Submit for Approval</button>
+        </form>
       </div>
     </div>
     <div id="solver-toast" aria-live="polite"></div>
@@ -160,7 +163,7 @@
     <div class="sm:col-span-2 2xl:col-span-12 flex flex-wrap items-center justify-between gap-space-sm p-space-md bg-surface-container rounded">
       <span class="flex items-center gap-space-sm font-label-mono-sm text-label-mono-sm text-on-surface">{{ icon("compare_arrows", 16, "text-primary") }}What-If Comparison: Baseline v{{ b.version_number }} vs Scenario v{{ c.version_number }}</span>
       <span class="flex items-center gap-space-sm font-label-mono-xs text-label-mono-xs text-on-surface-variant">{{ icon("rule", 14) }}Constraint violations: {{ c.hard_violations }} hard / {{ c.soft_violations }} soft</span>
-      {{ button("Adopt Scenario v" ~ c.version_number ~ " as Proposed Plan", "done_all", "primary", href="/assistant#approval") }}
+      {{ button("Review Scenario v" ~ c.version_number ~ " in Approvals", "done_all", "primary", href="/approvals") }}
     </div>
     {% set metrics = [
       ("Late Orders", "event_busy", b.late_orders, c.late_orders, "", ""),

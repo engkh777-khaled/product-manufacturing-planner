@@ -90,38 +90,13 @@ def test_stores_edits_inventory_but_not_orders(db):
 
 
 def test_planner_cannot_approve_a_schedule(db):
+    """Blocked twice since M07: by RLS and by the workflow guard (decide_plan_approval only)."""
     act_as(db, "planner@example.com")
     with pytest.raises(errors.InsufficientPrivilege):
         db.execute("update schedule_versions set status = 'Approved', approved_at = now() where version_number = '4.3'")
 
 
-def test_approver_can_approve_a_planners_schedule(db):
-    act_as(db, "approver@example.com")
-    assert rows(db, "update schedule_versions set status = 'Approved', approved_at = now() "
-                    "where version_number = '4.3'") == 1
-
-
-def test_approver_cannot_approve_a_schedule_they_created(db):
-    approver = uid(db, "approver@example.com")
-    db.execute("update schedule_versions set created_by = %s where version_number = '4.3'", (approver,))
-    act_as(db, "approver@example.com")
-    assert rows(db, "update schedule_versions set status = 'Approved', approved_at = now() "
-                    "where version_number = '4.3'") == 0
-
-
-def test_approver_decides_others_requests_not_own(db):
-    act_as(db, "approver@example.com")
-    assert rows(db, "update approval_requests set status = 'Approved', decided_at = now() "
-                    "where request_number = 'APR-1042'") == 1
-    db.execute("reset role")
-    approver = uid(db, "approver@example.com")
-    db.execute("update approval_requests set status = 'Pending', decided_at = null, requested_by = %s "
-               "where request_number = 'APR-1042'", (approver,))
-    act_as(db, "approver@example.com")
-    # The requester can see their own request (to withdraw it), so self-approval fails loudly, not silently.
-    with pytest.raises(errors.InsufficientPrivilege):
-        db.execute("update approval_requests set status = 'Approved', decided_at = now() "
-                   "where request_number = 'APR-1042'")
+# Approver decisions (approve, self-approval, own versions) are tested in test_approvals_db.py (M07 workflow).
 
 
 def test_engineering_edits_draft_bom_but_approved_bom_is_locked(db):

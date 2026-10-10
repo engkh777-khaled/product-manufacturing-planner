@@ -1,6 +1,7 @@
 """M06 test gate: writes through PostgREST as real demo users (RLS enforced), against the dev project.
 
-Every test restores the data it touched (via a direct postgres connection) so the dev database stays as seeded.
+Every test restores the data it touched (via a direct postgres connection) so the dev database stays as seeded,
+and removes the audit rows its writes produced (M07 triggers) using the owner-only maintenance mode.
 Requires DATABASE_URL and DEMO_USER_PASSWORD (python -m scripts.seed_demo_users).
 """
 
@@ -38,9 +39,21 @@ def as_user():
 
 @pytest.fixture
 def pg(db_conn):
-    """Autocommit connection for verification and cleanup (writes above are committed by PostgREST)."""
+    """Autocommit owner connection for verification and cleanup (writes above are committed by PostgREST).
+
+    Maintenance mode: cleanup statements are not audited, and test audit rows may be deleted (owner only).
+    """
     with psycopg.connect(SETTINGS.database_url.get_secret_value(), autocommit=True, sslmode="require") as conn:
-        yield conn.cursor()
+        cur = conn.cursor()
+        cur.execute("select set_config('app.audit_maintenance', 'on', false)")
+        yield cur
+
+
+@pytest.fixture(autouse=True)
+def remove_test_audit_rows(pg):
+    started = one(pg, "select now()")
+    yield
+    pg.execute("delete from audit_logs where created_at >= %s", (started,))
 
 
 def one(cur, sql, params=None):
@@ -98,6 +111,10 @@ def test_only_stores_can_adjust_inventory(as_user, pg):
         as_user("stores@example.com")
         assert writes.update_inventory(str(balance), 30, 2, 0).ok
         assert one(pg, "select net_available_quantity from inventory_balances where id = %s", (balance,)) == 28
+        # M07: the API write was audited by the trigger, as the stores user, with before/after values
+        assert one(pg, """select count(*) from audit_logs a join auth.users u on u.id = a.user_id
+                          where u.email = 'stores@example.com' and a.entity_id = %s
+                            and a.after_data ->> 'on_hand_quantity' = '30.0000'""", (balance,)) == 1
     finally:
         pg.execute("update inventory_balances set on_hand_quantity = %s, reserved_quantity = 0 where id = %s",
                    (original, balance))
@@ -134,15 +151,35 @@ def test_bom_revision_workflow_needs_engineering_then_approver(as_user, pg):
         pg.execute("update bom_headers set status = 'Draft', approved_at = null, approved_by = null where id = %s", (bom,))
 
 
-def test_approval_decision_is_persisted_by_approver_only(as_user, pg):
+def test_plan_approval_round_trip_through_the_api(as_user, pg):
+    planner = one(pg, "select id from auth.users where email = 'planner@example.com'")
+    run = one(pg, """insert into planning_runs (run_number, run_type, planning_horizon_start, planning_horizon_end,
+                                                algorithm_version, solver_status, created_by)
+                     values (9998, 'simulation', '2025-11-15', '2025-12-15', 'pytest', 'Feasible', %s) returning id""",
+              (planner,))
+    pg.execute("""insert into schedule_versions (planning_run_id, version_number, label, status, validation_passed, created_by)
+                  values (%s, '9.8', 'Version 9.8 [api test]', 'Draft', true, %s)""", (run, planner))
     try:
         as_user("planner@example.com")
-        assert not writes.decide_approval("APR-1042", "Approved").ok
+        submitted = writes.submit_plan("9.8", "api round trip")
+        assert submitted.ok and str(submitted.data).startswith("APR-")
+        number = submitted.data
+        again = writes.submit_plan("9.8")
+        assert not again.ok and "already awaiting approval" in again.message
+        denied = writes.decide_plan(number, "Approved")
+        assert not denied.ok and "Only approvers" in denied.message
+
         as_user("approver@example.com")
-        assert writes.decide_approval("APR-1042", "Rejected").ok
-        assert one(pg, "select status from approval_requests where request_number = 'APR-1042'") == "Rejected"
+        assert writes.decide_plan(number, "Rejected", "needs another iteration").ok
+        assert one(pg, "select status from schedule_versions where version_number = '9.8'") == "Rejected"
+        assert one(pg, "select version_number from schedule_versions where is_baseline") == "4.2"  # untouched
+        assert one(pg, "select decision_comments from approval_requests where request_number = %s",
+                   (number,)) == "needs another iteration"
     finally:
-        pg.execute("update approval_requests set status = 'Pending', decided_at = null where request_number = 'APR-1042'")
+        pg.execute("delete from approval_requests where schedule_version_id in "
+                   "(select id from schedule_versions where version_number = '9.8')")
+        pg.execute("delete from schedule_versions where version_number = '9.8'")
+        pg.execute("delete from planning_runs where run_number = 9998")
 
 
 def test_audit_entries_are_written_as_the_user(as_user, pg):
@@ -153,4 +190,4 @@ def test_audit_entries_are_written_as_the_user(as_user, pg):
         assert one(pg, "select count(*) from audit_logs a join auth.users u on u.id = a.user_id "
                        "where a.action = %s and u.email = 'planner@example.com'", (marker,)) == 1
     finally:
-        pg.execute("delete from audit_logs where action = %s", (marker,))
+        pg.execute("delete from audit_logs where action = %s", (marker,))  # maintenance mode (owner only)

@@ -97,6 +97,8 @@ def main() -> int:
     ids: dict[str, str] = {}
     with psycopg.connect(settings.database_url.get_secret_value(), sslmode="require", connect_timeout=20) as conn:
         with conn.cursor() as cur:
+            # Maintenance session (database owner only): seeding is not an auditable business change (M07).
+            cur.execute("select set_config('app.audit_maintenance', 'on', false)")
             for email, full_name, job_title, roles in DEMO_USERS:
                 meta = json.dumps({"full_name": full_name, "job_title": job_title, "fictional": True})
                 uid = cur.execute(UPSERT_USER, {"email": email, "hash": hashed, "meta": meta}).fetchone()[0]

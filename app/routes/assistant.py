@@ -53,4 +53,6 @@ def submit(request: Request, version: str = Form(...), notes: str = Form(""),
         return templates.TemplateResponse(request, "partials/approval_submitted.html",
                                           {"error": "Both planner verifications must be confirmed before submission."})
     result = repo.submit_for_approval(version, notes.strip()[:1000], user)
+    if "error" in result:
+        return templates.TemplateResponse(request, "partials/approval_submitted.html", {"error": result["error"]})
     return templates.TemplateResponse(request, "partials/approval_submitted.html", {"result": result, "error": None})

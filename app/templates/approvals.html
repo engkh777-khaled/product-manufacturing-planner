@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% from "components/ui.html" import icon, button, badge, panel_header %}
+{% block title %}Approvals & Audit{% endblock %}
+{% block content %}
+{% set status_tone = {"Pending": "warn", "Approved": "ok", "Rejected": "crit", "Withdrawn": "muted",
+                      "Draft": "info", "Proposed": "warn", "Superseded": "muted"} %}
+<div class="p-space-xl flex flex-col gap-space-xl">
+  <div class="flex flex-col gap-space-sm">
+    <nav class="font-label-mono-xs text-label-mono-xs text-outline uppercase" aria-label="Breadcrumb">Sec 12.8 / Governance / <span class="text-primary">Approvals &amp; Audit</span></nav>
+    <div class="flex flex-wrap items-center gap-space-md">
+      <h1 class="font-headline-lg text-headline-lg text-on-surface">Approvals &amp; Audit</h1>
+      {{ badge("Baseline v" ~ baseline.version_number, "ok") }}
+    </div>
+    <p class="font-body-sm text-body-sm text-on-surface-variant max-w-3xl">Planners submit validated plans; an authorized approver — never the requester — decides. Approving makes the plan the baseline and keeps the previous one as Superseded. The AI assistant can never approve.</p>
+  </div>
+
+  {% if msg %}
+  <div class="p-space-md rounded border border-primary/30 bg-primary/10 text-primary flex items-center gap-space-sm font-label-mono-sm text-label-mono-sm" role="status">{{ icon("info", 16) }}<span>{{ msg }}</span></div>
+  {% endif %}
+
+  {# ---------------------------------------------------------------- pending #}
+  <section class="flex flex-col gap-space-md">
+    <h2 class="flex items-center gap-space-sm font-headline-sm text-headline-sm text-on-surface">{{ icon("pending_actions", 20, "text-warn") }}Plans Awaiting Approval <span class="font-label-mono-sm text-label-mono-sm text-outline">({{ pending|length }})</span></h2>
+    {% for p in pending %}
+    {% set r, v, b = p.r, p.version, p.base %}
+    {% set mine = (r.requested_by_id == user.id) if r.requested_by_id else (r.requested_by == user.name) %}
+    <article class="bg-surface-container-low rounded overflow-hidden">
+      <div class="p-space-lg bg-surface-container flex flex-wrap items-start justify-between gap-space-md">
+        <div>
+          <div class="flex flex-wrap items-center gap-space-sm">
+            <span class="font-headline-sm text-headline-sm text-on-surface font-mono">{{ r.id }}</span>
+            {{ badge(r.status, status_tone[r.status]) }}
+            <span class="font-label-mono-sm text-label-mono-sm text-primary">{{ v.label }}</span>
+          </div>
+          <p class="font-label-mono-xs text-label-mono-xs text-on-surface-variant mt-space-xs">Run #{{ v.run_number }} · requested by {{ r.requested_by }}{% if r.requested_at %} on {{ r.requested_at|d("%b %d, %H:%M") }}{% endif %} · {{ v.change_summary }}</p>
+          {% if r.comments %}<p class="font-body-sm text-body-sm text-on-surface mt-space-xs">“{{ r.comments }}”</p>{% endif %}
+        </div>
+        {{ badge("Validation " ~ ("passed" if v.validation_passed else "failed"), "ok" if v.validation_passed else "crit") }}
+      </div>
+
+      <div class="p-space-lg grid grid-cols-1 2xl:grid-cols-2 gap-space-lg">
+        <div>
+          <h3 class="font-label-mono-xs text-label-mono-xs text-outline uppercase mb-space-sm">Plan summary vs baseline v{{ b.version_number }}</h3>
+          <table class="w-full font-label-mono-sm text-label-mono-sm">
+            <thead><tr class="text-outline font-label-mono-xs text-label-mono-xs uppercase"><th class="text-left py-space-xs">Metric</th><th class="text-right">Baseline</th><th class="text-right">This plan</th></tr></thead>
+            <tbody class="divide-y divide-surface-container">
+              {% for label, bv, cv in [("Late orders", b.late_orders, v.late_orders), ("Total lateness", b.total_lateness_h ~ "h", v.total_lateness_h ~ "h"),
+                                       ("Overtime + expedite", "$" ~ b.overtime_cost|num, "$" ~ v.overtime_cost|num),
+                                       ("Constraint violations", b.hard_violations ~ " hard / " ~ b.soft_violations ~ " soft", v.hard_violations ~ " hard / " ~ v.soft_violations ~ " soft")] %}
+              <tr><td class="py-space-xs text-on-surface">{{ label }}</td><td class="text-right text-on-surface-variant">{{ bv }}</td><td class="text-right text-primary">{{ cv }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <h3 class="font-label-mono-xs text-label-mono-xs text-outline uppercase mb-space-sm">Schedule changes — orders whose completion moves</h3>
+          {% if p.changes %}
+          <table class="w-full font-label-mono-sm text-label-mono-sm">
+            <thead><tr class="text-outline font-label-mono-xs text-label-mono-xs uppercase"><th class="text-left py-space-xs">Order</th><th class="text-right">Requested</th><th class="text-right">Baseline</th><th class="text-right">This plan</th><th class="text-right">Δ</th></tr></thead>
+            <tbody class="divide-y divide-surface-container">
+              {% for c in p.changes %}
+              <tr>
+                <td class="py-space-xs"><a class="text-primary hover:underline" href="/orders?selected={{ c.order }}">{{ c.order }}</a></td>
+                <td class="text-right text-on-surface-variant">{{ c.requested|d }}</td>
+                <td class="text-right {{ 'text-crit' if c.late_before else 'text-on-surface' }}">{{ c.before|d }}</td>
+                <td class="text-right {{ 'text-crit' if c.late_after else 'text-ok' }}">{{ c.after|d }}</td>
+                <td class="text-right {{ 'text-ok' if c.delta_days and c.delta_days < 0 else 'text-warn' }}">{{ ("%+d d"|format(c.delta_days)) if c.delta_days is not none else "—" }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}<p class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">No order completion dates change versus the baseline.</p>{% endif %}
+        </div>
+      </div>
+
+      <div class="p-space-lg border-t border-surface-container">
+        {% if mine %}
+          <div class="flex flex-wrap items-center justify-between gap-space-sm">
+            <p class="font-label-mono-xs text-label-mono-xs text-warn">You submitted this plan — another approver must decide.</p>
+            <form method="post" action="/approvals/{{ r.id }}/withdraw"><button class="h-7 px-space-md rounded bg-surface-container-high text-on-surface hover:bg-surface-container-highest font-label-mono-sm text-label-mono-sm">Withdraw request</button></form>
+          </div>
+        {% elif user.can_approve %}
+          <form method="post" action="/approvals/{{ r.id }}/decide" class="flex flex-col gap-space-sm">
+            <label class="flex flex-col gap-space-xs font-label-mono-xs text-label-mono-xs text-outline uppercase">Decision comments (recorded in the audit trail)
+              <textarea name="comments" rows="2" maxlength="1000" class="p-space-sm bg-surface-container-lowest text-on-surface font-body-lg text-body-lg normal-case rounded border border-hairline focus:border-cobalt outline-none"></textarea>
+            </label>
+            <div class="flex flex-wrap justify-end gap-space-sm">
+              <button name="decision" value="Rejected" class="h-8 px-space-md inline-flex items-center gap-space-xs rounded border border-crit/40 bg-crit/10 text-crit hover:bg-crit hover:text-white font-label-mono-sm text-label-mono-sm">{{ icon("close", 15) }}Reject</button>
+              <button name="decision" value="Approved" {% if not v.validation_passed %}disabled title="A schedule that failed validation cannot be approved"{% endif %}
+                      class="h-8 px-space-lg inline-flex items-center gap-space-xs rounded bg-primary text-on-primary hover:bg-primary-fixed font-label-mono-sm text-label-mono-sm font-semibold disabled:opacity-40">{{ icon("done_all", 15) }}Approve as new baseline</button>
+            </div>
+          </form>
+        {% else %}
+          <p class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">Only approvers can decide. Your role: {{ user.role }}.</p>
+        {% endif %}
+      </div>
+    </article>
+    {% else %}
+    <p class="p-space-lg bg-surface-container-low rounded font-label-mono-sm text-label-mono-sm text-on-surface-variant">No plans are awaiting approval.</p>
+    {% endfor %}
+  </section>
+
+  {# ---------------------------------------------------------------- versions + history #}
+  <div class="grid grid-cols-1 2xl:grid-cols-2 gap-space-xl items-start">
+    <section class="bg-surface-container-low rounded overflow-hidden">
+      {% call panel_header("Schedule Versions", "account_tree", "Draft → Proposed → Approved (baseline) → Superseded") %}{% endcall %}
+      <div class="overflow-x-auto scroll-thin">
+        <table class="w-full min-w-[560px] text-left font-label-mono-sm text-label-mono-sm">
+          <thead><tr class="bg-surface-container-lowest text-outline font-label-mono-xs text-label-mono-xs uppercase border-b border-hairline">
+            <th class="py-space-sm px-space-md">Version</th><th class="py-space-sm px-space-md">Status</th><th class="py-space-sm px-space-md">Run</th><th class="py-space-sm px-space-md">Created by</th><th class="py-space-sm px-space-md">Approved by</th></tr></thead>
+          <tbody>
+            {% for v in versions %}
+            <tr class="border-b border-surface-container">
+              <td class="py-space-sm px-space-md"><a class="text-primary hover:underline" href="/workbench?version={{ v.key }}">v{{ v.version_number }}</a>{% if v.is_baseline %} {{ badge("Baseline", "ok") }}{% endif %}</td>
+              <td class="py-space-sm px-space-md">{{ badge(v.status, status_tone.get(v.status, "muted")) }}</td>
+              <td class="py-space-sm px-space-md text-on-surface-variant">#{{ v.run_number }}</td>
+              <td class="py-space-sm px-space-md text-on-surface-variant">{{ v.created_by }}</td>
+              <td class="py-space-sm px-space-md text-on-surface-variant">{{ v.approved_by or "—" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="bg-surface-container-low rounded overflow-hidden">
+      {% call panel_header("Decision History", "history", "Approved, rejected and withdrawn requests") %}{% endcall %}
+      {% if history %}
+      <div class="overflow-x-auto scroll-thin">
+        <table class="w-full min-w-[560px] text-left font-label-mono-sm text-label-mono-sm">
+          <thead><tr class="bg-surface-container-lowest text-outline font-label-mono-xs text-label-mono-xs uppercase border-b border-hairline">
+            <th class="py-space-sm px-space-md">Request</th><th class="py-space-sm px-space-md">Outcome</th><th class="py-space-sm px-space-md">Requested by</th><th class="py-space-sm px-space-md">Decided</th><th class="py-space-sm px-space-md">Comments</th></tr></thead>
+          <tbody>
+            {% for r in history %}
+            <tr class="border-b border-surface-container">
+              <td class="py-space-sm px-space-md text-on-surface">{{ r.id }} <span class="text-outline">{{ r.schedule_version }}</span></td>
+              <td class="py-space-sm px-space-md">{{ badge(r.status, status_tone.get(r.status, "muted")) }}</td>
+              <td class="py-space-sm px-space-md text-on-surface-variant">{{ r.requested_by }}</td>
+              <td class="py-space-sm px-space-md text-on-surface-variant">{{ r.decided_at|d("%b %d, %H:%M") if r.decided_at else "—" }}{% if r.status in ("Approved", "Rejected") %} · {{ r.approver }}{% endif %}</td>
+              <td class="py-space-sm px-space-md text-on-surface">{{ r.decision_comments or "—" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}<p class="p-space-lg font-label-mono-xs text-label-mono-xs text-on-surface-variant">No decisions yet.</p>{% endif %}
+    </section>
+  </div>
+
+  {# ---------------------------------------------------------------- audit trail #}
+  <section id="audit" class="bg-surface-container-low rounded overflow-hidden">
+    {% call panel_header("Audit Trail", "fact_check", "Append-only · every consequential change with before → after (spec §6.22)") %}
+      <form method="get" action="/approvals#audit" class="flex flex-wrap items-center gap-space-xs font-label-mono-xs text-label-mono-xs">
+        <label class="sr-only" for="audit-entity">Entity</label>
+        <select id="audit-entity" name="entity" class="h-7 bg-surface-container-lowest text-on-surface rounded border border-hairline px-space-xs">
+          <option value="">All entities</option>
+          {% for e in entities %}<option value="{{ e }}" {% if e == entity %}selected{% endif %}>{{ e }}</option>{% endfor %}
+        </select>
+        <label class="sr-only" for="audit-limit">Rows</label>
+        <select id="audit-limit" name="limit" class="h-7 bg-surface-container-lowest text-on-surface rounded border border-hairline px-space-xs">
+          {% for n in [50, 100, 200, 500] %}<option value="{{ n }}" {% if n == limit %}selected{% endif %}>{{ n }} rows</option>{% endfor %}
+        </select>
+        <button class="h-7 px-space-sm rounded bg-surface-container-high text-on-surface hover:bg-surface-container-highest">Filter</button>
+      </form>
+    {% endcall %}
+    {% if audit_note %}<p class="px-space-lg pt-space-md font-label-mono-xs text-label-mono-xs text-warn">{{ audit_note }}</p>{% endif %}
+    {% if audit %}
+    <div class="overflow-x-auto scroll-thin">
+      <table class="w-full min-w-[960px] text-left font-label-mono-sm text-label-mono-sm">
+        <thead><tr class="bg-surface-container-lowest text-outline font-label-mono-xs text-label-mono-xs uppercase border-b border-hairline">
+          <th class="py-space-sm px-space-md">When (plant time)</th><th class="py-space-sm px-space-md">Who</th><th class="py-space-sm px-space-md">What</th>
+          <th class="py-space-sm px-space-md">Action</th><th class="py-space-sm px-space-md">Changes</th><th class="py-space-sm px-space-md">Reason</th></tr></thead>
+        <tbody>
+          {% for a in audit %}
+          <tr class="border-b border-surface-container align-top">
+            <td class="py-space-sm px-space-md text-on-surface-variant whitespace-nowrap">{{ a.at|d("%b %d %H:%M:%S") }}</td>
+            <td class="py-space-sm px-space-md"><div class="text-on-surface">{{ a.user }}</div><div class="font-label-mono-xs text-label-mono-xs text-outline">{{ a.actor_role }}</div></td>
+            <td class="py-space-sm px-space-md"><div class="text-on-surface">{{ a.entity_label or "—" }}</div><div class="font-label-mono-xs text-label-mono-xs text-outline">{{ a.entity_type }}</div></td>
+            <td class="py-space-sm px-space-md {{ 'text-crit' if 'blocked' in a.action else 'text-primary' }}">{{ a.action }}</td>
+            <td class="py-space-sm px-space-md text-on-surface-variant">{% for c in a.changes %}<div>{{ c }}</div>{% endfor %}</td>
+            <td class="py-space-sm px-space-md text-on-surface">{{ a.reason or "—" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% elif not audit_note %}<p class="p-space-lg font-label-mono-xs text-label-mono-xs text-on-surface-variant">No audit entries match.</p>{% endif %}
+  </section>
+</div>
+{% endblock %}

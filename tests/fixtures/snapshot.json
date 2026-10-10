@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-10T10:42:35.679043+00:00",
+ "generated_at": "2026-10-10T11:14:50.113518+00:00",
  "work_centers": [
   {
    "id": "5a40a001-4ef9-4a1e-9bd3-e70b8fdfc736",
@@ -1337,20 +1337,6 @@
  ],
  "bom_headers": [
   {
-   "id": "7c9d76d9-eaa9-43c9-84b4-f134a7e858db",
-   "product_id": "0d3f1dca-bd92-4daa-93c1-eff02051f05a",
-   "revision": "Rev A",
-   "status": "Draft",
-   "effective_from": "2025-12-01",
-   "effective_to": null,
-   "eco_number": "ECO-85002 (open)",
-   "approved_by": null,
-   "approved_at": null,
-   "notes": "Awaiting engineering review",
-   "created_at": "2026-10-10T09:17:50.054167+00:00",
-   "updated_at": "2026-10-10T09:17:50.054167+00:00"
-  },
-  {
    "id": "1617c855-94d2-4b7d-b6e2-aa2de16371b8",
    "product_id": "f8ecc54b-687e-466e-8467-76aacc827b8f",
    "revision": "Rev C",
@@ -1503,6 +1489,20 @@
    "notes": null,
    "created_at": "2026-10-10T09:17:50.054167+00:00",
    "updated_at": "2026-10-10T10:20:08.338474+00:00"
+  },
+  {
+   "id": "7c9d76d9-eaa9-43c9-84b4-f134a7e858db",
+   "product_id": "0d3f1dca-bd92-4daa-93c1-eff02051f05a",
+   "revision": "Rev A",
+   "status": "Draft",
+   "effective_from": "2025-12-01",
+   "effective_to": null,
+   "eco_number": "ECO-85002 (open)",
+   "approved_by": null,
+   "approved_at": null,
+   "notes": "Awaiting engineering review",
+   "created_at": "2026-10-10T09:17:50.054167+00:00",
+   "updated_at": "2026-10-10T11:14:09.595551+00:00"
   }
  ],
  "bom_items": [
@@ -3532,17 +3532,6 @@
    "updated_at": "2026-10-10T09:17:50.054167+00:00"
   },
   {
-   "id": "d3032052-d30a-45d3-adbc-8568a883bb60",
-   "product_id": "43f61ff8-4866-4812-b9fb-5b20fe808af4",
-   "warehouse_id": "25353d56-6465-469a-8849-b98925ac7582",
-   "lot_number": "",
-   "on_hand_quantity": 24.0,
-   "reserved_quantity": 0.0,
-   "quality_hold_quantity": 0.0,
-   "net_available_quantity": 24.0,
-   "updated_at": "2026-10-10T09:17:50.054167+00:00"
-  },
-  {
    "id": "4dbd53aa-a58d-4db7-b6c4-bcd736947b69",
    "product_id": "b378b59b-3bbf-48e1-b499-e477d6ed0365",
    "warehouse_id": "25353d56-6465-469a-8849-b98925ac7582",
@@ -3684,6 +3673,17 @@
    "quality_hold_quantity": 0.0,
    "net_available_quantity": 3.0,
    "updated_at": "2026-10-10T10:42:18.296249+00:00"
+  },
+  {
+   "id": "d3032052-d30a-45d3-adbc-8568a883bb60",
+   "product_id": "43f61ff8-4866-4812-b9fb-5b20fe808af4",
+   "warehouse_id": "25353d56-6465-469a-8849-b98925ac7582",
+   "lot_number": "",
+   "on_hand_quantity": 24.0,
+   "reserved_quantity": 0.0,
+   "quality_hold_quantity": 0.0,
+   "net_available_quantity": 24.0,
+   "updated_at": "2026-10-10T11:14:02.95356+00:00"
   }
  ],
  "purchase_orders": [
@@ -3762,22 +3762,6 @@
    "updated_at": "2026-10-10T09:17:50.054167+00:00"
   },
   {
-   "id": "3613e3b7-18b4-40a1-a323-47f7f82acf47",
-   "purchase_order_id": "ec12ba9c-c153-4827-8737-bf24a4ce8ee5",
-   "line_number": 1,
-   "product_id": "1d1b86ed-20c9-459b-9340-7c198eb76445",
-   "ordered_quantity": 96.0,
-   "received_quantity": 0.0,
-   "open_quantity": 96.0,
-   "expected_delivery_date": "2025-11-25",
-   "status": "In Transit",
-   "quality_status": "Not Inspected",
-   "warehouse_id": "25353d56-6465-469a-8849-b98925ac7582",
-   "notes": null,
-   "created_at": "2026-10-10T09:17:50.054167+00:00",
-   "updated_at": "2026-10-10T09:17:50.054167+00:00"
-  },
-  {
    "id": "521df42b-6612-4afa-a94b-a3c2b50d9eed",
    "purchase_order_id": "e531c76b-c9a8-4506-a910-ab2462a6bb42",
    "line_number": 1,
@@ -3792,6 +3776,22 @@
    "notes": null,
    "created_at": "2026-10-10T09:17:50.054167+00:00",
    "updated_at": "2026-10-10T09:17:50.054167+00:00"
+  },
+  {
+   "id": "3613e3b7-18b4-40a1-a323-47f7f82acf47",
+   "purchase_order_id": "ec12ba9c-c153-4827-8737-bf24a4ce8ee5",
+   "line_number": 1,
+   "product_id": "1d1b86ed-20c9-459b-9340-7c198eb76445",
+   "ordered_quantity": 96.0,
+   "received_quantity": 0.0,
+   "open_quantity": 96.0,
+   "expected_delivery_date": "2025-11-25",
+   "status": "In Transit",
+   "quality_status": "Not Inspected",
+   "warehouse_id": "25353d56-6465-469a-8849-b98925ac7582",
+   "notes": null,
+   "created_at": "2026-10-10T09:17:50.054167+00:00",
+   "updated_at": "2026-10-10T11:14:05.48767+00:00"
   },
   {
    "id": "62d1b588-1b4d-4160-b19d-ff6fa238d25c",
@@ -5918,7 +5918,8 @@
    "status": "Pending",
    "comments": null,
    "requested_at": "2025-11-20T20:12:00+00:00",
-   "decided_at": null
+   "decided_at": null,
+   "decision_comments": null
   }
  ],
  "profiles": [
@@ -5958,5 +5959,5 @@
    "job_title": "System Administrator"
   }
  ],
- "_note": "FICTIONAL demo data exported from the dev project via public.planning_snapshot() as planner@example.com (M06 test fixture)."
+ "_note": "FICTIONAL demo data exported from the dev project via public.planning_snapshot() as planner@example.com (M06/M07 test fixture)."
 }

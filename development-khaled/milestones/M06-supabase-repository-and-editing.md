@@ -5,7 +5,7 @@
 | **Date** | 2026-10-10 |
 | **Author** | Khaled (implemented with Claude Code) |
 | **Status** | Done |
-| **Commits** | _see git log — "M06" commit_ |
+| **Commits** | `f2ab6c4` |
 | **Spec sections** | §4 (consistent snapshot), §5 (role permissions), §6.1/§6.7 (orderable products, engineering config), §12.2–12.4 |
 
 ## Goal

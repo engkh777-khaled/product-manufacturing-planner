@@ -367,43 +367,131 @@ def approval_requests():
     return ds().APPROVAL_REQUESTS
 
 
-def record_audit(action: str, entity: str, user: CurrentUser, reason: str = "") -> AuditEntry:
+def record_audit(action: str, entity: str, user: CurrentUser, reason: str = "", app_event: bool = False) -> AuditEntry:
+    """Keep an in-process record; persist only *app events* to the database.
+
+    Data changes are audited by Postgres triggers with full before/after rows (M07), so persisting them here would
+    duplicate entries. App events — blocked attempts, solver run requests — never reach a table, so they are
+    written explicitly when running on Supabase.
+    """
     entry = AuditEntry(at=datetime.now(), user=user.name, action=action, entity=entity, reason=reason)
     AUDIT_LOG.append(entry)
-    if dataset.is_supabase():
+    if app_event and dataset.is_supabase():
         from app.data import writes  # local import avoids a cycle (writes reads the dataset)
         writes.insert_audit(action, entity, reason)
     return entry
 
 
-def request_decision(request_id: str, decision: str, user: CurrentUser) -> dict:
-    """Approve/reject a plan. Server-side authorization (spec §5): only an approver, never the requester."""
+def _requested_by_user(req, user: CurrentUser) -> bool:
+    if req.requested_by_id:
+        return req.requested_by_id == user.id
+    return req.requested_by == user.name  # mock data has names only
+
+
+def request_decision(request_id: str, decision: str, user: CurrentUser, comments: str = "") -> dict:
+    """Approve/reject a plan. Server-side authorization (spec §5): only an approver, never the requester.
+
+    On Supabase the database function decide_plan_approval() performs the decision atomically (baseline switch,
+    audit rows, RLS); these checks only give early, friendly messages.
+    """
     req = next((r for r in ds().APPROVAL_REQUESTS if r.id == request_id), None)
     if req is None:
         return {"ok": False, "message": f"Approval request {request_id} not found."}
     if not user.can_approve:
-        record_audit(f"{decision} attempt blocked", request_id, user, f"{user.role} lacks approval authority")
-        return {"ok": False, "message": f"{user.name} ({user.role}) cannot {decision.lower()} {req.schedule_version}. "
+        record_audit(f"{decision} attempt blocked", request_id, user, f"{user.role} lacks approval authority",
+                     app_event=True)
+        verb = {"Commit": "commit", "Approved": "approve", "Reject": "reject", "Rejected": "reject"}.get(decision, "decide")
+        return {"ok": False, "message": f"{user.name} ({user.role}) cannot {verb} {req.schedule_version}. "
                                         f"Sign-off is reserved for an approver. Attempt logged to audit trail."}
-    if req.requested_by == user.name:
-        record_audit(f"{decision} attempt blocked", request_id, user, "self-approval")
+    if _requested_by_user(req, user):
+        record_audit(f"{decision} attempt blocked", request_id, user, "self-approval", app_event=True)
         return {"ok": False, "message": "You cannot decide on a plan you submitted yourself."}
     if req.status != "Pending":
         return {"ok": False, "message": f"{req.id} is already {req.status.lower()}."}
-    new_status = "Approved" if decision == "Commit" else "Rejected"
+    new_status = "Approved" if decision in ("Commit", "Approved") else "Rejected"
     if dataset.is_supabase():
         from app.data import writes
-        result = writes.decide_approval(request_id, new_status)
+        result = writes.decide_plan(request_id, new_status, comments)
         if not result.ok:
             return {"ok": False, "message": result.message}
+        req.status = new_status
+        return {"ok": True, "message": result.message}
     req.status = new_status
-    record_audit(decision, request_id, user)
+    record_audit(decision, request_id, user, comments)
     return {"ok": True, "message": f"{req.schedule_version} {req.status.lower()}."}
 
 
 def submit_for_approval(version_key: str, notes: str, user: CurrentUser) -> dict:
-    """Records a submission. The plan is never auto-approved (spec §2 / §11.3 rule 10)."""
+    """Submit a plan for human approval. The plan is never auto-approved (spec §2 / §11.3 rule 10)."""
     version = get_version(version_key)
+    if dataset.is_supabase():
+        from app.data import writes
+        result = writes.submit_plan(version.version_number, notes)
+        if not result.ok:
+            return {"error": result.message}
+        entry = record_audit("Submitted for approval", f"schedule {version.key}", user, notes)
+        return {"version": version, "request_number": result.data, "entry": entry, "approver": "an authorized approver"}
     req = next((r for r in ds().APPROVAL_REQUESTS if r.schedule_version == version.key), None)
     entry = record_audit("Submitted for approval", f"schedule {version.key}", user, notes)
-    return {"version": version, "request": req, "entry": entry, "approver": ds().APPROVER}
+    return {"version": version, "request": req, "request_number": req.id if req else None, "entry": entry,
+            "approver": ds().APPROVER}
+
+
+def withdraw_request(request_id: str, user: CurrentUser) -> dict:
+    req = next((r for r in ds().APPROVAL_REQUESTS if r.id == request_id), None)
+    if req is None:
+        return {"ok": False, "message": f"Approval request {request_id} not found."}
+    if not _requested_by_user(req, user):
+        return {"ok": False, "message": "Only the requester can withdraw a request."}
+    if not dataset.is_supabase():
+        req.status = "Withdrawn"
+        return {"ok": True, "message": f"{request_id} withdrawn (demo data)."}
+    from app.data import writes
+    result = writes.withdraw_plan(request_id)
+    return {"ok": result.ok, "message": result.message}
+
+
+def _order_finish(version: ScheduleVersion) -> dict:
+    """Planned completion per order: stored per version on Supabase, derived from operations on mock data."""
+    if version.order_finish:
+        return dict(version.order_finish)
+    finish: dict = {}
+    for op in version.operations:
+        d = op.end.date()
+        finish[op.order_number] = max(d, finish.get(op.order_number, d))
+    return finish
+
+
+def version_changes(base: ScheduleVersion, cand: ScheduleVersion) -> list[dict]:
+    """Orders whose planned completion differs between two versions (spec §10 "orders whose dates change")."""
+    before, after = _order_finish(base), _order_finish(cand)
+    requested = {o.order_number: o.requested_delivery_date for o in ds().SALES_ORDERS}
+    rows = []
+    for order in sorted(set(before) | set(after)):
+        b, a = before.get(order), after.get(order)
+        if b == a:
+            continue
+        req = requested.get(order)
+        rows.append({
+            "order": order, "before": b, "after": a, "requested": req,
+            "delta_days": (a - b).days if a and b else None,
+            "late_before": bool(b and req and b > req), "late_after": bool(a and req and a > req),
+        })
+    return rows
+
+
+def approvals_overview() -> dict:
+    requests = sorted(ds().APPROVAL_REQUESTS, key=lambda r: (r.status != "Pending", r.requested_at or datetime.min), )
+    base = baseline()
+    pending = []
+    for r in requests:
+        if r.status != "Pending":
+            continue
+        version = get_version(r.schedule_version)
+        pending.append({"r": r, "version": version, "base": base, "changes": version_changes(base, version)})
+    return {
+        "pending": pending,
+        "history": [r for r in requests if r.status != "Pending"],
+        "versions": sorted(ds().SCHEDULE_VERSIONS.values(), key=lambda v: v.run_number, reverse=True),
+        "baseline": base,
+    }

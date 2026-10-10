@@ -43,6 +43,7 @@ Open http://127.0.0.1:8000 and sign in, e.g. as `planner@example.com` or `approv
 | `/workbench` | Planning Workbench (finite-capacity Gantt) | Baseline v4.2 / Scenario v4.3 switch, critical-path / shortage / PM filters, solver re-run (demo stub) |
 | `/orders` | Sales Orders & Demand | Search, status tabs, priority filter, pagination, order inspector |
 | `/engineering` | Engineering & BOM | Product switch, multilevel BOM expand/collapse, shortages filter, scrap +5% simulation, BOM validation |
+| `/approvals` | Approvals & Audit | Approve/reject plans (approver), version lifecycle, append-only audit trail |
 | `/assistant` | AI Planning Assistant | Scripted, data-grounded replies; human-approval submission gated by both confirmations (server-checked) |
 
 ## Layout

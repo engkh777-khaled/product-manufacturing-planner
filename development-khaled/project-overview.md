@@ -1,6 +1,6 @@
 # Project Overview
 
-_Last updated: 2026-10-10 (after M06)_
+_Last updated: 2026-10-10 (after M07)_
 
 ## Goal
 
@@ -26,7 +26,8 @@ The AI must never invent quantities or dates, approve plans, place POs, or relea
 | AI assistant | Scripted replies grounded in repository data; no LLM connected |
 | Auth | Supabase Auth sign-in, 7 spec roles, RLS policies on all tables, HTTP-only cookie sessions (M05) |
 | Editing | Draft sales orders, inventory, PO lines, BOM revision workflow, approval decisions (Supabase mode) |
-| Tests | 126 passing: 65 app + 61 DB (`tests/db`, need `DATABASE_URL`; skipped in CI) |
+| Approvals & audit | Workflow functions + guard (approve ⇒ new baseline), append-only trigger audit on 12 tables (M07) |
+| Tests | 145 passing: 73 app + 72 DB (`tests/db`, need `DATABASE_URL`; skipped in CI) |
 
 ## Architecture today
 
@@ -99,6 +100,7 @@ development-khaled/     This engineering log
 | `/orders` | Sales Orders & Demand | Search, status tabs, priority, pagination, order inspector |
 | `/inventory` | Inventory & Purchasing | Balances, QC holds, PO lines; stores/purchasing edit inline (M06) |
 | `/engineering` | Engineering & BOM | Multilevel BOM, revision history + approval workflow, scrap simulation, validation |
+| `/approvals` | Approvals & Audit | Pending plans with impact vs baseline, decisions, version lifecycle, audit trail (M07) |
 | `/assistant` | AI Planning Assistant | Scripted grounded replies; approval submission needs both confirmations (server-checked) |
 
 ## Run locally

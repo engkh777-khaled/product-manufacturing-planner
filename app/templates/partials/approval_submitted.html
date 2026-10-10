@@ -6,7 +6,7 @@
 {% else %}
 <div class="p-space-md rounded border border-ok/30 bg-ok/10 flex flex-col gap-space-xs font-label-mono-sm text-label-mono-sm" role="status">
   <span class="flex items-center gap-space-xs text-ok">{{ icon("outgoing_mail", 16) }}Submitted — awaiting approver</span>
-  <span class="text-on-surface">Schedule v{{ result.version.version_number }} (run #{{ result.version.run_number }}) sent to {{ result.approver }}{% if result.request %} as {{ result.request.id }}{% endif %}.</span>
-  <span class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">Status remains <b>Proposed</b>. Baseline v4.2 stays active until a human approver signs off. Logged {{ result.entry.at.strftime("%H:%M:%S") }} by {{ result.entry.user }}.</span>
+  <span class="text-on-surface">Schedule v{{ result.version.version_number }} (run #{{ result.version.run_number }}) sent to {{ result.approver }}{% if result.request_number %} as {{ result.request_number }}{% endif %}.</span>
+  <span class="font-label-mono-xs text-label-mono-xs text-on-surface-variant">Status: <b>Proposed</b>. The current baseline stays active until a human approver signs off. Logged {{ result.entry.at.strftime("%H:%M:%S") }} by {{ result.entry.user }}. <a class="text-primary underline" href="/approvals">Open Approvals</a></span>
 </div>
 {% endif %}

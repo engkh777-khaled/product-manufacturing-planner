@@ -16,6 +16,7 @@ NAV = [
     ("/orders", "receipt_long", "Sales Orders & Demand"),
     ("/inventory", "inventory_2", "Inventory & Purchasing"),
     ("/engineering", "schema", "Engineering & BOM"),
+    ("/approvals", "verified_user", "Approvals & Audit"),
     ("/assistant", "psychology", "AI Planning Assistant"),
 ]
 

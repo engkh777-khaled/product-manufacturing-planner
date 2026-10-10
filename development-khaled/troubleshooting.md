@@ -176,3 +176,39 @@ _Seen 2026-10-10 (M06)_
 
 Expected: required = qty ÷ (1 − scrap) is rounded **up** to whole parts (e.g. 10 valves with 2 % scrap need 11
 bodies). Increase stock or check the scrap factor; it is not a bug.
+
+## PL/pgSQL: `record "new" has no field "…"` in a trigger shared by several tables
+_Seen 2026-10-10 (M07)_
+
+**Cause.** PL/pgSQL resolves `NEW.column` when the expression runs, even if an earlier `AND` condition is false.
+A trigger function attached to two tables cannot mention a column that only one of them has in the same expression.
+
+**Fix.** Branch first (`IF tg_table_name = '…' THEN … ELSIF …`), and also branch by `tg_op` before touching `OLD`.
+
+## A SECURITY INVOKER function says "not found" although the row exists
+_Seen 2026-10-10 (M07)_
+
+**Cause.** `SELECT … FOR UPDATE` applies the table's UPDATE policies too; rows the caller may read but not update vanish.
+
+**Fix.** Use a plain `SELECT` for checks (and let the guarded UPDATE + unique indexes handle races), or check
+visibility separately to give a precise error.
+
+## "Audit log entries are append-only" when cleaning up test data
+_Reference (M07)_
+
+Expected. As the database owner, switch the session to maintenance mode first:
+```sql
+select set_config('app.audit_maintenance', 'on', false);   -- session; use true inside a transaction
+```
+Maintenance mode also skips auditing and opens the approval workflow guard. **Dev projects only.**
+
+## "Approving, rejecting or superseding a schedule must go through decide_plan_approval()"
+_Reference (M07)_
+
+Expected for direct UPDATEs. Use `select public.decide_plan_approval('APR-…', 'Approved', 'comment')` as an approver
+(the app does this), or maintenance mode for data repair on a dev project.
+
+## `UnicodeEncodeError: 'charmap' codec can't encode character '\u2192'` in a script
+_Seen 2026-10-10 (M07)_
+
+The Windows console uses cp1252. Run with `PYTHONIOENCODING=utf-8` (or `python -X utf8`).

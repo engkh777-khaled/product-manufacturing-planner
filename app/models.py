@@ -261,6 +261,9 @@ class ScheduleVersion(BaseModel):
     overtime_cost: float
     hard_violations: int
     soft_violations: int
+    validation_passed: bool | None = True
+    created_by_id: str | None = None
+    order_finish: dict[str, date] = {}  # planned completion per sales order in this version
 
 
 # --- Alerts / approvals / audit -------------------------------------------------
@@ -288,6 +291,10 @@ class ApprovalRequest(BaseModel):
     oee_forecast: float
     changeover_delta: str
     comments: str = ""
+    requested_by_id: str | None = None
+    requested_at: datetime | None = None
+    decided_at: datetime | None = None
+    decision_comments: str = ""
 
 
 class AuditEntry(BaseModel):

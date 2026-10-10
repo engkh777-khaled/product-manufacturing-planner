@@ -1,6 +1,6 @@
 # Backend Roadmap — Supabase + Python
 
-_Written 2026-10-10 · Updated 2026-10-10: **cloud-first** (D-014), M03–M06 done_
+_Written 2026-10-10 · Updated 2026-10-10: **cloud-first** (D-014), M03–M07 done_
 
 Each milestone ends with a **test gate**: commands any developer can run on their own machine to prove the
 milestone works. A milestone is not done until its gate passes and its file exists in [milestones/](milestones/).
@@ -139,12 +139,14 @@ $env:DATA_BACKEND="supabase"; .\.venv\Scripts\python -m pytest   # same route te
 .\.venv\Scripts\python -m pytest tests/test_crud.py              # create/edit order, inventory update
 ```
 
-### M07 — Approvals & audit trail (spec §6.21–6.22, §12.8)
+### M07 — Approvals & audit trail (spec §6.21–6.22, §12.8) ✅ Done 2026-10-10
 **Goal:** Approvals and consequential changes are persisted and traceable.
 - Postgres triggers write `audit_logs` (before/after JSON) for approvals, schedule changes, BOM revisions and
   inventory adjustments.
 - Version state transitions (`Draft → Proposed → Approved/Rejected → Superseded`) in a DB function that checks role.
 - New screen **Approvals & Audit**: pending plans, decision with comments, audit history.
+
+Details: [milestones/M07-approvals-and-audit.md](milestones/M07-approvals-and-audit.md).
 
 **Test gate**
 ```powershell

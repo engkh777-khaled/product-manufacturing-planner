@@ -25,5 +25,5 @@ def workbench(request: Request, version: str | None = None):
 @router.post("/workbench/run")
 def run_solver(request: Request, version: str | None = None, user: CurrentUser = Depends(require_user)):
     v = repo.get_version(version)
-    repo.record_audit("Solver re-run requested", f"schedule {v.key}", user)
+    repo.record_audit("Solver re-run requested", f"schedule {v.key}", user, app_event=True)
     return templates.TemplateResponse(request, "partials/solver_run.html", {"v": v})

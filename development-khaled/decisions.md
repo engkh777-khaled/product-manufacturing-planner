@@ -256,3 +256,29 @@ _2026-10-10 · M06_
 **Decision.** Work-center load and machine utilisation live in `schedule_versions.metrics`
 (`work_center_load`, `machine_utilization`), like other run KPIs. Until the solver exists they are labelled seed
 values (`load_source`); M09 writes computed values into the same keys.
+
+## D-023 — Approval transitions only through database functions, enforced by a guard trigger
+_2026-10-10 · M07_
+
+**Context.** Spec §6.19 / §12.8: an approved plan becomes the baseline, the previous baseline is preserved, and nobody
+approves their own plan. With plain table updates an approved request and the baseline could drift apart.
+
+**Decision.** `submit_plan_for_approval`, `decide_plan_approval`, `withdraw_plan_approval` (SECURITY INVOKER, RLS
+applies) are the only way to move plans through the workflow. A BEFORE trigger on `schedule_versions` and
+`approval_requests` rejects approve / reject / supersede / baseline changes unless the transaction-local flag set by
+`decide_plan_approval` is on — for every role, including the service role and the owner (maintenance mode excepted).
+
+**Consequences.** "Request approved" always implies "baseline switched, old baseline Superseded". The M09 solver must
+insert new versions as Draft and submit them through the same function.
+
+## D-024 — Audit by triggers, append-only, owner-only maintenance mode
+_2026-10-10 · M07_
+
+**Decision.** A SECURITY INVOKER row trigger on 12 business tables writes `audit_logs` with full before/after JSON,
+the acting user and database role, a business label, and the transaction's `app.audit_reason` (set by workflow
+functions from user comments). `audit_logs` rejects UPDATE/DELETE/TRUNCATE for everyone. The database owner can switch
+a session into maintenance mode (`app.audit_maintenance = on`) to seed or clean up test data without audit noise; API
+callers cannot set it. The app only writes *app events* (blocked attempts, solver requests).
+
+**Consequences.** Every change is audited no matter which client made it (app, scripts, SQL editor, future solver).
+Audit volume grows with writes; add retention/archiving before production (M12).

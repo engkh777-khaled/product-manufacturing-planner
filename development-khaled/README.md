@@ -25,9 +25,9 @@ Every milestone adds a file here. Nothing is deleted: if a decision is reversed,
 | M03 | 2026-10-10 | [Dev environment & configuration (Supabase cloud)](milestones/M03-dev-environment-supabase-cloud.md) | Done | `14092f0` |
 | M04 | 2026-10-10 | [Database schema, constraints & seed data](milestones/M04-database-schema-and-seed.md) | Done | `a25b75f` |
 | M05 | 2026-10-10 | [Authentication, roles & RLS](milestones/M05-auth-roles-rls.md) | Done | `8579b2e` |
-| M06 | 2026-10-10 | [Supabase repository & master-data editing](milestones/M06-supabase-repository-and-editing.md) | Done | see git log |
-| M07 | — | [Approvals & audit trail](backend-roadmap.md#m07--approvals--audit-trail-spec-621622-128) | Next | — |
-| M08 | — | [Material requirements planning engine](backend-roadmap.md#m08--material-requirements-planning-engine-spec-7-phase-2) | Planned | — |
+| M06 | 2026-10-10 | [Supabase repository & master-data editing](milestones/M06-supabase-repository-and-editing.md) | Done | `f2ab6c4` |
+| M07 | 2026-10-10 | [Approvals & audit trail](milestones/M07-approvals-and-audit.md) | Done | see git log |
+| M08 | — | [Material requirements planning engine](backend-roadmap.md#m08--material-requirements-planning-engine-spec-7-phase-2) | Next | — |
 | M09 | — | [Finite-capacity scheduler & validator](backend-roadmap.md#m09--finite-capacity-scheduler--independent-validator-spec-8-phase-3) | Planned | — |
 | M10 | — | [Live workbench & what-if scenarios](backend-roadmap.md#m10--planning-workbench-on-live-schedules--what-if-scenarios-spec-10-126-phase-4) | Planned | — |
 | M11 | — | [AI assistant with tool calling](backend-roadmap.md#m11--ai-assistant-with-tool-calling-spec-11-phase-5) | Planned | — |

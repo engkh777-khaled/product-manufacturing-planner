@@ -278,6 +278,14 @@ def build_dataset(snap: dict) -> SimpleNamespace:
                       for a in snap["planning_alerts"]
                       if a["alert_type"] == "delivery_date_at_risk" and a.get("sales_order_item_id") in lines}
 
+    finish_by_version = defaultdict(dict)  # version id -> {order number: planned completion (plant date)}
+    for pord in snap["production_orders"]:
+        so_number = order_number_for_item(pord.get("sales_order_item_id"))
+        finish = local_day(pord.get("planned_finish"))
+        if so_number and finish:
+            current_max = finish_by_version[pord["schedule_version_id"]].get(so_number)
+            finish_by_version[pord["schedule_version_id"]][so_number] = max(finish, current_max) if current_max else finish
+
     SCHEDULE_VERSIONS = {}
     for v in versions:
         run = runs.get(v["planning_run_id"], {})
@@ -341,7 +349,8 @@ def build_dataset(snap: dict) -> SimpleNamespace:
             operations=ops, blocks=blocks, markers=markers, dependencies=deps,
             late_orders=int(m.get("late_orders", 0)), total_lateness_h=int(m.get("total_lateness_hours", 0)),
             overtime_cost=num(m.get("overtime_cost")), hard_violations=int(m.get("hard_violations", 0)),
-            soft_violations=int(m.get("soft_violations", 0)))
+            soft_violations=int(m.get("soft_violations", 0)), validation_passed=v.get("validation_passed"),
+            created_by_id=v.get("created_by"), order_finish=finish_by_version[v["id"]])
 
     # ---- capacity (loads are planning-run outputs stored on the baseline version)
     wc_load = base_metrics.get("work_center_load", {})
@@ -478,7 +487,9 @@ def build_dataset(snap: dict) -> SimpleNamespace:
             total_ops=len(SCHEDULE_VERSIONS[f"v{v['version_number']}"].operations),
             hard_violations=int(m.get("hard_violations", 0)), soft_violations=int(m.get("soft_violations", 0)),
             oee_forecast=num(m.get("oee_forecast")) or 88.4, changeover_delta=m.get("changeover_delta", "—"),
-            comments=r.get("comments") or ""))
+            comments=r.get("comments") or "", requested_by_id=r.get("requested_by"),
+            requested_at=ts(r.get("requested_at")), decided_at=ts(r.get("decided_at")),
+            decision_comments=r.get("decision_comments") or ""))
 
     horizon_run = runs.get(baseline["planning_run_id"]) if baseline else None
     horizon = (day(horizon_run["planning_horizon_start"]), day(horizon_run["planning_horizon_end"])) if horizon_run \
@@ -494,6 +505,7 @@ def build_dataset(snap: dict) -> SimpleNamespace:
         APPROVER_ROLE=mock_data.APPROVER_ROLE, COPILOT_INSIGHTS=mock_data.COPILOT_INSIGHTS,
         ASSISTANT_QUICK_PROMPTS=mock_data.ASSISTANT_QUICK_PROMPTS, INVENTORY=INVENTORY, PO_LINES=PO_LINES,
         PRODUCT_ROWS={p["product_code"]: p for p in snap["products"]},
+        PROFILES={p["id"]: p["full_name"] for p in snap["profiles"]},
         ORDER_EDIT={o["order_number"]: {
             "order_number": o["order_number"], "customer_name": o["customer_name"],
             "customer_reference": o.get("customer_reference") or "", "order_date": o["order_date"],

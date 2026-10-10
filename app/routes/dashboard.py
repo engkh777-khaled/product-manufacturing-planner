@@ -29,6 +29,7 @@ def dashboard(request: Request):
 
 
 @router.post("/approvals/{request_id}/decision")
-def decide(request: Request, request_id: str, decision: str = Form(...), user: CurrentUser = Depends(require_user)):
-    result = repo.request_decision(request_id, decision, user)
+def decide(request: Request, request_id: str, decision: str = Form(...), comments: str = Form(""),
+           user: CurrentUser = Depends(require_user)):
+    result = repo.request_decision(request_id, decision, user, comments.strip()[:1000])
     return templates.TemplateResponse(request, "partials/approval_result.html", {"result": result})
