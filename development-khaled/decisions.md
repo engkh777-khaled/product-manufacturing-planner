@@ -448,3 +448,32 @@ until a job finishes or a human confirms.
 
 **Consequences.** Simple and safe for a supervised MVP; scaling out requires moving that state to the database or
 a queue first.
+
+## D-039 — Scenario plans keep untouched lines at their reference slots
+_2026-10-11 · after M12 (strengthens D-032)_
+
+**Context.** The anchoring of D-032 was not enough under short time limits or CPU load: the time-limited scenario
+solve sometimes moved lines the scenario does not touch (found as flaky tests, 2 of 10 runs; seen as untouched
+orders "finishing 8.5 h earlier").
+
+**Decision.** For scenario repairs (`Options.hint_from_baseline`): the greedy start first keeps every operation that
+can stay at its reference slot and places only the forced ones in the gaps; after solving, any line whose
+operations can all return to their reference slots (free, inside working time, clear of downtime, in precedence
+order) is put back. The independent validator checks the final plan as always.
+
+**Consequences.** Comparisons show only what the scenario causes (0 of 12 noisy runs under load). A scenario plan
+may forgo improvements the reference solve missed — by design: what-if answers "what changes because of this".
+
+## D-040 — The repository stays public
+_2026-10-11 · owner decision (supersedes the "private" assumption in D-010)_
+
+**Context.** The GitHub repository was found to be public (D-010 assumed private). Reviewers need easy access.
+
+**Decision.** Keep `engkh777-khaled/product-manufacturing-planner` public. Secrets live only in `.env` / the host's
+secret store; the full history was scanned on 2026-10-11 (no secrets, only fake test values) and every commit is
+scanned before pushing. All data in the repository is fictional.
+
+**Consequences.** Anyone can read the code and the engineering log. The dev Supabase project's reference is
+visible — not a secret (RLS and sign-in protect the data). Never commit credentials, real factory data or
+customer information. Recommended: turn on GitHub secret scanning and push protection (free for public
+repositories; both were off on 2026-10-11).

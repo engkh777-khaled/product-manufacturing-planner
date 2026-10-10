@@ -14,6 +14,7 @@ Every milestone adds a file here. Nothing is deleted: if a decision is reversed,
 | [backend-roadmap.md](backend-roadmap.md) | To see what comes next: Supabase + Python milestones, each with a test gate you run on your machine |
 | [decisions.md](decisions.md) | Before changing the stack, data model, or a convention |
 | [troubleshooting.md](troubleshooting.md) | When setup, builds, or `git push` misbehave |
+| [../REVIEWING.md](../REVIEWING.md) | Reviewing the project: what to read, how to run it, what to check |
 
 ## Milestone timeline
 
@@ -32,6 +33,16 @@ Every milestone adds a file here. Nothing is deleted: if a decision is reversed,
 | M10 | 2026-10-10 | [Live workbench & what-if scenarios](milestones/M10-scenarios-and-live-workbench.md) | Done | `54354b2` |
 | M11 | 2026-10-10 | [AI assistant with tool calling](milestones/M11-ai-assistant-tools.md) | Done (live check passed) | `ce12a90` |
 | M12 | 2026-10-10 | [Hardening](milestones/M12-hardening.md) (deployment pending decisions) | Hardening done | `3db83fd` |
+
+## After M12 — maintenance log
+
+| Date | Change | Commit |
+|---|---|---|
+| 2026-10-10 | CI: strict shell for the container smoke test; M12 commit recorded | `2a53f93` |
+| 2026-10-10 | Real AI model connected and live-checked (`claude-opus-5-5`); thinking-block fix, `scripts/check_assistant.py`, test env pinned to mock | `c9fd384` |
+| 2026-10-11 | Review readiness: README rewritten, [REVIEWING.md](../REVIEWING.md), `scripts/setup_database.py` (+ tests), other Supabase project's ID removed from docs; repository found **public** (history scanned, no secrets); demo mode verified from a fresh public clone (201 tests pass) | see git log |
+| 2026-10-11 | Scenario comparisons stable under load: reference-slot greedy start + put-back of untouched lines (D-039); flaky tests fixed; 337 tests pass | see git log |
+| 2026-10-11 | Decision: the repository stays public (D-040) | see git log |
 
 ## How to add a milestone
 

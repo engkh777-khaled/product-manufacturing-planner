@@ -49,7 +49,9 @@ docker run -p 8000:8000 --env-file prod.env pmp      # prod.env from the secret 
 
 ## Database changes
 - Migrations live in `supabase/migrations/`, named with the remote version timestamp. Dev: applied through the
-  Supabase MCP / dashboard. Production: `supabase link --project-ref <prod>` then `supabase db push`.
+  Supabase MCP / dashboard. New or production project without the CLI: `python -m scripts.setup_database --no-seed`
+  (empty database) or `--upgrade` (apply pending migrations); with the CLI: `supabase link` + `supabase db push`.
+  `--check` compares the repository's migrations with the database history.
 - After applying: `get_advisors` / Advisors page, then `python -m pytest tests/db` against dev.
 - Seed (`supabase/seed.sql`) is fictional demo data — **never** run it on production.
 
@@ -72,6 +74,7 @@ missing engineering data, unqualified or uncalendared operations, undated/overdu
 
 ## Security checklist before go-live
 - [ ] Supabase Auth: public sign-ups **off**, leaked-password protection **on**, MFA for admins
+- [ ] GitHub (public repository, D-040): secret scanning and push protection **on**
 - [ ] Production `SCHEDULE_SIGNING_KEY` generated and stored in both places; dev key not reused
 - [ ] Demo users not created in production (`scripts/seed_demo_users.py` is dev-only)
 - [ ] Advisors clean; `tests/db` green against a staging copy

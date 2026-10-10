@@ -335,6 +335,7 @@ def _plan(snap: dict, horizon, options: Options, anchor: Schedule | None = None)
     if anchor is not None:
         options = copy.deepcopy(options)
         options.weights.baseline_change = max(options.weights.baseline_change, ANCHOR_WEIGHT)
+        options.hint_from_baseline = True       # start the search from today's plan, repair only what changed
     inp = sched_from_snapshot(snap, horizon, options, mrp=mrp)
     if anchor is not None:
         for job in inp.jobs:

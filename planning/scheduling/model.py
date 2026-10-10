@@ -172,6 +172,7 @@ class Options:
     orders: frozenset[str] | None = None  # only these sales orders (None = all open)
     overflow_days: int = 21              # model time beyond the horizon / latest due date
     window_days: float = 3.0             # search window: until N days after max(due, greedy finish)
+    hint_from_baseline: bool = False     # greedy start keeps baseline slots where still feasible (scenario repair)
     weights: Weights = field(default_factory=Weights)
 
 

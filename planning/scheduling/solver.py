@@ -124,21 +124,54 @@ def _todo(job: Job) -> list:
 def greedy(inp: SchedulingInput, tables: Tables, pieces: dict) -> dict:
     """Serial list scheduling: lines by priority then due date, operations in routing order, each at its earliest
     finish on any qualified machine. Always feasible; used as the complete CP-SAT hint, to bound the search
-    window, and as a proven-feasible fallback when the solver hits its time limit."""
+    window, and as a proven-feasible fallback when the solver hits its time limit.
+
+    Scenario repair (`hint_from_baseline`): a first pass keeps every operation that can stay at its reference slot
+    (same machine and start, still free and feasible); only the operations the scenario forces to move are then
+    placed in the remaining gaps — so lines the change does not touch keep their dates."""
     from planning.scheduling.explain import topo
     busy = defaultdict(list)                     # machine -> [(s, e)]
     placed = {}
-    for job in sorted(inp.jobs, key=lambda j: (-j.weight, j.due, j.key)):
-        todo = {o.number for o in _todo(job)}
+    jobs = sorted(inp.jobs, key=lambda j: (-j.weight, j.due, j.key))
+    todo = {job.key: {o.number for o in _todo(job)} for job in jobs}
+
+    def earliest_start(job, n):
+        est = 0
+        for p in job.op(n).predecessors:
+            if (job.key, p) in placed:
+                est = max(est, placed[(job.key, p)][2])
+            elif p in job.fixed:
+                est = max(est, tables.grid.ceil(job.fixed[p].end))
+        return est
+
+    def free(code, s, e):
+        return not any(a < e and s < b for a, b in busy[code])
+
+    def put(job, n, slot):
+        placed[(job.key, n)] = slot
+        busy[slot[0]].append((slot[1], slot[2]))
+
+    if inp.options.hint_from_baseline:
+        for job in jobs:
+            for n in topo(job):
+                if n not in todo[job.key]:
+                    continue
+                anchor = job.baseline.get(n)
+                if not anchor:
+                    break
+                code, start, _ = anchor
+                s0, est = tables.grid.floor(start), earliest_start(job, n)
+                slot = next(((code, s0, s0 + el) for lo, hi, el in pieces[(job.key, n)].get(code, [])
+                             if lo <= s0 <= hi and s0 >= est and free(code, s0, s0 + el)), None)
+                if slot is None:
+                    break                        # this operation and the rest of the line are placed below
+                put(job, n, slot)
+
+    for job in jobs:
         for n in topo(job):
-            if n not in todo:
+            if n not in todo[job.key] or (job.key, n) in placed:
                 continue
-            est = 0
-            for p in job.op(n).predecessors:
-                if (job.key, p) in placed:
-                    est = max(est, placed[(job.key, p)][2])
-                elif p in job.fixed:
-                    est = max(est, tables.grid.ceil(job.fixed[p].end))
+            est = earliest_start(job, n)
             best = None
             for code, ps in pieces[(job.key, n)].items():
                 for lo, hi, el in ps:
@@ -154,9 +187,46 @@ def greedy(inp: SchedulingInput, tables: Tables, pieces: dict) -> dict:
                         if best is None or s + el < best[2]:
                             best = (code, s, s + el)
                         break
-            placed[(job.key, n)] = best
-            busy[best[0]].append((best[1], best[2]))
+            put(job, n, best)
     return placed
+
+
+def _snap_to_reference(inp: SchedulingInput, tables: Tables, pieces: dict, choice: dict) -> dict:
+    """Scenario repair (`hint_from_baseline`): give a line back ALL its reference slots when every one is still free
+    and feasible — a time-limited solve may move lines the scenario does not touch, which would show up as changes
+    it did not cause. Feasibility is checked here and the result is validated independently afterwards anyway."""
+    by_machine = defaultdict(list)
+    for key, (code, s, e) in choice.items():
+        by_machine[code].append((s, e, key))
+    for job in sorted(inp.jobs, key=lambda j: (-j.weight, j.due, j.key)):
+        ops = [o.number for o in _todo(job)]
+        if not ops or any(n not in job.baseline for n in ops):
+            continue
+        target = {}
+        for n in ops:
+            code, start, _ = job.baseline[n]
+            s0 = tables.grid.floor(start)
+            el = next((el for lo, hi, el in pieces[(job.key, n)].get(code, []) if lo <= s0 <= hi), None)
+            if el is None:
+                break                                   # calendar, downtime or material no longer allow it
+            target[n] = (code, s0, s0 + el)
+        if len(target) != len(ops) or all(choice[(job.key, n)] == target[n] for n in ops):
+            continue
+        ok = all(target[p][2] <= target[n][1] if p in target else
+                 (p not in job.fixed or tables.grid.ceil(job.fixed[p].end) <= target[n][1])
+                 for n in ops for p in job.op(n).predecessors)
+        ok = ok and all(target[p][2] <= tables.grid.floor(f.start)
+                        for f_n, f in job.fixed.items() for p in job.op(f_n).predecessors if p in target)
+        ok = ok and not any(a < e and s < b
+                            for code, s, e in target.values() for a, b, key in by_machine[code] if key[0] != job.key)
+        if not ok:
+            continue
+        for n in ops:
+            code, s, e = choice[(job.key, n)]
+            by_machine[code].remove((s, e, (job.key, n)))
+            choice[(job.key, n)] = target[n]
+            by_machine[target[n][0]].append((target[n][1], target[n][2], (job.key, n)))
+    return choice
 
 
 def solve(inp: SchedulingInput) -> Schedule:
@@ -299,6 +369,8 @@ def solve(inp: SchedulingInput) -> Schedule:
                  [f"Solver stopped after {opts.time_limit_s:g} s without proving feasibility or infeasibility"]
         return Schedule(inp, outcome, name, None, elapsed, conflicts=reason)
 
+    if opts.hint_from_baseline:
+        choice = _snap_to_reference(inp, tables, pieces, choice)
     sched = Schedule(inp, "", name, objective, elapsed, ops=_to_schedule_ops(inp, grid, tables, choice))
     from planning.scheduling.explain import explain_lines  # explain reuses the solver's calendar tables
     sched.lines = explain_lines(sched, grid, tables)

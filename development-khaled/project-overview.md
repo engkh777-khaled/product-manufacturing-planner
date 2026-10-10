@@ -31,7 +31,7 @@ The AI must never invent quantities or dates, approve plans, place POs, or relea
 | What-if scenarios | Seven change types, planned next to today's data, compared and saved as separate versions; receipt changes flag the baseline (M10) |
 | Hardening | Signed validation, locked decided records, RLS matrix, security headers, rate limits, data-quality checks, backups, Dockerfile + CI image test (M12) |
 | Deployment | Not deployed yet — production project and host pending; see [operations.md](operations.md) |
-| Tests | 327 passing: 198 app/engine + 129 DB (`tests/db` need `DATABASE_URL`; skipped in CI) |
+| Tests | 337 passing: 207 app/engine + 130 DB (`tests/db` need `DATABASE_URL`; skipped in CI) |
 
 ## Architecture today
 
@@ -132,13 +132,18 @@ $env:TAILWINDCSS_VERSION = "v3.4.17"
 
 | Remote | URL | Use |
 |---|---|---|
-| `planner` | https://github.com/engkh777-khaled/product-manufacturing-planner (private) | **This project.** Local `main` tracks `planner/main` |
+| `planner` | https://github.com/engkh777-khaled/product-manufacturing-planner (**public**, D-040) | **This project.** Local `main` tracks `planner/main` |
 | `origin` | https://github.com/engkh777-khaled/AI-AGENT | Older repo; untouched since `b7e2f07` |
+
+Visibility: the repository is **public** — the owner decided to keep it public on 2026-10-11 (D-040). The full
+history was scanned for the real secrets in `.env` — none found; only fake test values. Reviewers: see
+[REVIEWING.md](../REVIEWING.md).
 
 ## Supabase
 
 | Project | Ref | Region | Use |
 |---|---|---|---|
 | `product-manufacturing-planner-dev` | `qemoliyeblfmrccniczr` | eu-west-3 | Shared, disposable dev database |
-| _(engkh777-khaled's Project)_ | `nydvjpygmamsejpkxfts` | eu-west-3 | **Another app — do not use** |
+
+The Supabase account also hosts an unrelated project: never point this app, its scripts or its tests at it.
 

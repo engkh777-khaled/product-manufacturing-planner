@@ -22,3 +22,10 @@ def test_damaged_or_incomplete_backups_are_detected(db):
     incomplete = copy.deepcopy(backup)
     del incomplete["manifest"]["audit_logs"], incomplete["tables"]["audit_logs"]
     assert any("audit_logs: exists in the database but not in the backup" in p for p in verify(incomplete, db))
+
+
+def test_migration_files_match_the_database_history(db):
+    """The repository's migrations are exactly what the database recorded (no missing or extra migration)."""
+    from scripts.setup_database import plan
+    p = plan(db)
+    assert not p["empty"] and p["pending"] == [] and p["unknown_recorded"] == []

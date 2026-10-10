@@ -271,6 +271,8 @@ _Seen 2026-10-10 (M10)_
 **Cause.** Two independent time-limited CP-SAT solves can place untouched operations differently.
 
 **Fix (in place).** The scenario solve is anchored to the reference plan (D-032); changes under 1 h are ignored.
+Since 2026-10-11 (D-039) the greedy start keeps reference slots and untouched lines are put back after solving —
+anchoring alone still let 2 of 10 runs show noise under CPU load.
 
 ## "Version … is a what-if scenario … cannot be submitted or approved"
 _Reference (M10)_
@@ -331,3 +333,11 @@ By design (D-037). Create a new revision (engineering) or use the approval workf
 _Reference (M12)_
 
 Login is limited to 10 attempts per minute per IP and e-mail; the assistant to 20 messages per minute per user.
+
+## `pip install` fails: "No such file or directory … anthropic\types\beta\…"
+_Seen 2026-10-11 (reviewer setup test)_
+
+**Cause.** Windows' 260-character path limit: the Anthropic SDK has file names up to 133 characters, so the folder
+the repository is cloned into must be at most ~70 characters when long-path support is off (it is off on the dev PC).
+**Fix.** Clone into a short folder (e.g. `C:\dev`), or enable long paths (Windows setting `LongPathsEnabled`, admin).
+Mapping a drive letter with `subst` does not help: `venv` resolves the real path.
