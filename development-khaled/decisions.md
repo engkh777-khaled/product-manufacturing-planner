@@ -389,3 +389,27 @@ through sub-assemblies and subtracting their lead times. The baseline is never c
 
 **Consequences.** Works for any client (app, API, SQL). The flag is a planned-start comparison; MRP and the solver
 give the full re-plan.
+
+## D-034 — The assistant acts only through tools; consequential tools need a human Confirm
+_2026-10-10 · M11_
+
+**Context.** Spec §11: the AI explains and coordinates; the planning engine calculates; rules 9–12 forbid
+automatic purchasing, release, self-approval and committing dates, and require human authorization.
+
+**Decision.** The model gets 11 server-side tools (spec §11.1) and nothing else. Tools validate input (pydantic),
+check roles, run as the signed-in user on their RLS snapshot, and log. `save_proposed_plan` and
+`submit_plan_for_approval` only create a pending action; a person presses Confirm, and the action runs with that
+person's token through the normal workflow functions (idempotent, owner-only). No approve/release/PO/commit tool
+exists.
+
+**Consequences.** A prompt-injected or mistaken model cannot change data on its own; the worst case is a proposal
+the user dismisses. Every number in an answer is traceable to a tool call shown in the trace.
+
+## D-035 — Model and key are server-side settings; without a key the scripted demo stays
+_2026-10-10 · M11_
+
+**Decision.** `ANTHROPIC_API_KEY` lives only in `.env`/server configuration (never rendered); `ASSISTANT_MODEL`
+defaults to `claude-opus-5-5` (most capable) and can be switched to a cheaper model. With no key, the page keeps
+the scripted, data-grounded demo replies; tests always run with the key cleared and a mocked client.
+
+**Consequences.** CI and offline development never call the AI service; enabling the assistant is one setting.

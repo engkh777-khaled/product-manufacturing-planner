@@ -5,7 +5,7 @@
 | **Date** | 2026-10-10 |
 | **Author** | Khaled (implemented with Claude Code) |
 | **Status** | Done |
-| **Commits** | _see git log — "M10" commit_ |
+| **Commits** | `54354b2` |
 | **Spec sections** | §10 (what-if simulation), §12.6 (planning workbench), §6.18–6.20 (runs, versions, alerts), acceptance test 9 |
 
 ## Goal

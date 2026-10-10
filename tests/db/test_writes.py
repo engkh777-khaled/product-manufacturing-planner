@@ -54,6 +54,8 @@ def remove_test_audit_rows(pg):
     started = one(pg, "select now()")
     yield
     pg.execute("delete from audit_logs where created_at >= %s", (started,))
+    # receipt-date edits through the API fire the baseline-impact trigger (M10): drop the flags they raised
+    pg.execute("delete from planning_alerts where details ->> 'source' = 'receipt_change' and created_at >= %s", (started,))
 
 
 def one(cur, sql, params=None):

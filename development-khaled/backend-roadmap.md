@@ -1,6 +1,6 @@
 # Backend Roadmap — Supabase + Python
 
-_Written 2026-10-10 · Updated 2026-10-10: **cloud-first** (D-014), M03–M10 done_
+_Written 2026-10-10 · Updated 2026-10-10: **cloud-first** (D-014), M03–M11 done_
 
 Each milestone ends with a **test gate**: commands any developer can run on their own machine to prove the
 milestone works. A milestone is not done until its gate passes and its file exists in [milestones/](milestones/).
@@ -198,7 +198,7 @@ Details: [milestones/M09-finite-capacity-scheduler.md](milestones/M09-finite-cap
 Manual: delay PO-8821 by 5 days, run, and compare. The approved baseline is unchanged.
 Details: [milestones/M10-scenarios-and-live-workbench.md](milestones/M10-scenarios-and-live-workbench.md).
 
-### M11 — AI assistant with tool calling (spec §11, Phase 5)
+### M11 — AI assistant with tool calling (spec §11, Phase 5) ✅ Done 2026-10-10
 **Goal:** Replace the scripted assistant with an LLM that only uses authorised tools.
 - Tools from spec §11.1 wrap repository and planning functions, run as the logged-in user, and validate inputs.
 - System prompt from spec §11.3. No tool can approve, release, place POs or commit dates.
@@ -209,6 +209,7 @@ Details: [milestones/M10-scenarios-and-live-workbench.md](milestones/M10-scenari
 .\.venv\Scripts\python -m pytest tests/test_assistant_tools.py   # schemas, authorization, refusals (mocked LLM)
 ```
 Manual (needs API key in `.env`): "Can we deliver SO-1005 by 30 November?" returns tool calls and an answer that matches the data.
+Details: [milestones/M11-ai-assistant-tools.md](milestones/M11-ai-assistant-tools.md).
 
 ### M12 — Hardening & deployment (spec Phase 6)
 **Goal:** A controlled MVP ready for supervised use.

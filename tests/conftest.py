@@ -10,3 +10,5 @@ os.environ["APP_ENV"] = "test"
 os.environ["AUTH_MODE"] = "disabled"
 os.environ["SCHEDULER_WORKER"] = "thread"  # solver jobs run in-process in tests (no worker pool)
 os.environ["SCHEDULER_TIME_LIMIT_SECONDS"] = "3"
+os.environ["ASSISTANT_PLAN_SECONDS"] = "3"
+os.environ["ANTHROPIC_API_KEY"] = ""  # tests never call the real AI service (mocked client in test_assistant_tools)

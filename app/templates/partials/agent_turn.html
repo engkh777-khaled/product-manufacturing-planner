@@ -1,0 +1,30 @@
+{% from "components/ui.html" import icon, badge %}
+{% from "components/chat.html" import user_msg, agent_shell %}
+{% if turn %}
+{{ user_msg(turn.prompt, turn.at.strftime("%H:%M:%S"), user.name) }}
+{% call agent_shell() %}
+  {% if turn.trace %}
+  <details class="p-space-md bg-surface-container-lowest rounded font-label-mono-xs text-label-mono-xs" open>
+    <summary class="cursor-pointer flex items-center gap-space-xs text-outline uppercase">{{ icon("data_object", 14) }}Tool calls ({{ turn.trace|length }}) — run as {{ user.name }}</summary>
+    <ol class="mt-space-xs flex flex-col gap-px">
+      {% for c in turn.trace %}
+      <li class="flex flex-wrap items-center gap-space-xs {{ 'text-on-surface-variant' if c.ok else 'text-crit' }}">
+        {{ icon("check_circle" if c.ok else "cancel", 13, "text-ok" if c.ok else "text-crit") }}
+        <span class="text-primary">{{ c.name }}</span><span class="text-outline">({{ c.input|tojson|truncate(90) }})</span>
+        <span>→ {{ c.summary|truncate(110) }}</span><span class="text-outline">{{ c.seconds }}s</span>
+      </li>
+      {% endfor %}
+    </ol>
+  </details>
+  {% endif %}
+  {% if turn.error %}
+  <div class="p-space-md rounded border border-crit/40 bg-crit/10 text-crit font-label-mono-xs text-label-mono-xs" role="alert">{{ icon("error", 14) }} {{ turn.error }}</div>
+  {% else %}
+  <div class="p-space-md bg-surface-container rounded flex flex-col gap-space-sm font-body-sm text-body-sm text-on-surface leading-6">
+    {{ render(turn.answer) }}
+    <div class="font-label-mono-xs text-label-mono-xs text-outline">AI answer · facts come from the tool calls above · verify before acting</div>
+  </div>
+  {% endif %}
+  {% for action in actions %}{% include "partials/agent_action.html" %}{% endfor %}
+{% endcall %}
+{% endif %}

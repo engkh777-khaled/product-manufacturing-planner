@@ -36,6 +36,16 @@ class Settings(BaseSettings):
     scheduler_worker: Literal["process", "thread"] = "process"
     scheduler_time_limit_seconds: float = 10.0
 
+    # AI planning assistant (M11). Without a key the assistant falls back to scripted demo replies.
+    anthropic_api_key: SecretStr | None = None   # server-side only — never sent to templates or browsers
+    assistant_model: str = "claude-opus-5-5"
+    assistant_max_tool_rounds: int = 8
+    assistant_plan_seconds: float = 8.0          # CP-SAT time limit when a tool needs a fresh plan
+
+    @property
+    def assistant_enabled(self) -> bool:
+        return bool(self.anthropic_api_key and self.anthropic_api_key.get_secret_value().strip())
+
     @model_validator(mode="after")
     def _auth_mode_is_safe(self) -> "Settings":
         if self.auth_mode == "disabled" and self.app_env not in ("development", "test"):

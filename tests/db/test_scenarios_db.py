@@ -39,7 +39,8 @@ def test_9_receipt_change_flags_the_baseline_and_keeps_it(db, act_as):
                   from purchase_orders po where po.id = li.purchase_order_id and po.po_number = 'PO-8821'""")
     db.execute("reset role")
     db.execute("""select severity, description, details ->> 'operation', details ->> 'order_number', details ->> 'baseline_version'
-                  from planning_alerts where details ->> 'source' = 'receipt_change' and status = 'Open'""")
+                  from planning_alerts where details ->> 'source' = 'receipt_change' and status = 'Open'
+                    and details ->> 'po_number' = 'PO-8821'""")
     rows = db.fetchall()
     assert rows, "a later receipt must flag the baseline"
     severity, description, op, order, version = rows[0]
@@ -58,7 +59,8 @@ def test_an_earlier_receipt_raises_no_flag(db, act_as):
     db.execute("""update purchase_order_items li set expected_delivery_date = expected_delivery_date - 2
                   from purchase_orders po where po.id = li.purchase_order_id and po.po_number = 'PO-8821'""")
     db.execute("reset role")
-    assert scalar(db, "select count(*) from planning_alerts where details ->> 'source' = 'receipt_change'") == 0
+    assert scalar(db, "select count(*) from planning_alerts where details ->> 'source' = 'receipt_change' "
+                      "and details ->> 'po_number' = 'PO-8821'") == 0
 
 
 def test_9_what_if_scenario_is_a_separate_version_that_cannot_be_approved(db, act_as, snap):

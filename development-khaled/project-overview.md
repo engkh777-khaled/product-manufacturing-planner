@@ -1,6 +1,6 @@
 # Project Overview
 
-_Last updated: 2026-10-10 (after M10)_
+_Last updated: 2026-10-10 (after M11)_
 
 ## Goal
 
@@ -23,13 +23,13 @@ The AI must never invent quantities or dates, approve plans, place POs, or relea
 | Configuration | `app/config.py` + `.env` (template `.env.example`) |
 | CI | GitHub Actions runs `pytest` on push |
 | Planning engine (OR-Tools CP-SAT) | Finite-capacity scheduler + independent validator; "Re-run CP-SAT" runs a background job and saves a Draft version (M09) |
-| AI assistant | Scripted replies grounded in repository data; no LLM connected |
+| AI assistant | Tool-calling LLM (Anthropic) over 11 server-side tools, human Confirm for saves/submissions; scripted demo without an API key (M11) |
 | Auth | Supabase Auth sign-in, 7 spec roles, RLS policies on all tables, HTTP-only cookie sessions (M05) |
 | Editing | Draft sales orders, inventory, PO lines, BOM revision workflow, approval decisions (Supabase mode) |
 | Approvals & audit | Workflow functions + guard (approve ⇒ new baseline), append-only trigger audit on 12 tables (M07) |
 | Planning engine | `planning/` package: MRP (multilevel netting, priority allocation, time-phased availability, alerts) + CLI (M08) |
 | What-if scenarios | Seven change types, planned next to today's data, compared and saved as separate versions; receipt changes flag the baseline (M10) |
-| Tests | 247 passing: 156 app/engine + 91 DB (`tests/db`, need `DATABASE_URL`; skipped in CI) |
+| Tests | 272 passing: 181 app/engine + 91 DB (`tests/db`, need `DATABASE_URL`; skipped in CI) |
 
 ## Architecture today
 
@@ -106,7 +106,7 @@ development-khaled/     This engineering log
 | `/resources` | Resources & Calendars | Machines, capabilities, shifts, holidays/overtime, downtime; supervisors edit (M09) |
 | `/engineering` | Engineering & BOM | Multilevel BOM, revision history + approval workflow, scrap simulation, validation |
 | `/approvals` | Approvals & Audit | Pending plans with impact vs baseline, decisions, version lifecycle, audit trail (M07) |
-| `/assistant` | AI Planning Assistant | Scripted grounded replies; approval submission needs both confirmations (server-checked) |
+| `/assistant` | AI Planning Assistant | LLM with tool trace and confirmation cards when `ANTHROPIC_API_KEY` is set (M11); otherwise scripted grounded replies |
 
 ## Run locally
 

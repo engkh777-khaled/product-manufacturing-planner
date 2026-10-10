@@ -283,3 +283,21 @@ _Reference (M10)_
 
 Only moves to a *later* date (or removing the date) are flagged, and only when an approved-baseline operation that
 consumes the item — directly or through a sub-assembly — starts before the new date minus sub-assembly lead time.
+
+## Assistant says "The AI service rejected the API key"
+_Reference (M11)_
+
+Set `ANTHROPIC_API_KEY=` in `.env` (no quotes), restart the app. The page header shows "AI assistant · <model>"
+when the key is loaded; without it the scripted demo is shown.
+
+## Assistant answer takes 10–20 s
+_Reference (M11)_
+
+Questions about risk or "what if" need a fresh CP-SAT plan (`ASSISTANT_PLAN_SECONDS`, default 8 s); it is cached
+per snapshot for 5 minutes, so follow-up questions are faster.
+
+## DB tests fail on planning_alerts counts after `tests/db/test_writes.py`
+_Seen 2026-10-10 (M11)_
+
+**Cause.** The API round-trip test commits a PO date change through PostgREST; since M10 that fires the
+baseline-impact trigger. **Fix (in place).** Its cleanup deletes the `receipt_change` alerts it raised.

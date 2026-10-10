@@ -56,7 +56,7 @@ Open http://127.0.0.1:8000 and sign in, e.g. as `planner@example.com` or `approv
 | `/orders` | Sales Orders & Demand | Search, status tabs, priority filter, pagination, order inspector |
 | `/engineering` | Engineering & BOM | Product switch, multilevel BOM expand/collapse, shortages filter, scrap +5% simulation, BOM validation |
 | `/approvals` | Approvals & Audit | Approve/reject plans (approver), version lifecycle, append-only audit trail |
-| `/assistant` | AI Planning Assistant | Scripted, data-grounded replies; human-approval submission gated by both confirmations (server-checked) |
+| `/assistant` | AI Planning Assistant | With `ANTHROPIC_API_KEY`: tool-calling assistant (11 planning tools, run as you; saves/submissions need your Confirm). Without: scripted, data-grounded replies |
 
 ## Layout
 ```

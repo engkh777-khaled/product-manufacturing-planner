@@ -17,7 +17,7 @@
     <div class="p-space-md flex flex-col gap-space-sm border-b border-surface-container">
       <div class="flex flex-wrap items-center gap-space-sm">
         <span class="flex items-center gap-space-xs px-space-sm py-space-xs bg-surface-container rounded font-label-mono-sm text-label-mono-sm text-on-surface">{{ icon("forum", 15, "text-primary") }}Diagnostic Dialogue #PL-4092</span>
-        {{ badge("Scripted demo — no LLM connected", "ai") }}
+        {% if agent_mode %}{{ badge("AI assistant · " ~ model ~ " · tools only", "ai") }}{% else %}{{ badge("Scripted demo — no LLM connected", "ai") }}{% endif %}
       </div>
       <div class="flex flex-wrap items-center gap-space-sm font-label-mono-xs text-label-mono-xs">
         <span class="flex items-center gap-space-xs text-on-surface-variant">{{ icon("center_focus_strong", 14) }}Focused Context:
@@ -30,6 +30,15 @@
     </div>
 
     <div id="thread" class="flex-1 overflow-y-auto scroll-thin p-space-md flex flex-col gap-space-lg" aria-live="polite">
+      {% if agent_mode %}
+      {% call agent_shell() %}
+        <div class="p-space-md bg-surface-container rounded flex flex-col gap-space-sm font-body-sm text-body-sm text-on-surface leading-6">
+          <p>Hello {{ user.name if user else "" }}. I answer from the planning tools only — order details, readiness, MRP, material availability, capacity, schedule versions, fresh CP-SAT plans, what-if simulations and delivery-risk explanations — run with your permissions.</p>
+          <p>I can prepare saving a plan or submitting it for approval, but nothing happens until you press <b>Confirm</b>. I cannot approve plans, release production, place purchase orders or promise dates to customers.</p>
+          <p class="font-label-mono-xs text-label-mono-xs text-outline">Context: {{ o.order_number }} · baseline v{{ b.version_number }} · conversation {{ conv.id }}</p>
+        </div>
+      {% endcall %}
+      {% else %}
       {{ user_msg(question, "14:30:12") }}
       {% if first_reply %}
         {{ agent_reply(first_reply) }}
@@ -114,22 +123,27 @@
         </div>
       {% endcall %}
       {% endif %}
+      {% endif %}
     </div>
 
     <div class="p-space-md border-t border-surface-container flex flex-col gap-space-sm">
+      {% if agent_mode %}<div id="agent-working" class="htmx-indicator font-label-mono-xs text-label-mono-xs text-cobalt flex items-center gap-space-xs"><span class="animate-spin">{{ icon("autorenew", 14) }}</span>Working — calling planning tools (a fresh plan can take ~10 s)…</div>{% endif %}
       <div class="flex items-center gap-space-xs overflow-x-auto scroll-thin whitespace-nowrap font-label-mono-xs text-label-mono-xs">
         <span class="text-outline">Quick Prompts:</span>
         {% for qp in quick_prompts %}
-        <button type="button" hx-post="/assistant/message" hx-vals='{{ {"prompt": qp}|tojson }}' hx-target="#thread" hx-swap="beforeend scroll:bottom"
+        <button type="button" hx-post="/assistant/message" hx-vals='{{ {"prompt": qp, "conv_id": conv.id if conv else "", "order": o.order_number, "version": version_key}|tojson }}' hx-target="#thread" hx-swap="beforeend scroll:bottom" hx-indicator="#agent-working" hx-disabled-elt="this"
                 class="px-space-sm py-space-xs bg-surface-container rounded text-on-surface hover:bg-surface-container-high">{{ qp }}</button>
         {% endfor %}
       </div>
       <form class="flex items-center gap-space-sm" hx-post="/assistant/message" hx-target="#thread" hx-swap="beforeend scroll:bottom"
+            hx-indicator="#agent-working" hx-disabled-elt="find button"
             hx-on::after-request="if (event.detail.successful) this.reset()">
+        {% if conv %}<input type="hidden" name="conv_id" value="{{ conv.id }}">{% endif %}
+        <input type="hidden" name="order" value="{{ o.order_number }}"><input type="hidden" name="version" value="{{ version_key }}">
         <label class="relative flex-1">
           <span class="sr-only">Message</span>
           {{ icon("terminal", 16, "text-outline absolute left-space-md top-1/2 -translate-y-1/2 pointer-events-none") }}
-          <input name="prompt" required maxlength="500" autocomplete="off" placeholder="Ask the scheduling engine (e.g. 'Why is SO-1012 late?')"
+          <input name="prompt" required maxlength="{{ 2000 if agent_mode else 500 }}" autocomplete="off" placeholder="Ask the scheduling engine (e.g. 'Why is SO-1012 late?')"
                  class="w-full h-10 pl-10 pr-space-md bg-surface-container-lowest text-on-surface placeholder:text-outline font-body-lg text-body-lg rounded border border-hairline focus:border-cobalt outline-none">
         </label>
         <button class="h-10 px-space-lg inline-flex items-center gap-space-xs bg-primary text-on-primary hover:bg-primary-fixed font-label-mono-sm text-label-mono-sm rounded font-semibold">Send{{ icon("send", 15) }}</button>

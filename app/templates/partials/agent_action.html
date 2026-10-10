@@ -1,0 +1,22 @@
+{% from "components/ui.html" import icon, badge %}
+{% if error %}
+<div class="p-space-md rounded border border-crit/40 bg-crit/10 text-crit font-label-mono-xs text-label-mono-xs" role="alert">{{ error }}</div>
+{% elif action %}
+<div id="action-{{ action.id }}" class="p-space-md rounded border {{ 'border-warn/50 bg-warn/10' if action.status == 'pending' else ('border-ok/40 bg-ok/10' if action.status == 'done' else 'border-hairline bg-surface-container') }} flex flex-col gap-space-sm font-label-mono-xs text-label-mono-xs">
+  <div class="flex flex-wrap items-center gap-space-xs text-on-surface">
+    {{ icon("front_hand" if action.status == "pending" else ("task_alt" if action.status == "done" else "block"), 15) }}
+    <b>{{ "Your confirmation is needed" if action.status == "pending" else "Action " ~ action.status }}</b>
+    {{ badge(action.tool|replace("_", " "), "ai") }}
+  </div>
+  <p class="text-on-surface-variant">{{ action.summary }}</p>
+  {% if action.result %}<p class="{{ 'text-ok' if action.status == 'done' else 'text-crit' }}">{{ action.result }}</p>{% endif %}
+  {% if action.status == "pending" %}
+  <div class="flex gap-space-sm">
+    <button hx-post="/assistant/actions/{{ action.id }}/confirm" hx-target="#action-{{ action.id }}" hx-swap="outerHTML"
+            hx-disabled-elt="this" class="h-7 px-space-md rounded bg-primary text-on-primary hover:bg-primary-fixed font-semibold">Confirm</button>
+    <button hx-post="/assistant/actions/{{ action.id }}/dismiss" hx-target="#action-{{ action.id }}" hx-swap="outerHTML"
+            class="h-7 px-space-md rounded bg-surface-container-high text-on-surface-variant">Dismiss</button>
+  </div>
+  {% endif %}
+</div>
+{% endif %}

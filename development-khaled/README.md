@@ -29,9 +29,9 @@ Every milestone adds a file here. Nothing is deleted: if a decision is reversed,
 | M07 | 2026-10-10 | [Approvals & audit trail](milestones/M07-approvals-and-audit.md) | Done | `038c51f` |
 | M08 | 2026-10-10 | [Material requirements planning engine](milestones/M08-mrp-engine.md) | Done | `d40a04e` |
 | M09 | 2026-10-10 | [Finite-capacity scheduler & validator](milestones/M09-finite-capacity-scheduler.md) | Done | `fb15595` |
-| M10 | 2026-10-10 | [Live workbench & what-if scenarios](milestones/M10-scenarios-and-live-workbench.md) | Done | see git log |
-| M11 | — | [AI assistant with tool calling](backend-roadmap.md#m11--ai-assistant-with-tool-calling-spec-11-phase-5) | Next | — |
-| M12 | — | [Hardening & deployment](backend-roadmap.md#m12--hardening--deployment-spec-phase-6) | Planned | — |
+| M10 | 2026-10-10 | [Live workbench & what-if scenarios](milestones/M10-scenarios-and-live-workbench.md) | Done | `54354b2` |
+| M11 | 2026-10-10 | [AI assistant with tool calling](milestones/M11-ai-assistant-tools.md) | Done (live LLM check pending API key) | see git log |
+| M12 | — | [Hardening & deployment](backend-roadmap.md#m12--hardening--deployment-spec-phase-6) | Next | — |
 
 ## How to add a milestone
 

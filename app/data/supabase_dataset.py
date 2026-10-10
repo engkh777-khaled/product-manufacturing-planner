@@ -611,6 +611,7 @@ def build_dataset(snap: dict) -> SimpleNamespace:
             for o in snap["sales_orders"]},
         SNAPSHOT_AT=snap.get("generated_at"),
         RESOURCES=RESOURCES,
+        SNAPSHOT=snap,  # raw RLS snapshot: assistant tools plan on exactly what the user can see (M11)
         BASELINE_IMPACT=[{"description": a["description"], "details": a.get("details") or {}, "created_at": ts(a["created_at"])}
                          for a in snap["planning_alerts"]
                          if a["status"] == "Open" and (a.get("details") or {}).get("source") == "receipt_change"],
