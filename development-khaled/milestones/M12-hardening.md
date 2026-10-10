@@ -5,7 +5,7 @@
 | **Date** | 2026-10-10 |
 | **Author** | Khaled (implemented with Claude Code) |
 | **Status** | Hardening done; production deployment waiting for decisions (host, production project) |
-| **Commits** | _see git log — "M12" commit_ |
+| **Commits** | `3db83fd` |
 | **Spec sections** | Phase 6 (data validation, authorization and RLS testing, audit, solver performance, backup and recovery, UAT, documentation), §5 security requirements |
 
 ## Goal
