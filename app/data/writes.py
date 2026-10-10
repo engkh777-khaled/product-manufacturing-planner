@@ -207,7 +207,10 @@ def fetch_snapshot(token: str) -> WriteResult:
 def record_schedule_run(payload: dict, token: str | None = None) -> WriteResult:
     """Planner/admin: store a schedule run and, when the solver produced one, a Draft version with its production
     orders and operations (M09). The database re-checks the stored operations independently."""
-    result = _rest("POST", "rpc/record_schedule_run", json={"p": payload}, token=token, timeout=60)
+    from app.signing import signed_payload
+    text, signature = signed_payload(payload)
+    result = _rest("POST", "rpc/record_schedule_run", json={"p_text": text, "p_signature": signature}, token=token,
+                   timeout=60)
     if result.ok:
         d = result.data or {}
         if d.get("version_number") and payload.get("run_type") == "simulation":

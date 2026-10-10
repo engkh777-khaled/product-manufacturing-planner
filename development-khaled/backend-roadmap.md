@@ -1,6 +1,6 @@
 # Backend Roadmap — Supabase + Python
 
-_Written 2026-10-10 · Updated 2026-10-10: **cloud-first** (D-014), M03–M11 done_
+_Written 2026-10-10 · Updated 2026-10-10: **cloud-first** (D-014), M03–M11 done, M12 hardening done (deployment pending)_
 
 Each milestone ends with a **test gate**: commands any developer can run on their own machine to prove the
 milestone works. A milestone is not done until its gate passes and its file exists in [milestones/](milestones/).
@@ -211,10 +211,11 @@ Details: [milestones/M10-scenarios-and-live-workbench.md](milestones/M10-scenari
 Manual (needs API key in `.env`): "Can we deliver SO-1005 by 30 November?" returns tool calls and an answer that matches the data.
 Details: [milestones/M11-ai-assistant-tools.md](milestones/M11-ai-assistant-tools.md).
 
-### M12 — Hardening & deployment (spec Phase 6)
+### M12 — Hardening & deployment (spec Phase 6) — hardening ✅ 2026-10-10, deployment pending decisions
 **Goal:** A controlled MVP ready for supervised use.
 - RLS and authorization test sweep, solver performance tests, backups, error monitoring.
 - Deploy: separate **production** Supabase project (`supabase db push`), Python app on a container host, secrets management.
 - User acceptance run of all 10 spec acceptance tests against the deployed environment.
 
 **Test gate:** full `pytest` (including `tests/db`) green locally against dev, and in CI against a staging project.
+Details: [milestones/M12-hardening.md](milestones/M12-hardening.md), [operations.md](operations.md), [acceptance-tests.md](acceptance-tests.md).

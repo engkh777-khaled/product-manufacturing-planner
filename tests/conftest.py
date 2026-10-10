@@ -12,3 +12,15 @@ os.environ["SCHEDULER_WORKER"] = "thread"  # solver jobs run in-process in tests
 os.environ["SCHEDULER_TIME_LIMIT_SECONDS"] = "3"
 os.environ["ASSISTANT_PLAN_SECONDS"] = "3"
 os.environ["ANTHROPIC_API_KEY"] = ""  # tests never call the real AI service (mocked client in test_assistant_tools)
+
+
+import pytest  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def _fresh_rate_limits():
+    """Rate limits are per process (M12); tests sign in many times a minute."""
+    from app import hardening
+    hardening.login_limiter.reset()
+    hardening.assistant_limiter.reset()
+    yield

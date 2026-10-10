@@ -1,0 +1,26 @@
+# Acceptance tests — traceability (spec §14)
+
+_Last updated: 2026-10-10 (M12). All data fictional._
+
+Each spec acceptance test maps to automated tests (run on every push: engine/app in CI; `tests/db` locally against
+the dev project) and to the live checks done in the milestone that delivered it. **Status: all 10 pass on the dev
+environment; the run against a deployed production environment is pending (no production project yet — see
+[operations.md](operations.md)).**
+
+| # | Spec test | Automated evidence | Live evidence |
+|---|---|---|---|
+| 1 | Normal order: requirements, feasible schedule, validation, save + submit | `planning/tests/scheduling/test_acceptance.py::test_1_normal_order_gets_a_feasible_validated_schedule`; `tests/db/test_schedule_db.py::test_planner_records_a_validated_draft_version`, `::test_validated_draft_can_be_submitted` | M09: Re-run CP-SAT → Draft v4.4, validation passed (281 checks), submitted as APR-2065 (then withdrawn) |
+| 2 | Missing critical component: shortage identified, linked to the operation, not assumed available, impact explained | `planning/tests/test_mrp.py::test_acceptance_2_missing_critical_component`; `planning/tests/scheduling/test_plant.py::test_2_missing_component_blocks_the_operation_not_the_whole_plan`; `test_acceptance.py::test_short_material_blocks_the_operation_and_its_successors` | M08: SO-1005 seat rings short 3 at OP-030; M09: SO-1005/1 blocked at OP-030, OP-010/020 still scheduled |
+| 3 | Late supplier receipt: availability from the expected date, operation waits, risk recalculated | `test_mrp.py::test_acceptance_3_late_supplier_receipt`; `test_plant.py::test_3_late_supplier_receipt_delays_the_consuming_operation`; `test_acceptance.py::test_7_material_is_named_when_it_limits_the_date` | M08/M09: SO-1012 OP-050 starts Nov 25 when PO-8815 arrives |
+| 4 | Machine conflict: no overlap, validator detects overlap, qualified alternative used | `test_acceptance.py::test_4_operations_on_the_same_exclusive_machine_do_not_overlap`, `::test_4_a_qualified_alternative_machine_is_used`; `test_validator.py::test_duplicate_operation`; DB re-check `tests/db/test_schedule_db.py::test_database_recheck_blocks_submission_of_an_overlapping_schedule` | M09 plant schedule: MC-010 / MC-014 alternatives, 0 overlaps |
+| 5 | Urgent order: priority rules, delivery-date changes identified, freeze policy | `test_acceptance.py::test_5_urgent_order_takes_priority_and_the_delivery_change_is_reported`, `::test_5_frozen_commitments_are_preserved_under_the_freeze_policy`, `::test_freeze_window_option_fixes_baseline_operations_from_the_snapshot`; `tests/test_scenarios.py::test_urgent_order_takes_capacity_and_material_and_says_so` | M10: urgent Critical SIM-1 → SO-1019 blocked, SO-1020 +36.5 h |
+| 6 | Machine downtime: not scheduled in the blocked interval; adjusted or reported infeasible | `test_acceptance.py::test_6_operation_is_not_scheduled_during_confirmed_downtime`, `::test_6_long_operation_never_straddles_downtime_and_moves_after_it`, `::test_6_committed_work_inside_downtime_is_reported_infeasible`; `tests/test_scenarios.py::test_machine_unavailable_is_respected_and_decision_scenarios_can_be_adopted` | M09: MC-010 spindle PM and TE-001 overhaul avoided |
+| 7 | Impossible requested date: reported as not achievable, limiting factors, no fabricated schedule | `test_acceptance.py::test_7_impossible_requested_date_is_reported_with_limiting_factors`, `::test_7_material_is_named_when_it_limits_the_date` | M10: PO-8821 +5 d → SO-1005/2 "Requested date Nov 30 cannot be achieved … earliest possible Dec 03" |
+| 8 | Missing engineering data: needs data, missing information identified, not production-ready | `test_mrp.py::test_acceptance_8_missing_engineering_data`; `test_acceptance.py::test_8_order_without_approved_engineering_data_needs_data`, `::test_8_no_qualified_machine_is_missing_data`; `tests/test_assistant_tools.py::test_order_details_and_readiness`; `tests/test_data_quality.py::test_recorded_plant_findings` | SO-1021 (V-800-FGV-02): MRP missing_bom, scheduler needs data, data-quality errors |
+| 9 | Approved plan + receipt change: baseline preserved, impact flagged, new run/scenario possible, approval required | `tests/test_scenarios.py::test_9_receipt_change_scenario_preserves_the_baseline_and_shows_the_impact`; `tests/db/test_scenarios_db.py::test_9_receipt_change_flags_the_baseline_and_keeps_it`, `::test_9_what_if_scenario_is_a_separate_version_that_cannot_be_approved`; approvals `tests/db/test_approvals_db.py` | M10: scenario run #1152 → v4.5 (what-if), submit refused, baseline still v4.2 |
+| 10 | Competing orders: consistent, explicit allocation; stock never allocated twice; affected orders explained | `test_mrp.py::test_acceptance_10_competing_orders`; `tests/test_scenarios.py::test_urgent_order_takes_capacity_and_material_and_says_so` | M08: SO-1022 shortages name SO-1005 as the higher-priority consumer |
+
+## Still to run
+- The same 10 checks by a planner and an approver against the **deployed production** environment (user
+  acceptance), once the production project and host exist — record the run here with date and versions.
+- The live assistant conversation check of M11 (needs `ANTHROPIC_API_KEY`).

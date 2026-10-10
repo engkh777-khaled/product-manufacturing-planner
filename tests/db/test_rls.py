@@ -111,9 +111,19 @@ def test_engineering_cannot_approve_its_own_bom(db):
         db.execute(f"update bom_headers set status = 'Approved', approved_at = now() where id = {V800_DRAFT_BOM}")
 
 
-def test_approver_can_approve_a_bom(db):
+def test_approver_can_approve_a_bom_under_review_only(db):
+    act_as(db, "engineering@example.com")
+    assert rows(db, f"update bom_headers set status = 'Under Review' where id = {V800_DRAFT_BOM}") == 1
+    db.execute("reset role")
     act_as(db, "approver@example.com")
     assert rows(db, f"update bom_headers set status = 'Approved', approved_at = now() where id = {V800_DRAFT_BOM}") == 1
+
+
+def test_approver_cannot_skip_engineering_review(db):
+    # M12: a Draft revision must be submitted (Under Review) before it can be approved
+    act_as(db, "approver@example.com")
+    with pytest.raises(errors.InsufficientPrivilege, match="Only engineering edits revisions"):
+        db.execute(f"update bom_headers set status = 'Approved', approved_at = now() where id = {V800_DRAFT_BOM}")
 
 
 def test_audit_log_is_append_only_and_private(db):

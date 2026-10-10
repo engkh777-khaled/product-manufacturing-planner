@@ -1,0 +1,18 @@
+# Keep secrets, local state and non-runtime material out of the image.
+.env
+.env.*
+!.env.example
+.venv/
+.git/
+.github/
+**/__pycache__/
+*.pyc
+.pytest_cache/
+backups/
+tests/
+planning/tests/
+design/
+development-khaled/
+supabase/
+*.zip
+*.md

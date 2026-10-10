@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import RedirectResponse
 
-from app import auth
+from app import auth, hardening
 from app.templating import templates
 
 router = APIRouter()
@@ -29,6 +29,7 @@ def login_form(request: Request, next: str = "/dashboard"):
 
 @router.post("/login")
 async def login(request: Request, email: str = Form(...), password: str = Form(...), next: str = Form("/dashboard")):
+    hardening.login_limiter.check(f"{hardening.client_ip(request)}|{email.strip().lower()}")  # slows password guessing
     target = auth.safe_next(next)
     if auth.settings().auth_mode == "disabled":
         return RedirectResponse(target, status_code=303)

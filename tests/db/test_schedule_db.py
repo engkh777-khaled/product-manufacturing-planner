@@ -7,6 +7,8 @@ import sys
 from datetime import date
 
 import pytest
+
+from app.signing import signed_payload
 from psycopg import errors
 
 from planning.scheduling import plan_payload
@@ -28,7 +30,7 @@ def payload(db):
 @pytest.fixture
 def recorded(db, act_as, payload):
     act_as("planner@example.com")
-    result = scalar(db, "select public.record_schedule_run(%s::jsonb)", (json.dumps(payload),))
+    result = scalar(db, "select public.record_schedule_run(%s, %s)", signed_payload(payload))
     db.execute("reset role")
     return result
 
@@ -58,13 +60,13 @@ def test_planner_records_a_validated_draft_version(db, recorded, payload, user_i
 def test_only_planners_record_schedule_runs(db, act_as, payload):
     act_as("stores@example.com")
     with pytest.raises(errors.InsufficientPrivilege):
-        db.execute("select public.record_schedule_run(%s::jsonb)", (json.dumps(payload),))
+        db.execute("select public.record_schedule_run(%s, %s)", signed_payload(payload))
 
 
 def test_no_version_is_stored_without_a_schedule(db, act_as, payload):
     act_as("planner@example.com")
     infeasible = {**payload, "status": "Infeasible", "orders": []}
-    result = scalar(db, "select public.record_schedule_run(%s::jsonb)", (json.dumps(infeasible),))
+    result = scalar(db, "select public.record_schedule_run(%s, %s)", signed_payload(infeasible))
     assert result["version_number"] is None and result["validation_passed"] is False
     assert scalar(db, "select solver_status from planning_runs where run_number = %s", (result["run_number"],)) == "Infeasible"
 
@@ -135,3 +137,13 @@ def test_cli_schedules_the_dev_database(db_conn):
                          capture_output=True, text=True, encoding="utf-8", timeout=180)
     assert out.returncode == 0, out.stderr[-500:]
     assert "Independent validation: PASSED" in out.stdout and "SO-1012/1" in out.stdout
+
+
+def test_unsigned_validation_claims_are_not_trusted(db, act_as, payload):
+    """M12 / D-036: a planner calling the RPC directly cannot mark a schedule as validated."""
+    act_as("planner@example.com")
+    text, _ = signed_payload(payload)
+    forged = scalar(db, "select public.record_schedule_run(%s, %s)", (text, "0" * 64))
+    assert forged["validation_passed"] is False and forged["validation_signed"] is False
+    assert scalar(db, "select metrics ->> 'validation_untrusted' from schedule_versions where version_number = %s",
+                  (forged["version_number"],)).startswith("validation result not signed")

@@ -6,6 +6,8 @@ import subprocess
 import sys
 
 import pytest
+
+from app.signing import signed_payload
 from psycopg import errors
 
 from planning.scenarios import run_scenario
@@ -27,7 +29,7 @@ def snap(db):
 
 def record(db, act_as, body):
     act_as("planner@example.com")
-    result = scalar(db, "select public.record_schedule_run(%s::jsonb)", (json.dumps(body),))
+    result = scalar(db, "select public.record_schedule_run(%s, %s)", signed_payload(body))
     db.execute("reset role")
     return result
 
@@ -95,7 +97,8 @@ def test_decision_scenario_can_be_submitted_for_approval(db, act_as, snap):
 def test_operations_on_a_hypothetical_machine_are_stored_and_labelled(db, act_as, snap):
     body, _, _ = run_scenario(snap, [{"kind": "extra_machine", "params": {"machine_code": "TE-001"}}], options=FAST)
     # Put one hydro test on the second unit (whether the solver used it or not), keeping its times.
-    row = next(r for o in body["orders"] for r in o["operations"] if r.get("machine_code") == "TE-001")
+    # (the solver may already have used the second unit; either way one hydro test ends up on TE-001-B)
+    row = next(r for o in body["orders"] for r in o["operations"] if r.get("machine_code") in ("TE-001", "TE-001-B"))
     row["machine_code"] = "TE-001-B"
     result = record(db, act_as, body)
     db.execute("""select op.assigned_machine_id, op.notes from production_operations op
@@ -110,8 +113,8 @@ def test_operations_on_a_hypothetical_machine_are_stored_and_labelled(db, act_as
 def test_unknown_run_type_is_refused(db, act_as, snap):
     act_as("planner@example.com")
     with pytest.raises(errors.CheckViolation):
-        db.execute("select public.record_schedule_run(%s::jsonb)",
-                   (json.dumps({"run_type": "forecast", "status": "Feasible", "orders": []}),))
+        db.execute("select public.record_schedule_run(%s, %s)",
+                   signed_payload({"run_type": "forecast", "status": "Feasible", "orders": []}))
 
 
 def test_cli_scenario_is_read_only(db_conn):

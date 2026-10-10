@@ -36,6 +36,9 @@ Open http://127.0.0.1:8000 and sign in, e.g. as `planner@example.com` or `approv
 .\.venv\Scripts\python -m pytest
 ```
 
+## Operations
+See [development-khaled/operations.md](development-khaled/operations.md): container (`Dockerfile`), health (`/livez`, `/healthz`), backups (`python -m scripts.export_data`), data quality (`python -m planning.cli check-data`), signing key (`python -m scripts.set_signing_key`).
+
 ## Planning engine (CLI)
 ```powershell
 .\.venv\Scripts\python -m planning.cli mrp                  # material problems from the database

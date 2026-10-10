@@ -46,3 +46,9 @@ def healthz(request: Request, settings: Settings = Depends(get_settings)):
         "supabase": supabase,
     }
     return JSONResponse(body, status_code=503 if degraded else 200)
+
+
+@router.get("/livez", tags=["ops"])
+def livez(request: Request):
+    """Liveness for container health checks: the process answers; no external calls (readiness is /healthz)."""
+    return {"status": "alive", "version": request.app.version}

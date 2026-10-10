@@ -301,3 +301,25 @@ _Seen 2026-10-10 (M11)_
 
 **Cause.** The API round-trip test commits a PO date change through PostgREST; since M10 that fires the
 baseline-impact trigger. **Fix (in place).** Its cleanup deletes the `receipt_change` alerts it raised.
+
+## "planning_runs_timing" check violation when saving a run
+_Seen 2026-10-10 (M12)_
+
+**Cause.** `started_at` comes from the app clock, `completed_at` from the database (`now()` = transaction start).
+**Fix (in place).** Trigger clamps `started_at` to `completed_at` (`20261010192202_clamp_run_timing`).
+
+## Saved draft shows "validation result not signed by the application server"
+_Reference (M12)_
+
+The app (or CLI) has no `SCHEDULE_SIGNING_KEY`, or it differs from the database copy. Run
+`python -m scripts.set_signing_key` and restart the app; re-run the solver.
+
+## "Revision … is Approved and locked" / "Approvers decide through the approval workflow"
+_Reference (M12)_
+
+By design (D-037). Create a new revision (engineering) or use the approval workflow (approver).
+
+## HTTP 429 "Too many requests"
+_Reference (M12)_
+
+Login is limited to 10 attempts per minute per IP and e-mail; the assistant to 20 messages per minute per user.

@@ -11,10 +11,34 @@ jobs:
       APP_ENV: test
       DATA_BACKEND: mock
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
           cache: pip
       - run: pip install -r requirements.txt
       - run: python -m pytest -q
+
+  container:
+    # M12: the production image builds, starts as a non-root user and serves pages (no secrets needed: demo mode).
+    runs-on: ubuntu-latest
+    needs: pytest
+    steps:
+      - uses: actions/checkout@v5
+      - run: docker build -t pmp:ci .
+      - name: Start the container (development mode with fictional demo data)
+        run: |
+          docker run -d --name pmp -p 8000:8000 -e APP_ENV=development -e AUTH_MODE=disabled -e DATA_BACKEND=mock pmp:ci
+          for i in $(seq 1 30); do curl -fs http://127.0.0.1:8000/livez && break; sleep 1; done
+      - name: Smoke test
+        run: |
+          curl -fs http://127.0.0.1:8000/livez
+          curl -fs -o /dev/null -w "dashboard %{http_code}\n" http://127.0.0.1:8000/dashboard
+          curl -fsI http://127.0.0.1:8000/dashboard | grep -i "x-frame-options: DENY"
+          test "$(docker exec pmp id -u)" = "10001"
+          ! docker exec pmp test -e /app/.env
+      - name: Production configuration is refused without its settings
+        run: |
+          ! docker run --rm -e APP_ENV=production pmp:ci python -c "from app.config import Settings; Settings()"
+      - if: always()
+        run: docker logs pmp | tail -50

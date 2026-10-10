@@ -36,6 +36,10 @@ class Settings(BaseSettings):
     scheduler_worker: Literal["process", "thread"] = "process"
     scheduler_time_limit_seconds: float = 10.0
 
+    # Signs validation results sent to record_schedule_run() (M12, D-036). Same value as private.app_config in the DB;
+    # set both with `python -m scripts.set_signing_key`. Without it, saved schedules are never marked validated.
+    schedule_signing_key: SecretStr | None = None
+
     # AI planning assistant (M11). Without a key the assistant falls back to scripted demo replies.
     anthropic_api_key: SecretStr | None = None   # server-side only — never sent to templates or browsers
     assistant_model: str = "claude-opus-5-5"
@@ -52,6 +56,13 @@ class Settings(BaseSettings):
             raise ValueError("AUTH_MODE=disabled is only allowed when APP_ENV is development or test")
         if self.data_backend == "supabase" and self.auth_mode != "supabase":
             raise ValueError("DATA_BACKEND=supabase reads data as the signed-in user: it requires AUTH_MODE=supabase")
+        if self.app_env == "production":   # M12: refuse to start a misconfigured production instance
+            missing = [name for name, ok in (("DATA_BACKEND=supabase", self.data_backend == "supabase"),
+                                             ("SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY", self.supabase_configured),
+                                             ("SCHEDULE_SIGNING_KEY", bool(self.schedule_signing_key)))
+                       if not ok]
+            if missing:
+                raise ValueError("APP_ENV=production requires " + ", ".join(missing))
         return self
 
     @property

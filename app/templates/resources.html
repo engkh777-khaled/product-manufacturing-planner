@@ -35,6 +35,23 @@
     {% endcall %}
   </div>
 
+  {% if quality %}
+  <section class="bg-surface-container-low rounded overflow-hidden" id="data-quality">
+    {% call panel_header("Plant Data Quality", "fact_check", "Data that would make plans wrong or impossible — fix it before relying on a schedule (spec Phase 6)") %}
+      {{ badge(quality.summary.error ~ " errors", "crit" if quality.summary.error else "ok") }}{{ badge(quality.summary.warning ~ " warnings", "warn" if quality.summary.warning else "ok") }}
+    {% endcall %}
+    <ul class="p-space-md flex flex-col gap-space-xs font-label-mono-xs text-label-mono-xs">
+      {% for f in quality.findings %}
+      <li class="flex flex-wrap gap-space-sm {{ {'error': 'text-crit', 'warning': 'text-warn'}.get(f.severity, 'text-on-surface-variant') }}">
+        <span class="uppercase w-16">{{ f.severity }}</span><span class="text-outline w-24">{{ f.category }}</span><span class="text-on-surface w-48">{{ f.entity }}</span><span>{{ f.message }}</span>
+      </li>
+      {% else %}
+      <li class="text-ok">No data-quality problems found.</li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
   <section class="bg-surface-container-low rounded overflow-hidden">
     {% call panel_header("Work Centers & Machines", "precision_manufacturing", "Capabilities decide which operations a machine may run (spec §6.13); speed factor scales durations") %}{% endcall %}
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-px bg-surface-container">

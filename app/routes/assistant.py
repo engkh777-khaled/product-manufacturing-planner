@@ -2,7 +2,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, Form, Request
 
-from app import assistant
+from app import assistant, hardening
 from app.agent import loop as agent
 from app.agent import tools as agent_tools
 from app.auth import require_user
@@ -57,6 +57,7 @@ def message(request: Request, prompt: str = Form(...), conv_id: str = Form(""), 
             version: str = Form(""), user: CurrentUser = Depends(require_user)):
     prompt = prompt.strip()[:2000]
     if get_settings().assistant_enabled:
+        hardening.assistant_limiter.check(user.id)        # AI cost and load control
         if not prompt:
             return templates.TemplateResponse(request, "partials/agent_turn.html", {"turn": None})
         conv = agent.conversation(user.id, conv_id or None, order or None, version or None)

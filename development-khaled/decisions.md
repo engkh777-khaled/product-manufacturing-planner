@@ -413,3 +413,38 @@ defaults to `claude-opus-5-5` (most capable) and can be switched to a cheaper mo
 the scripted, data-grounded demo replies; tests always run with the key cleared and a mocked client.
 
 **Consequences.** CI and offline development never call the AI service; enabling the assistant is one setting.
+
+## D-036 — Validation results are signed by the server
+_2026-10-10 · M12_
+
+**Context.** D-029 left one gap: the independent validator runs in Python, so a planner calling
+`record_schedule_run()` directly could claim `validation_passed`.
+
+**Decision.** The app server signs the exact payload text with HMAC-SHA256 (`SCHEDULE_SIGNING_KEY`); the database
+recomputes it with the copy in `private.app_config` (no client access) and trusts `validation_passed` only when
+the signature matches. Unsigned claims are stored as not validated with a note.
+
+**Consequences.** Only the server (or an operator holding the key, e.g. the CLI) can produce approvable
+versions. The key must be set in both places per environment and rotated with `scripts/set_signing_key.py`.
+
+## D-037 — Approved and decided records are locked by triggers, not only RLS
+_2026-10-10 · M12_
+
+**Context.** The approval functions are SECURITY INVOKER, so approvers need UPDATE rights on BOM/routing headers
+and schedule versions — which also let them edit approved records directly (found by the RLS matrix).
+
+**Decision.** Keep RLS as is and add triggers: approvers may only perform Under Review → Approved and
+Approved → Superseded on revisions; Approved/Superseded/Obsolete revisions are locked; decided schedule versions
+are read-only outside the approval workflow; approvers cannot edit versions.
+
+**Consequences.** Least privilege without rewriting the workflow functions; a Draft BOM must go through review.
+
+## D-038 — Single-process deployment until a shared job queue exists
+_2026-10-10 · M12_
+
+**Decision.** Run one app process (one container, one uvicorn worker). Solver jobs, assistant conversations,
+pending confirmations and rate limits live in memory; the database stays consistent because nothing is written
+until a job finishes or a human confirms.
+
+**Consequences.** Simple and safe for a supervised MVP; scaling out requires moving that state to the database or
+a queue first.

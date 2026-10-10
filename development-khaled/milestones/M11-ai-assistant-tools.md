@@ -5,7 +5,7 @@
 | **Date** | 2026-10-10 |
 | **Author** | Khaled (implemented with Claude Code) |
 | **Status** | Done (live LLM check pending an API key) |
-| **Commits** | _see git log — "M11" commit_ |
+| **Commits** | `ce12a90` |
 | **Spec sections** | §11 (assistant design, tools §11.1, system instructions §11.3), §12.7 (assistant UI), §5 (roles) |
 
 ## Goal

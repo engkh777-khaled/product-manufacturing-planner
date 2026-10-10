@@ -11,6 +11,7 @@
     python -m planning.cli schedule --freeze-days 3 --time-limit 30 --save --as planner@example.com
 
     python -m planning.cli scenario --delay PO-8821:5                 # what-if vs today's data (read-only)
+    python -m planning.cli check-data [--strict]                     # plant-data quality report
     python -m planning.cli scenario --down MC-014:2025-11-24T06:00/2025-11-25T22:00 --priority SO-1012:Critical --save
 
 Reads one consistent snapshot through DATABASE_URL (.env). Fictional demo data.
@@ -83,6 +84,11 @@ def cmd_mrp(args) -> int:
     return 0
 
 
+def _signed(body: dict) -> tuple[str, str | None]:
+    from app.signing import signed_payload  # the CLI runs on the server side and holds the signing key (.env)
+    return signed_payload(body)
+
+
 def _act_as(conn, email: str) -> None:
     uid = conn.execute("select id from auth.users where email = %s", (email,)).fetchone()
     if uid is None:
@@ -133,7 +139,7 @@ def cmd_schedule(args) -> int:
             body = payload(sched, report, started)
             with conn.transaction():
                 _act_as(conn, args.as_user)
-                result = conn.execute("select public.record_schedule_run(%s::jsonb)", (json.dumps(body),)).fetchone()[0]
+                result = conn.execute("select public.record_schedule_run(%s, %s)", _signed(body)).fetchone()[0]
             version = f"draft version {result['version_number']}" if result["version_number"] else "no version (no schedule)"
             print(f"Saved as planning run #{result['run_number']} by {args.as_user}: {version}, "
                   f"validation {'passed' if result['validation_passed'] else 'not passed'}.")
@@ -202,10 +208,22 @@ def cmd_scenario(args) -> int:
         if args.save:
             with conn.transaction():
                 _act_as(conn, args.as_user)
-                result = conn.execute("select public.record_schedule_run(%s::jsonb)", (json.dumps(body),)).fetchone()[0]
+                result = conn.execute("select public.record_schedule_run(%s, %s)", _signed(body)).fetchone()[0]
             print(f"Saved as simulation run #{result['run_number']}: version {result['version_number']} "
                   f"(the approved baseline is unchanged).")
     return 0
+
+
+def cmd_check_data(args) -> int:
+    from planning.data_quality import check, summary
+    with _connect() as conn:
+        snap = conn.execute("select public.planning_snapshot()").fetchone()[0]
+    findings = check(snap)
+    s = summary(findings)
+    print(f"Data quality: {s['error']} errors, {s['warning']} warnings, {s['info']} notes\n")
+    for f in findings:
+        print(f"  {f.severity:<8}{f.category:<12}{f.entity:<28}{f.message}")
+    return 1 if s["error"] and args.strict else 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -241,8 +259,11 @@ def main(argv: list[str] | None = None) -> int:
     scn.add_argument("--time-limit", type=float, default=10.0, help="solver time limit per plan (two plans)")
     scn.add_argument("--save", action="store_true", help="save the scenario as a separate version")
     scn.add_argument("--as", dest="as_user", default="planner@example.com", help="user recorded as running it")
+    chk = sub.add_parser("check-data", help="plant-data quality checks (engineering, resources, supply, demand)")
+    chk.add_argument("--strict", action="store_true", help="exit 1 when any error is found (for CI / cron)")
     args = parser.parse_args(argv)
-    return {"mrp": cmd_mrp, "schedule": cmd_schedule, "scenario": cmd_scenario}[args.command](args)
+    return {"mrp": cmd_mrp, "schedule": cmd_schedule, "scenario": cmd_scenario,
+            "check-data": cmd_check_data}[args.command](args)
 
 
 if __name__ == "__main__":

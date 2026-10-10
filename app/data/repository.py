@@ -448,6 +448,16 @@ def resources_view() -> dict:
     }
 
 
+def data_quality() -> dict | None:
+    """Plant-data quality findings for the user's snapshot (M12); None on demo data."""
+    snap = getattr(ds(), "SNAPSHOT", None)
+    if snap is None:
+        return None
+    from planning.data_quality import check, summary
+    findings = check(snap)
+    return {"summary": summary(findings), "findings": [f.as_dict() for f in findings]}
+
+
 def schedule_report(version: ScheduleVersion) -> dict | None:
     """Delivery results and the independent validation report of a solver-made version (M09), for display."""
     r = version.report

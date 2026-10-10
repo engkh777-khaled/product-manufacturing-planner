@@ -1,3 +1,5 @@
+import logging
+import os
 from pathlib import Path
 from urllib.parse import quote
 
@@ -5,12 +7,16 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 
-from app import auth
+from app import auth, hardening
 from app.data import dataset, supabase_dataset
 from app.routes import approvals, assistant, dashboard, engineering, health, inventory, orders, resources, scenarios, workbench
 from app.routes import auth as auth_routes
 
-app = FastAPI(title="Product Manufacturing Planner", version="0.3.0")
+# App loggers (access, errors, assistant tools) next to uvicorn's own; LOG_LEVEL overrides (M12).
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO").upper(),
+                    format="%(asctime)s %(levelname)s %(name)s %(message)s")
+
+app = FastAPI(title="Product Manufacturing Planner", version="0.4.0")
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
 
 for module in (health, auth_routes, dashboard, workbench, scenarios, orders, inventory, resources, engineering, approvals, assistant):
@@ -22,7 +28,7 @@ async def auth_session(request: Request, call_next):
     """Attach the signed-in user to request.state and keep the session cookies fresh."""
     request.state.user = None
     new_session, clear, access = None, False, None
-    if not request.url.path.startswith(("/static", "/healthz")):
+    if not request.url.path.startswith(("/static", "/healthz", "/livez")):
         request.state.user, new_session, clear, access = await auth.resolve_session(request)
 
     tokens = None
@@ -45,6 +51,10 @@ async def auth_session(request: Request, call_next):
     elif clear:
         auth.clear_session(response)
     return response
+
+
+# Outermost layer (registered last): security headers, request ids, access log, friendly 500 page (M12).
+hardening.install(app)
 
 
 @app.exception_handler(auth.LoginRequired)

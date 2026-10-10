@@ -40,7 +40,7 @@ def _utc(local: str) -> str:
 @router.get("/resources")
 def resources_page(request: Request, msg: str = "", user: CurrentUser = Depends(require_user)):
     return templates.TemplateResponse(request, "resources.html", {
-        "res": repo.resources_view(), "can_edit": _can_edit(user), "msg": msg[:300],
+        "res": repo.resources_view(), "can_edit": _can_edit(user), "msg": msg[:300], "quality": repo.data_quality(),
         "editable_backend": dataset.is_supabase(), "downtime_types": DOWNTIME_TYPES,
         "downtime_statuses": DOWNTIME_STATUSES, "exception_types": EXCEPTION_TYPES})
 
